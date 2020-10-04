@@ -31,8 +31,8 @@ export const Main = EStyleSheet.create({
     alignItems: 'center',
   },
   picture: {
-    width: '200rem',
-    height: '200rem',
+    width: '240rem',
+    height: '240rem',
     justifyContent: 'center',
   },
   inputContainer: {
@@ -48,7 +48,7 @@ export const Main = EStyleSheet.create({
   input: {
     height: '40rem',
     color: 'black',
-    fontSize: '13rem',
+    fontSize: '12rem',
   },
   error: {
     textAlign: 'center',

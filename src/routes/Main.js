@@ -10,6 +10,7 @@ import {
   View,
   Text,
   Animated,
+  Alert,
   FlatList,
   RefreshControl,
   SafeAreaView,
@@ -32,8 +33,17 @@ import {
   faUserLock,
   faSearch,
   faInfoCircle,
+  faChevronCircleUp,
+  faChevronCircleDown,
+  faCopy,
+  faDownload,
+  faDatabase,
+  faCalendarWeek,
+  faTasks,
+  faStar,
 } from '@fortawesome/free-solid-svg-icons';
 import SplashScreen from 'react-native-splash-screen';
+import {USERNAME, PASSKEY} from '../../env';
 import a3d from '../assets/cat/3d.png';
 import a4k from '../assets/cat/4k.png';
 import a4kbd from '../assets/cat/4kBD.png';
@@ -60,6 +70,7 @@ import sdtv from '../assets/cat/sdtv.png';
 import sport from '../assets/cat/sport.png';
 import vids from '../assets/cat/vids.png';
 import xxx from '../assets/cat/xxx.png';
+import Axios from 'axios';
 
 const MAIN_COLOR = '#E8E6E6';
 const ACCENT_COLOR = '#1598F4';
@@ -77,21 +88,18 @@ function Home() {
   const [showClipboardStatus] = useState(new Animated.Value(0));
   const [textClipboardOpacity] = useState(new Animated.Value(0));
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [infoModal, setInfoModal] = useState(false);
+  const [modalData, setModalData] = useState(null);
+  const [IMDbID, setIMDbID] = useState(null);
+  const [IMDbData, setIMDbData] = useState(null);
+  const [IMDbLoading, setIMDbLoading] = useState(false);
   const SearchBarRef = useRef();
 
-  // Determine torrent size
-  // function formatBytes(a, b = 2) {
-  //   if (0 === a) return '0 Bytes';
-  //   const c = 0 > b ? 0 : b,
-  //     d = Math.floor(Math.log(a) / Math.log(1024));
-  //   return (
-  //     parseFloat((a / Math.pow(1024, d)).toFixed(c)) +
-  //     ' ' +
-  //     ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
-  //   );
-  // }
-
   useEffect(() => {
+    if (IMDbID !== null) {
+      fetchIMDbInfo(IMDbID);
+    }
+
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
       () => {
@@ -110,7 +118,30 @@ function Home() {
       keyboardDidHideListener.remove();
       keyboardDidShowListener.remove();
     };
-  }, []);
+  }, [modalData, IMDbID]);
+
+  const fetchIMDbInfo = async (id) => {
+    setIMDbLoading(true);
+    await Axios.get('https://spleeter.co.uk/' + id)
+      .then((res) => {
+        setIMDbData(Array(res.data));
+        setIMDbLoading(false);
+      })
+      .catch((e) => {
+        alert(e);
+      });
+  };
+
+  const formatBytes = (a, b = 2) => {
+    if (0 === a) return '0 Bytes';
+    const c = 0 > b ? 0 : b,
+      d = Math.floor(Math.log(a) / Math.log(1024));
+    return (
+      parseFloat((a / Math.pow(1024, d)).toFixed(c)) +
+      ' ' +
+      ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
+    );
+  };
 
   const copyToClipboard = (string) => {
     Clipboard.setString(`${string}`);
@@ -148,6 +179,7 @@ function Home() {
       console.log(e);
     }
     dispatch(AppConfigActions.getLatest());
+    dispatch(AppConfigActions.setError());
   };
 
   const getUserDetails = async () => {
@@ -428,6 +460,11 @@ function Home() {
   const renderItem = ({item}) => {
     return (
       <Item
+        onPress={() => {
+          setModalData(Array(item));
+          setIMDbID(item.imdb);
+          setInfoModal(true);
+        }}
         item={item}
         style={{
           backgroundColor: 'transparent',
@@ -443,15 +480,1092 @@ function Home() {
         backgroundColor={'transparent'}
         translucent={true}
       />
-      {/* <TouchableWithoutFeedback
-        onPress={() => {
-          Keyboard.dismiss;
-        }}> */}
       <SafeAreaView
         style={{
           flex: 1,
           backgroundColor: '#202020',
         }}>
+        <Overlay
+          statusBarTranslucent
+          animationType="fade"
+          overlayStyle={{
+            top: IMDbID !== null ? '5%' : '2%',
+            width: '87%',
+            height: IMDbID !== null ? '60%' : '50%',
+            backgroundColor: '#202020',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+          isVisible={infoModal}
+          onBackdropPress={() => {
+            setModalData(null);
+            setIMDbID(null);
+            setInfoModal(false);
+          }}>
+          <View
+            style={{
+              width: '100%',
+              height: '100%',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              alignItems: 'center',
+            }}>
+            {modalData
+              ? modalData.map((item, index) => {
+                  return (
+                    <View
+                      key={item.id}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                      }}>
+                      <View
+                        style={{
+                          width: '100%',
+                          height: '8.5%',
+                          flexDirection: 'row',
+                          justifyContent: 'flex-end',
+                          alignItems: 'center',
+                        }}>
+                        <FastImage
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            height: '100%',
+                            width: 45,
+                          }}
+                          resizeMode={FastImage.resizeMode.contain}
+                          source={
+                            item.category === 'Audio'
+                              ? music
+                              : item.category === 'Jocuri PC'
+                              ? games
+                              : item.category === 'Filme HD'
+                              ? hd
+                              : item.category === 'Filme HD-RO'
+                              ? hdro
+                              : item.category === 'Filme Blu-Ray'
+                              ? bluray
+                              : item.category === 'Docs'
+                              ? docs
+                              : item.category === 'Anime'
+                              ? anime
+                              : item.category === 'Jocuri Console'
+                              ? console
+                              : item.category === 'XXX'
+                              ? xxx
+                              : item.category === 'Seriale HD'
+                              ? hdtv
+                              : item.category === 'Filme SD'
+                              ? sd
+                              : item.category === 'Filme DVD'
+                              ? dvd
+                              : item.category === 'Filme DVD-RO'
+                              ? dvdro
+                              : item.category === 'FLAC'
+                              ? flac
+                              : item.category === 'Filme 4K'
+                              ? a4k
+                              : item.category === 'Programe'
+                              ? apps
+                              : item.category === 'Videoclip'
+                              ? vids
+                              : item.category === 'Sport'
+                              ? sport
+                              : item.category === 'Desene'
+                              ? cartoons
+                              : item.category === 'Linux'
+                              ? linux
+                              : item.category === 'Diverse'
+                              ? misc
+                              : item.category === 'Mobile'
+                              ? mobile
+                              : item.category === 'Seriale SD'
+                              ? sdtv
+                              : item.category === 'Filme 3D'
+                              ? a3d
+                              : item.category === 'Filme 4K Blu-Ray'
+                              ? a4kbd
+                              : item.category === 'Seriale 4K'
+                              ? a4ktv
+                              : null
+                          }
+                        />
+                        <View
+                          style={{
+                            width: '85%',
+                            height: '100%',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'flex-start',
+                            paddingLeft: '2%',
+                          }}>
+                          <Text
+                            style={{
+                              textShadowColor: 'black',
+                              textShadowOffset: {width: 0.5, height: 0.5},
+                              textShadowRadius: 1,
+                              color: MAIN_COLOR,
+                              fontSize: 18,
+                            }}>
+                            {item.category}
+                          </Text>
+                          <Text
+                            style={{
+                              textShadowColor: 'black',
+                              textShadowOffset: {width: 0.5, height: 0.5},
+                              textShadowRadius: 1,
+                              color: 'grey',
+                              fontSize: 9,
+                              fontWeight: 'bold',
+                              textAlign: 'center',
+                            }}>
+                            [ {item.small_description} ]
+                          </Text>
+                        </View>
+                      </View>
+                      <View
+                        style={{
+                          position: 'relative',
+                          top: 0,
+                          left: 0,
+                          marginTop: 10,
+                          marginBottom: 10,
+                          width: '100%',
+                          height: '0.1%',
+                          backgroundColor: '#303030',
+                        }}
+                      />
+                      <View
+                        style={{
+                          width: '100%',
+                          height: '10%',
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'flex-start',
+                        }}>
+                        <Text
+                          style={{
+                            textShadowColor: 'black',
+                            textShadowOffset: {width: 0.5, height: 0.5},
+                            textShadowRadius: 1,
+                            color: MAIN_COLOR,
+                            fontSize: 12,
+                            fontWeight: 'bold',
+                          }}>
+                          {item.name}
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          height:
+                            item.freeleech !== 1 &&
+                            item.doubleup !== 1 &&
+                            item.internal !== 1 &&
+                            item.moderated !== 1
+                              ? 0
+                              : '3%',
+                          width: '100%',
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}>
+                        {item.freeleech === 1 ? (
+                          <Text
+                            style={{
+                              textShadowColor: 'black',
+                              textShadowOffset: {width: 0.5, height: 0.5},
+                              textShadowRadius: 1,
+                              paddingHorizontal: 2,
+                              borderColor: 'yellowgreen',
+                              borderWidth: 0.5,
+                              fontSize: 10,
+                              color: 'aliceblue',
+                              marginRight: 10,
+                              backgroundColor: 'green',
+                            }}>
+                            Freeleech
+                          </Text>
+                        ) : null}
+                        {item.doubleup === 1 ? (
+                          <Text
+                            style={{
+                              textShadowColor: 'black',
+                              textShadowOffset: {width: 0.5, height: 0.5},
+                              textShadowRadius: 1,
+                              paddingHorizontal: 2,
+                              borderColor: 'fuchsia',
+                              borderWidth: 0.5,
+                              fontSize: 10,
+                              color: 'aliceblue',
+                              marginRight: 10,
+                              backgroundColor: 'darkmagenta',
+                            }}>
+                            Doubleup
+                          </Text>
+                        ) : null}
+                        {item.internal === 1 ? (
+                          <Text
+                            style={{
+                              textShadowColor: 'black',
+                              textShadowOffset: {width: 0.5, height: 0.5},
+                              textShadowRadius: 1,
+                              paddingHorizontal: 2,
+                              borderColor: 'deepskyblue',
+                              borderWidth: 0.5,
+                              fontSize: 10,
+                              color: 'aliceblue',
+                              marginRight: 10,
+                              backgroundColor: 'darkblue',
+                            }}>
+                            Internal
+                          </Text>
+                        ) : null}
+                        {item.moderated === 1 ? (
+                          <Text
+                            style={{
+                              textShadowColor: 'black',
+                              textShadowOffset: {width: 0.5, height: 0.5},
+                              textShadowRadius: 1,
+                              paddingHorizontal: 2,
+                              borderColor: 'crimson',
+                              borderWidth: 0.5,
+                              fontSize: 10,
+                              color: 'aliceblue',
+                              marginRight: 10,
+                              backgroundColor: 'maroon',
+                            }}>
+                            Moderated
+                          </Text>
+                        ) : null}
+                      </View>
+                      <View
+                        style={{
+                          position: 'relative',
+                          top: 0,
+                          left: 0,
+                          marginTop: 10,
+                          marginBottom: 10,
+                          width: '100%',
+                          height: '0.1%',
+                          backgroundColor: '#303030',
+                        }}
+                      />
+                      {IMDbID !== null ? (
+                        <View
+                          style={{
+                            width: '100%',
+                            height: '50%',
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            marginBottom: '7%',
+                          }}>
+                          {IMDbLoading ? (
+                            <View
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                backgroundColor: 'transparent',
+                              }}>
+                              <ActivityIndicator
+                                size="large"
+                                color={ACCENT_COLOR}
+                              />
+                            </View>
+                          ) : (
+                            <>
+                              {IMDbData
+                                ? IMDbData.map((item, index) => {
+                                    return (
+                                      <View
+                                        style={{
+                                          width: '100%',
+                                          height: '100%',
+                                          flexDirection: 'row',
+                                          justifyContent: 'flex-start',
+                                          alignItems: 'flex-start',
+                                        }}
+                                        key={item.link}>
+                                        <View
+                                          style={{
+                                            width: '50%',
+                                            height: '100%',
+                                            flexDirection: 'column',
+                                            justifyContent: 'flex-start',
+                                            alignItems: 'flex-start',
+                                          }}>
+                                          <Pressable
+                                            style={{
+                                              width: '100%',
+                                              height: '100%',
+                                              flexDirection: 'column',
+                                              justifyContent: 'flex-start',
+                                              alignItems: 'flex-start',
+                                            }}
+                                            onPress={() =>
+                                              Alert.alert(
+                                                'Alertă',
+                                                'Doreşti să vizitezi pagina IMDb asociată filmului ?',
+                                                [
+                                                  {
+                                                    text: 'Da',
+                                                    onPress: () =>
+                                                      Linking.openURL(
+                                                        item.link,
+                                                      ),
+                                                  },
+                                                  {
+                                                    text: 'Nu',
+                                                    onPress: () => {},
+                                                    style: 'cancel',
+                                                  },
+                                                ],
+                                                {cancelable: true},
+                                              )
+                                            }>
+                                            <FastImage
+                                              style={{
+                                                width: '85%',
+                                                height: '80%',
+                                              }}
+                                              resizeMode={
+                                                FastImage.resizeMode.contain
+                                              }
+                                              source={{
+                                                uri: item.poster,
+                                              }}
+                                            />
+                                            {item.rating === '' ? null : (
+                                              <>
+                                                <View
+                                                  style={{
+                                                    flexDirection: 'row',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    width: '85%',
+                                                    height: '20%',
+                                                  }}>
+                                                  <Text
+                                                    style={{
+                                                      fontSize: 10,
+                                                      textShadowColor: 'black',
+                                                      textShadowOffset: {
+                                                        width: 0.5,
+                                                        height: 0.5,
+                                                      },
+                                                      textShadowRadius: 1,
+                                                      color: 'white',
+                                                      fontSize: 18,
+                                                      fontWeight: 'bold',
+                                                    }}>
+                                                    {item.rating}
+                                                  </Text>
+                                                  <FontAwesomeIcon
+                                                    size={20}
+                                                    style={{marginLeft: 10}}
+                                                    color={'gold'}
+                                                    icon={faStar}
+                                                  />
+                                                </View>
+                                              </>
+                                            )}
+                                          </Pressable>
+                                        </View>
+                                        <View
+                                          style={{
+                                            width: '50%',
+                                            height: '100%',
+                                            flexDirection: 'column',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'flex-start',
+                                            paddingRight: '2%',
+                                          }}>
+                                          <View
+                                            style={{
+                                              width: '100%',
+                                              height: '80%',
+                                              flexDirection: 'column',
+                                              justifyContent: 'flex-start',
+                                              alignItems: 'flex-start',
+                                            }}>
+                                            <Text
+                                              style={{
+                                                fontSize: 10,
+                                                textShadowColor: 'black',
+                                                textShadowOffset: {
+                                                  width: 0.5,
+                                                  height: 0.5,
+                                                },
+                                                textShadowRadius: 1,
+                                                color: 'grey',
+                                                fontWeight: 'bold',
+                                              }}>
+                                              Plot
+                                            </Text>
+                                            <Text
+                                              style={{
+                                                fontSize: 10,
+                                                textShadowColor: 'black',
+                                                textShadowOffset: {
+                                                  width: 0.5,
+                                                  height: 0.5,
+                                                },
+                                                textShadowRadius: 1,
+                                                color: 'white',
+                                                paddingTop: '3%',
+                                              }}>
+                                              {item.plot.split('\n')[0]}
+                                            </Text>
+                                            {item.duration === '' ? null : (
+                                              <>
+                                                <View
+                                                  style={{
+                                                    position: 'relative',
+                                                    top: 0,
+                                                    left: 0,
+                                                    marginTop: '4%',
+                                                    marginBottom: '4%',
+                                                    width: '100%',
+                                                    height: '0.2%',
+                                                    backgroundColor: '#404040',
+                                                  }}
+                                                />
+                                                <Text
+                                                  style={{
+                                                    fontSize: 10,
+                                                    textShadowColor: 'black',
+                                                    textShadowOffset: {
+                                                      width: 0.5,
+                                                      height: 0.5,
+                                                    },
+                                                    textShadowRadius: 1,
+                                                    color: 'grey',
+                                                    fontWeight: 'bold',
+                                                  }}>
+                                                  Durată film:
+                                                  <Text
+                                                    style={{
+                                                      fontSize: 10,
+                                                      textShadowColor: 'black',
+                                                      textShadowOffset: {
+                                                        width: 0.5,
+                                                        height: 0.5,
+                                                      },
+                                                      textShadowRadius: 1,
+                                                      color: 'white',
+                                                      fontWeight: 'bold',
+                                                    }}>
+                                                    {' '}
+                                                    {item.duration}
+                                                  </Text>
+                                                </Text>
+                                              </>
+                                            )}
+                                          </View>
+                                        </View>
+                                      </View>
+                                    );
+                                  })
+                                : null}
+                            </>
+                          )}
+                        </View>
+                      ) : null}
+                      {IMDbID !== null ? (
+                        <View
+                          style={{
+                            width: '100%',
+                            height: '14%',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}>
+                          <View
+                            style={{
+                              width: '100%',
+                              height: '50%',
+                              flexDirection: 'row',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}>
+                            <View
+                              style={{
+                                width: '33.33%',
+                                height: '100%',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <Pressable
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  justifyContent: 'space-around',
+                                  alignItems: 'center',
+                                }}
+                                android_ripple={{
+                                  color: 'grey',
+                                  borderless: false,
+                                  radius: 40,
+                                }}
+                                onPress={() =>
+                                  alert('Mărimea totală a torrentului')
+                                }>
+                                <FontAwesomeIcon
+                                  size={14}
+                                  icon={faDatabase}
+                                  color={ACCENT_COLOR}
+                                />
+                                <Text
+                                  style={{
+                                    fontSize: 10,
+                                    textShadowColor: 'black',
+                                    textShadowOffset: {width: 0.5, height: 0.5},
+                                    textShadowRadius: 1,
+                                    color: 'white',
+                                  }}>
+                                  {formatBytes(item.size)}
+                                </Text>
+                              </Pressable>
+                            </View>
+                            <View
+                              style={{
+                                width: '33.33%',
+                                height: '100%',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <Pressable
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  justifyContent: 'space-around',
+                                  alignItems: 'center',
+                                }}
+                                android_ripple={{
+                                  color: 'grey',
+                                  borderless: false,
+                                  radius: 40,
+                                }}
+                                onPress={() =>
+                                  alert('Numărul de fişiere din torrent')
+                                }>
+                                <FontAwesomeIcon
+                                  size={14}
+                                  icon={faCopy}
+                                  color={ACCENT_COLOR}
+                                />
+                                <Text
+                                  style={{
+                                    fontSize: 10,
+                                    textShadowColor: 'black',
+                                    textShadowOffset: {width: 0.5, height: 0.5},
+                                    textShadowRadius: 1,
+                                    color: 'white',
+                                  }}>
+                                  {item.files}
+                                </Text>
+                              </Pressable>
+                            </View>
+                            <View
+                              style={{
+                                width: '33.33%',
+                                height: '100%',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <Pressable
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  justifyContent: 'space-around',
+                                  alignItems: 'center',
+                                }}
+                                android_ripple={{
+                                  color: 'grey',
+                                  borderless: false,
+                                  radius: 40,
+                                }}
+                                onPress={() =>
+                                  alert(
+                                    'Numărul de persoane care ţin torrentul la seed în acest moment',
+                                  )
+                                }>
+                                <FontAwesomeIcon
+                                  size={14}
+                                  icon={faChevronCircleUp}
+                                  color={'limegreen'}
+                                />
+                                <Text
+                                  style={{
+                                    fontSize: 10,
+                                    textShadowColor: 'black',
+                                    textShadowOffset: {width: 0.5, height: 0.5},
+                                    textShadowRadius: 1,
+                                    color: 'white',
+                                  }}>
+                                  {item.seeders}
+                                </Text>
+                              </Pressable>
+                            </View>
+                          </View>
+                          <View
+                            style={{
+                              width: '100%',
+                              height: '50%',
+                              flexDirection: 'row',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              marginTop: 12,
+                            }}>
+                            <View
+                              style={{
+                                width: '33.33%',
+                                height: '100%',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <Pressable
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  justifyContent: 'space-around',
+                                  alignItems: 'center',
+                                }}
+                                android_ripple={{
+                                  color: 'grey',
+                                  borderless: false,
+                                  radius: 40,
+                                }}
+                                onPress={() =>
+                                  alert(
+                                    'Data la care torrentul a apărut pe Filelist',
+                                  )
+                                }>
+                                <FontAwesomeIcon
+                                  size={14}
+                                  icon={faCalendarWeek}
+                                  color={ACCENT_COLOR}
+                                />
+                                <Text
+                                  style={{
+                                    fontSize: 10,
+                                    textShadowColor: 'black',
+                                    textShadowOffset: {width: 0.5, height: 0.5},
+                                    textShadowRadius: 1,
+                                    color: 'white',
+                                  }}>
+                                  {item.upload_date.substring(0, 10)}
+                                </Text>
+                              </Pressable>
+                            </View>
+                            <View
+                              style={{
+                                width: '33.33%',
+                                height: '100%',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <Pressable
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  justifyContent: 'space-around',
+                                  alignItems: 'center',
+                                }}
+                                android_ripple={{
+                                  color: 'grey',
+                                  borderless: false,
+                                  radius: 40,
+                                }}
+                                onPress={() =>
+                                  alert(
+                                    'De câte ori a fost descărcat torrentul',
+                                  )
+                                }>
+                                <FontAwesomeIcon
+                                  size={14}
+                                  icon={faDownload}
+                                  color={ACCENT_COLOR}
+                                />
+                                <Text
+                                  style={{
+                                    fontSize: 10,
+                                    textShadowColor: 'black',
+                                    textShadowOffset: {width: 0.5, height: 0.5},
+                                    textShadowRadius: 1,
+                                    color: 'white',
+                                  }}>
+                                  {item.times_completed}
+                                </Text>
+                              </Pressable>
+                            </View>
+                            <View
+                              style={{
+                                width: '33.33%',
+                                height: '100%',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <Pressable
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  justifyContent: 'space-around',
+                                  alignItems: 'center',
+                                }}
+                                android_ripple={{
+                                  color: 'grey',
+                                  borderless: false,
+                                  radius: 40,
+                                }}
+                                onPress={() =>
+                                  alert(
+                                    'Numărul de persoane care descarcă torrentul în acest moment',
+                                  )
+                                }>
+                                <FontAwesomeIcon
+                                  size={14}
+                                  icon={faChevronCircleDown}
+                                  color={'crimson'}
+                                />
+                                <Text
+                                  style={{
+                                    fontSize: 10,
+                                    textShadowColor: 'black',
+                                    textShadowOffset: {width: 0.5, height: 0.5},
+                                    textShadowRadius: 1,
+                                    color: 'white',
+                                  }}>
+                                  {item.leechers}
+                                </Text>
+                              </Pressable>
+                            </View>
+                          </View>
+                        </View>
+                      ) : (
+                        <View
+                          style={{
+                            width: '100%',
+                            height: '64%',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}>
+                          <View
+                            style={{
+                              width: '100%',
+                              height: '30%',
+                              flexDirection: 'column',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}>
+                            <View
+                              style={{
+                                width: '100%',
+                                height: '50%',
+                                flexDirection: 'row',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <View
+                                style={{
+                                  width: '33.33%',
+                                  height: '100%',
+                                  flexDirection: 'column',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                }}>
+                                <Pressable
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    justifyContent: 'space-around',
+                                    alignItems: 'center',
+                                  }}
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    alert('Mărimea totală a torrentului')
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faDatabase}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={{
+                                      fontSize: 10,
+                                      textShadowColor: 'black',
+                                      textShadowOffset: {
+                                        width: 0.5,
+                                        height: 0.5,
+                                      },
+                                      textShadowRadius: 1,
+                                      color: 'white',
+                                    }}>
+                                    {formatBytes(item.size)}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View
+                                style={{
+                                  width: '33.33%',
+                                  height: '100%',
+                                  flexDirection: 'column',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                }}>
+                                <Pressable
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    justifyContent: 'space-around',
+                                    alignItems: 'center',
+                                  }}
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    alert('Numărul de fişiere din torrent')
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faCopy}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={{
+                                      fontSize: 10,
+                                      textShadowColor: 'black',
+                                      textShadowOffset: {
+                                        width: 0.5,
+                                        height: 0.5,
+                                      },
+                                      textShadowRadius: 1,
+                                      color: 'white',
+                                    }}>
+                                    {item.files}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View
+                                style={{
+                                  width: '33.33%',
+                                  height: '100%',
+                                  flexDirection: 'column',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                }}>
+                                <Pressable
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    justifyContent: 'space-around',
+                                    alignItems: 'center',
+                                  }}
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    alert(
+                                      'Numărul de persoane care ţin torrentul la seed în acest moment',
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faChevronCircleUp}
+                                    color={'limegreen'}
+                                  />
+                                  <Text
+                                    style={{
+                                      fontSize: 10,
+                                      textShadowColor: 'black',
+                                      textShadowOffset: {
+                                        width: 0.5,
+                                        height: 0.5,
+                                      },
+                                      textShadowRadius: 1,
+                                      color: 'white',
+                                    }}>
+                                    {item.seeders}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                            </View>
+                            <View
+                              style={{
+                                width: '100%',
+                                height: '50%',
+                                flexDirection: 'row',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginTop: 12,
+                              }}>
+                              <View
+                                style={{
+                                  width: '33.33%',
+                                  height: '100%',
+                                  flexDirection: 'column',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                }}>
+                                <Pressable
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    justifyContent: 'space-around',
+                                    alignItems: 'center',
+                                  }}
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    alert(
+                                      'Data la care torrentul a apărut pe Filelist',
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faCalendarWeek}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={{
+                                      fontSize: 10,
+                                      textShadowColor: 'black',
+                                      textShadowOffset: {
+                                        width: 0.5,
+                                        height: 0.5,
+                                      },
+                                      textShadowRadius: 1,
+                                      color: 'white',
+                                    }}>
+                                    {item.upload_date.substring(0, 10)}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View
+                                style={{
+                                  width: '33.33%',
+                                  height: '100%',
+                                  flexDirection: 'column',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                }}>
+                                <Pressable
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    justifyContent: 'space-around',
+                                    alignItems: 'center',
+                                  }}
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    alert(
+                                      'De câte ori a fost descărcat torrentul',
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faDownload}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={{
+                                      fontSize: 10,
+                                      textShadowColor: 'black',
+                                      textShadowOffset: {
+                                        width: 0.5,
+                                        height: 0.5,
+                                      },
+                                      textShadowRadius: 1,
+                                      color: 'white',
+                                    }}>
+                                    {item.times_completed}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View
+                                style={{
+                                  width: '33.33%',
+                                  height: '100%',
+                                  flexDirection: 'column',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                }}>
+                                <Pressable
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    justifyContent: 'space-around',
+                                    alignItems: 'center',
+                                  }}
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    alert(
+                                      'Numărul de persoane care descarcă torrentul în acest moment',
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faChevronCircleDown}
+                                    color={'crimson'}
+                                  />
+                                  <Text
+                                    style={{
+                                      fontSize: 10,
+                                      textShadowColor: 'black',
+                                      textShadowOffset: {
+                                        width: 0.5,
+                                        height: 0.5,
+                                      },
+                                      textShadowRadius: 1,
+                                      color: 'white',
+                                    }}>
+                                    {item.leechers}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })
+              : null}
+          </View>
+        </Overlay>
         <View
           style={{
             height: StatusBar.currentHeight * 3,
@@ -482,7 +1596,7 @@ function Home() {
               }}>
               Recent adăugate
             </Text>
-            <View
+            {/* <View
               style={{
                 width: '20%',
                 height: '40%',
@@ -514,7 +1628,7 @@ function Home() {
                   Logout
                 </Text>
               </Pressable>
-            </View>
+            </View> */}
           </View>
         </View>
         <FlatList
@@ -533,18 +1647,18 @@ function Home() {
               clearIcon={false}
               searchIcon={
                 <FontAwesomeIcon
-                  style={{marginLeft: 5}}
-                  color={'grey'}
+                  style={{marginLeft: 6}}
+                  color={'dimgrey'}
                   icon={faSearch}
                 />
               }
               placeholder="Caută după cuvânt cheie, IMDb..."
+              placeholderTextColor={'dimgrey'}
+              style={{color: MAIN_COLOR}}
               onChangeText={(search) => setSearch(search)}
               value={search}
             />
           }
-          onEndReached={() => alert('coaeee')}
-          onEndReachedThreshold={0.7}
           data={latest}
           renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
@@ -628,7 +1742,6 @@ function Home() {
           </Animated.Text>
         </Animated.View>
       </SafeAreaView>
-      {/* </TouchableWithoutFeedback> */}
     </>
   );
 }
@@ -639,8 +1752,8 @@ function Login() {
   const [userModal, setUserModal] = useState(false);
   const [passModal, setPassModal] = useState(false);
   const [aboutModal, setAboutModal] = useState(false);
-  const [user, setUser] = useState('kevin7');
-  const [pass, setPass] = useState('51e60083fcfc825ffd146bfa8786fda0');
+  const [user, setUser] = useState(USERNAME);
+  const [pass, setPass] = useState(PASSKEY);
   const [invalid, setInvalid] = useState(false);
   const [invalidUser, setInvalidUser] = useState(false);
   const [invalidPass, setInvalidPass] = useState(false);
@@ -649,9 +1762,6 @@ function Login() {
 
   useEffect(() => {
     if (error !== null) {
-      setTimeout(() => {
-        dispatch(AppConfigActions.setError());
-      }, 5000);
       setLoginLoading(false);
     }
 
@@ -1066,7 +2176,7 @@ function Login() {
               <FastImage
                 style={Main.picture}
                 resizeMode={FastImage.resizeMode.contain}
-                source={require('../assets/logo.png')}
+                source={require('../assets/logo13.png')}
               />
             </View>
             <View style={Main.form}>
@@ -1090,13 +2200,13 @@ function Login() {
                 rightIcon={
                   <Pressable
                     android_ripple={{
-                      color: 'black',
+                      color: ACCENT_COLOR,
                       borderless: true,
-                      radius: 18,
+                      radius: 17,
                     }}
                     onPress={() => setUserModal(true)}>
                     <FontAwesomeIcon
-                      size={28}
+                      size={25}
                       color={'black'}
                       icon={faInfoCircle}
                     />
@@ -1115,13 +2225,13 @@ function Login() {
                 rightIcon={
                   <Pressable
                     android_ripple={{
-                      color: 'black',
+                      color: ACCENT_COLOR,
                       borderless: true,
-                      radius: 18,
+                      radius: 17,
                     }}
                     onPress={() => setPassModal(true)}>
                     <FontAwesomeIcon
-                      size={28}
+                      size={25}
                       color={'black'}
                       icon={faInfoCircle}
                     />
