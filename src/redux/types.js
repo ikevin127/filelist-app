@@ -1,0 +1,7 @@
+export const types = {
+  APP_CONFIG: {
+    SET_LATEST: 'APP_CONFIG/SET_LATEST',
+    GET_LATEST: 'APP_CONFIG/GET_LATEST',
+    SET_ERROR: 'APP_CONFIG/SET_ERROR',
+  },
+};
