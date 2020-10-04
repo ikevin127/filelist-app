@@ -467,7 +467,7 @@ function Home() {
               flex: 4,
               display: 'flex',
               flexDirection: 'row',
-              justifyContent: 'center',
+              justifyContent: 'space-around',
               alignItems: 'center',
             }}>
             <Text
@@ -482,6 +482,39 @@ function Home() {
               }}>
               Recent adăugate
             </Text>
+            <View
+              style={{
+                width: '20%',
+                height: '40%',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <Pressable
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+                android_ripple={{
+                  color: 'white',
+                  borderless: false,
+                }}
+                onPress={handleLogout}>
+                <Text
+                  style={{
+                    textShadowColor: 'black',
+                    textShadowOffset: {width: 0.5, height: 0.5},
+                    textShadowRadius: 1,
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                    padding: 8,
+                  }}>
+                  Logout
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
         <FlatList
@@ -616,6 +649,9 @@ function Login() {
 
   useEffect(() => {
     if (error !== null) {
+      setTimeout(() => {
+        dispatch(AppConfigActions.setError());
+      }, 5000);
       setLoginLoading(false);
     }
 
