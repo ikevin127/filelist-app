@@ -1,6 +1,8 @@
 # OSX
 #
 .DS_Store
+android/*.properties
+env.js
 
 # Xcode
 #
