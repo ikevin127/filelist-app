@@ -22,7 +22,7 @@ import {
   KeyboardAvoidingView,
   Linking,
 } from 'react-native';
-import {Input, SearchBar, Overlay} from 'react-native-elements';
+import {Input, Overlay} from 'react-native-elements';
 import FastImage from 'react-native-fast-image';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
@@ -39,10 +39,12 @@ import {
   faDownload,
   faDatabase,
   faCalendarWeek,
-  faTasks,
+  faFilter,
   faStar,
+  faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
 import SplashScreen from 'react-native-splash-screen';
+import Axios from 'axios';
 import {USERNAME, PASSKEY} from '../../env';
 import a3d from '../assets/cat/3d.png';
 import a4k from '../assets/cat/4k.png';
@@ -70,7 +72,6 @@ import sdtv from '../assets/cat/sdtv.png';
 import sport from '../assets/cat/sport.png';
 import vids from '../assets/cat/vids.png';
 import xxx from '../assets/cat/xxx.png';
-import Axios from 'axios';
 
 const MAIN_COLOR = '#E8E6E6';
 const ACCENT_COLOR = '#1598F4';
@@ -79,9 +80,13 @@ const Stack = createStackNavigator();
 function Home() {
   const dispatch = useDispatch();
   const [search, setSearch] = useState('');
-  const [user, setUser] = useState('');
-  const [pass, setPass] = useState('');
-  const {latest} = useSelector((state) => state.appConfig);
+  const {
+    listLatest,
+    listSearch,
+    listImdb,
+    searchError,
+    imdbError,
+  } = useSelector((state) => state.appConfig);
   const [refreshing, setRefreshing] = useState(false);
   const [showStatus] = useState(new Animated.Value(0));
   const [textOpacity] = useState(new Animated.Value(0));
@@ -93,11 +98,28 @@ function Home() {
   const [IMDbID, setIMDbID] = useState(null);
   const [IMDbData, setIMDbData] = useState(null);
   const [IMDbLoading, setIMDbLoading] = useState(false);
+  const [isFilters, setIsFilters] = useState(false);
+  const [searchValidation, setSearchValidation] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [noResults, setNoResults] = useState(false);
   const SearchBarRef = useRef();
 
   useEffect(() => {
     if (IMDbID !== null) {
       fetchIMDbInfo(IMDbID);
+    }
+    if (listSearch !== null) {
+      setTimeout(() => {
+        setSearchLoading(false);
+      }, 1000);
+    }
+    if (listImdb !== null) {
+      setTimeout(() => {
+        setSearchLoading(false);
+      }, 1000);
+    }
+    if (JSON.stringify(listSearch) === '[]') {
+      setNoResults(true);
     }
 
     const keyboardDidShowListener = Keyboard.addListener(
@@ -118,7 +140,63 @@ function Home() {
       keyboardDidHideListener.remove();
       keyboardDidShowListener.remove();
     };
-  }, [modalData, IMDbID]);
+  }, [modalData, IMDbID, listSearch, listImdb, searchError, imdbError]);
+
+  // Functions
+
+  const handleSearch = async () => {
+    try {
+      Keyboard.dismiss();
+      const value0 = await AsyncStorage.getItem('username');
+      const value1 = await AsyncStorage.getItem('passkey');
+      if (value0 !== null && value1 !== null && search !== '') {
+        if (/\d{6,}/.test(search)) {
+          setSearchLoading(true);
+          dispatch(AppConfigActions.getImdb(value0, value1, search));
+        } else if (/tt\d+/.test(search)) {
+          setSearchLoading(true);
+          dispatch(AppConfigActions.getImdb(value0, value1, search));
+        } else {
+          setSearchLoading(true);
+          dispatch(AppConfigActions.getSearch(value0, value1, search));
+        }
+      } else if (search === '') {
+        setSearchValidation(true);
+        setTimeout(() => {
+          setSearchValidation(false);
+        }, 3000);
+      }
+    } catch (e) {
+      alert(e);
+    }
+  };
+
+  const clearSearch = async () => {
+    try {
+      await AsyncStorage.removeItem('search');
+      await AsyncStorage.removeItem('imdb');
+    } catch (e) {
+      alert(e);
+    }
+    dispatch(AppConfigActions.retrieveSearch());
+    dispatch(AppConfigActions.retrieveImdb());
+    dispatch(AppConfigActions.searchError());
+    dispatch(AppConfigActions.imdbError());
+    setNoResults(false);
+    SearchBarRef.current.blur();
+    SearchBarRef.current.clear();
+  };
+
+  const handleLogout = async () => {
+    const keys = ['username', 'passkey', 'latest'];
+    try {
+      await AsyncStorage.multiRemove(keys);
+    } catch (e) {
+      alert(e);
+    }
+    dispatch(AppConfigActions.retrieveLatest());
+    dispatch(AppConfigActions.latestError());
+  };
 
   const fetchIMDbInfo = async (id) => {
     setIMDbLoading(true);
@@ -147,7 +225,7 @@ function Home() {
     Clipboard.setString(`${string}`);
     setTimeout(() => {
       Animated.timing(showClipboardStatus, {
-        toValue: StatusBar.currentHeight * 2,
+        toValue: StatusBar.currentHeight * 2.5,
         duration: 300,
         useNativeDriver: false,
       }).start();
@@ -171,37 +249,24 @@ function Home() {
     }, 3500);
   };
 
-  const handleLogout = async () => {
-    const keys = ['username', 'passkey', 'torrents'];
-    try {
-      await AsyncStorage.multiRemove(keys);
-    } catch (e) {
-      console.log(e);
-    }
-    dispatch(AppConfigActions.getLatest());
-    dispatch(AppConfigActions.setError());
-  };
-
-  const getUserDetails = async () => {
+  const getRefreshData = async () => {
     try {
       const value0 = await AsyncStorage.getItem('username');
       const value1 = await AsyncStorage.getItem('passkey');
       if (value0 !== null && value1 !== null) {
-        setUser(value0);
-        setPass(value1);
+        dispatch(AppConfigActions.getLatest(value0, value1));
       }
     } catch (e) {
-      console.log(e);
+      alert(e);
     }
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await getUserDetails();
-    dispatch(AppConfigActions.setLatest(user, pass));
+    await getRefreshData();
     setTimeout(() => {
       Animated.timing(showStatus, {
-        toValue: StatusBar.currentHeight * 2,
+        toValue: StatusBar.currentHeight * 2.5,
         duration: 300,
         useNativeDriver: false,
       }).start();
@@ -210,7 +275,8 @@ function Home() {
         duration: 600,
         useNativeDriver: false,
       }).start();
-    }, 500);
+      setRefreshing(false);
+    }, 1000);
     setTimeout(() => {
       Animated.timing(showStatus, {
         toValue: 0,
@@ -222,10 +288,7 @@ function Home() {
         duration: 300,
         useNativeDriver: false,
       }).start();
-    }, 3500);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, refreshing);
+    }, 4000);
   }, [refreshing]);
 
   const Item = ({item, onPress, style}) => (
@@ -242,7 +305,6 @@ function Home() {
         {
           elevation: 5,
           marginTop: 16,
-          marginBottom: 16,
           marginHorizontal: 16,
         },
         style,
@@ -340,8 +402,8 @@ function Home() {
             style={{
               paddingTop: 5,
               paddingLeft: 5,
-              height: 45,
-              width: '80%',
+              height: 57,
+              width: '100%',
             }}>
             <Text
               style={{
@@ -356,12 +418,11 @@ function Home() {
           </View>
           <View
             style={{
-              height: 15,
+              height: 18,
               width: '100%',
               flexDirection: 'row',
               justifyContent: 'flex-start',
-              alignItems: 'center',
-              paddingLeft: 5,
+              alignItems: 'flex-start',
             }}>
             <Text
               style={{
@@ -370,19 +431,10 @@ function Home() {
                 textShadowRadius: 1,
                 fontSize: 9,
                 color: 'silver',
+                paddingLeft: 5,
               }}>
-              [ {item.small_description} ]
+              [ {item.upload_date.substring(0, 16)} ]
             </Text>
-          </View>
-          <View
-            style={{
-              height: 15,
-              marginBottom: 5,
-              width: '100%',
-              flexDirection: 'row',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-            }}>
             {item.freeleech === 1 ? (
               <Text
                 style={{
@@ -432,23 +484,6 @@ function Home() {
                   backgroundColor: 'darkblue',
                 }}>
                 Internal
-              </Text>
-            ) : null}
-            {item.moderated === 1 ? (
-              <Text
-                style={{
-                  textShadowColor: 'black',
-                  textShadowOffset: {width: 0.5, height: 0.5},
-                  textShadowRadius: 1,
-                  paddingHorizontal: 2,
-                  borderColor: 'crimson',
-                  borderWidth: 0.5,
-                  fontSize: 10,
-                  color: 'aliceblue',
-                  marginLeft: 5,
-                  backgroundColor: 'maroon',
-                }}>
-                Moderated
               </Text>
             ) : null}
           </View>
@@ -664,8 +699,7 @@ function Home() {
                           height:
                             item.freeleech !== 1 &&
                             item.doubleup !== 1 &&
-                            item.internal !== 1 &&
-                            item.moderated !== 1
+                            item.internal !== 1
                               ? 0
                               : '3%',
                           width: '100%',
@@ -722,23 +756,6 @@ function Home() {
                               backgroundColor: 'darkblue',
                             }}>
                             Internal
-                          </Text>
-                        ) : null}
-                        {item.moderated === 1 ? (
-                          <Text
-                            style={{
-                              textShadowColor: 'black',
-                              textShadowOffset: {width: 0.5, height: 0.5},
-                              textShadowRadius: 1,
-                              paddingHorizontal: 2,
-                              borderColor: 'crimson',
-                              borderWidth: 0.5,
-                              fontSize: 10,
-                              color: 'aliceblue',
-                              marginRight: 10,
-                              backgroundColor: 'maroon',
-                            }}>
-                            Moderated
                           </Text>
                         ) : null}
                       </View>
@@ -949,7 +966,7 @@ function Home() {
                                                     color: 'grey',
                                                     fontWeight: 'bold',
                                                   }}>
-                                                  Durată film:
+                                                  Durată:
                                                   <Text
                                                     style={{
                                                       fontSize: 10,
@@ -1016,7 +1033,17 @@ function Home() {
                                   radius: 40,
                                 }}
                                 onPress={() =>
-                                  alert('Mărimea totală a torrentului')
+                                  Alert.alert(
+                                    'Alertă',
+                                    'Mărimea totală a torrentului',
+                                    [
+                                      {
+                                        text: 'OK',
+                                        onPress: () => {},
+                                      },
+                                    ],
+                                    {cancelable: true},
+                                  )
                                 }>
                                 <FontAwesomeIcon
                                   size={14}
@@ -1056,7 +1083,16 @@ function Home() {
                                   radius: 40,
                                 }}
                                 onPress={() =>
-                                  alert('Numărul de fişiere din torrent')
+                                  Alert.alert(
+                                    'Alertă',
+                                    'Numărul de fişiere din torrent',
+                                    [
+                                      {
+                                        text: 'OK',
+                                      },
+                                    ],
+                                    {onDismiss: () => {}, cancelable: true},
+                                  )
                                 }>
                                 <FontAwesomeIcon
                                   size={14}
@@ -1096,8 +1132,16 @@ function Home() {
                                   radius: 40,
                                 }}
                                 onPress={() =>
-                                  alert(
+                                  Alert.alert(
+                                    'Alertă',
                                     'Numărul de persoane care ţin torrentul la seed în acest moment',
+                                    [
+                                      {
+                                        text: 'OK',
+                                        onPress: () => {},
+                                      },
+                                    ],
+                                    {cancelable: true},
                                   )
                                 }>
                                 <FontAwesomeIcon
@@ -1148,8 +1192,16 @@ function Home() {
                                   radius: 40,
                                 }}
                                 onPress={() =>
-                                  alert(
+                                  Alert.alert(
+                                    'Alertă',
                                     'Data la care torrentul a apărut pe Filelist',
+                                    [
+                                      {
+                                        text: 'OK',
+                                        onPress: () => {},
+                                      },
+                                    ],
+                                    {cancelable: true},
                                   )
                                 }>
                                 <FontAwesomeIcon
@@ -1190,8 +1242,16 @@ function Home() {
                                   radius: 40,
                                 }}
                                 onPress={() =>
-                                  alert(
+                                  Alert.alert(
+                                    'Alertă',
                                     'De câte ori a fost descărcat torrentul',
+                                    [
+                                      {
+                                        text: 'OK',
+                                        onPress: () => {},
+                                      },
+                                    ],
+                                    {cancelable: true},
                                   )
                                 }>
                                 <FontAwesomeIcon
@@ -1232,8 +1292,16 @@ function Home() {
                                   radius: 40,
                                 }}
                                 onPress={() =>
-                                  alert(
+                                  Alert.alert(
+                                    'Alertă',
                                     'Numărul de persoane care descarcă torrentul în acest moment',
+                                    [
+                                      {
+                                        text: 'OK',
+                                        onPress: () => {},
+                                      },
+                                    ],
+                                    {cancelable: true},
                                   )
                                 }>
                                 <FontAwesomeIcon
@@ -1301,7 +1369,17 @@ function Home() {
                                     radius: 40,
                                   }}
                                   onPress={() =>
-                                    alert('Mărimea totală a torrentului')
+                                    Alert.alert(
+                                      'Alertă',
+                                      'Mărimea totală a torrentului',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
                                   }>
                                   <FontAwesomeIcon
                                     size={14}
@@ -1344,7 +1422,17 @@ function Home() {
                                     radius: 40,
                                   }}
                                   onPress={() =>
-                                    alert('Numărul de fişiere din torrent')
+                                    Alert.alert(
+                                      'Alertă',
+                                      'Numărul de fişiere din torrent',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
                                   }>
                                   <FontAwesomeIcon
                                     size={14}
@@ -1387,8 +1475,16 @@ function Home() {
                                     radius: 40,
                                   }}
                                   onPress={() =>
-                                    alert(
+                                    Alert.alert(
+                                      'Alertă',
                                       'Numărul de persoane care ţin torrentul la seed în acest moment',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
                                     )
                                   }>
                                   <FontAwesomeIcon
@@ -1442,8 +1538,16 @@ function Home() {
                                     radius: 40,
                                   }}
                                   onPress={() =>
-                                    alert(
+                                    Alert.alert(
+                                      'Alertă',
                                       'Data la care torrentul a apărut pe Filelist',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
                                     )
                                   }>
                                   <FontAwesomeIcon
@@ -1487,8 +1591,16 @@ function Home() {
                                     radius: 40,
                                   }}
                                   onPress={() =>
-                                    alert(
+                                    Alert.alert(
+                                      'Alertă',
                                       'De câte ori a fost descărcat torrentul',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
                                     )
                                   }>
                                   <FontAwesomeIcon
@@ -1532,8 +1644,16 @@ function Home() {
                                     radius: 40,
                                   }}
                                   onPress={() =>
-                                    alert(
+                                    Alert.alert(
+                                      'Alertă',
                                       'Numărul de persoane care descarcă torrentul în acest moment',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
                                     )
                                   }>
                                   <FontAwesomeIcon
@@ -1581,8 +1701,9 @@ function Home() {
               flex: 4,
               display: 'flex',
               flexDirection: 'row',
-              justifyContent: 'space-around',
+              justifyContent: 'space-between',
               alignItems: 'center',
+              marginHorizontal: 16,
             }}>
             <Text
               style={{
@@ -1591,17 +1712,18 @@ function Home() {
                 textShadowRadius: 1,
                 color: 'white',
                 fontSize: 18,
-                padding: 8,
                 fontWeight: 'bold',
+                marginBottom: 8,
               }}>
               Recent adăugate
             </Text>
-            {/* <View
+            <View
               style={{
                 width: '20%',
                 height: '40%',
                 justifyContent: 'center',
                 alignItems: 'center',
+                marginBottom: 8,
               }}>
               <Pressable
                 style={{
@@ -1623,46 +1745,267 @@ function Home() {
                     color: 'white',
                     fontWeight: 'bold',
                     fontSize: 18,
-                    padding: 8,
                   }}>
                   Logout
                 </Text>
               </Pressable>
-            </View> */}
+            </View>
           </View>
         </View>
-        <FlatList
-          refreshControl={
-            <RefreshControl
-              progressViewOffset={130}
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-            />
+        <View
+          style={{
+            position: 'absolute',
+            top:
+              listSearch !== null || listImdb !== null
+                ? StatusBar.currentHeight * 3
+                : -100,
+            zIndex: 12,
+            elevation: 12,
+            height: 70,
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: '#202020',
+          }}>
+          <View
+            style={{
+              height: '80%',
+              width: '95%',
+              overflow: 'hidden',
+              borderRadius: 34,
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: ACCENT_COLOR,
+            }}>
+            <Pressable
+              style={{
+                height: '100%',
+                width: '100%',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: ACCENT_COLOR,
+                borderRadius: 34,
+                padding: 10,
+              }}
+              android_ripple={{
+                color: 'white',
+                borderless: false,
+              }}
+              onPress={() => {
+                clearSearch();
+              }}>
+              <FontAwesomeIcon size={26} color={'white'} icon={faArrowLeft} />
+              <Text
+                style={{
+                  textShadowColor: 'black',
+                  textShadowOffset: {width: 0.5, height: 0.5},
+                  textShadowRadius: 1,
+                  color: 'white',
+                  textAlign: 'center',
+                  fontSize: 28,
+                  fontWeight: 'bold',
+                  marginLeft: 15,
+                }}>
+                Înapoi
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+        <Input
+          ref={SearchBarRef}
+          style={{
+            color: 'white',
+          }}
+          containerStyle={{
+            zIndex: 10,
+            elevation: 10,
+            height: 70,
+            width: '100%',
+            paddingTop: 12,
+            justifyContent: 'flex-start',
+            paddingBottom: 2,
+            alignItems: 'center',
+            backgroundColor: '#202020',
+          }}
+          inputContainerStyle={{
+            borderBottomWidth: 1,
+            borderColor: searchValidation ? 'crimson' : 'grey',
+            height: '80%',
+            width: '100%',
+            paddingLeft: 5,
+            paddingRight: 2.5,
+          }}
+          keyboardType="default"
+          selectionColor="grey"
+          autoCapitalize="none"
+          placeholder={
+            searchValidation
+              ? 'Căsuţa este goală...'
+              : 'Caută după cuvânt cheie, IMDb...'
           }
-          ListHeaderComponent={
-            <SearchBar
-              ref={SearchBarRef}
-              textContentType="none"
-              selectTextOnFocus
-              clearIcon={false}
-              searchIcon={
+          placeholderTextColor={searchValidation ? 'crimson' : 'grey'}
+          rightIcon={
+            <View
+              style={{
+                height: '100%',
+                width: 40,
+                borderRadius: 100,
+                justifyContent: 'center',
+                alignItems: 'center',
+                overflow: 'hidden',
+              }}>
+              <Pressable
+                style={{
+                  height: '100%',
+                  width: '100%',
+                  borderRadius: 100,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+                android_ripple={{
+                  color: ACCENT_COLOR,
+                  borderless: false,
+                }}
+                onLongPress={() => {
+                  alert('Căutare avansată');
+                }}
+                onPress={() => {
+                  handleSearch();
+                }}>
                 <FontAwesomeIcon
-                  style={{marginLeft: 6}}
-                  color={'dimgrey'}
+                  size={20}
+                  color={ACCENT_COLOR}
                   icon={faSearch}
                 />
-              }
-              placeholder="Caută după cuvânt cheie, IMDb..."
-              placeholderTextColor={'dimgrey'}
-              style={{color: MAIN_COLOR}}
-              onChangeText={(search) => setSearch(search)}
-              value={search}
-            />
+              </Pressable>
+            </View>
           }
-          data={latest}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
+          onChangeText={(search) => setSearch(search)}
+          value={search}
         />
+        {searchLoading ? (
+          <View
+            style={{
+              width: '100%',
+              height: '100%',
+              justifyContent: 'flex-start',
+              paddingTop: StatusBar.currentHeight * 4,
+              alignItems: 'center',
+              paddingBottom: StatusBar.currentHeight * 3 + 70,
+            }}>
+            <ActivityIndicator size="large" color={ACCENT_COLOR} />
+          </View>
+        ) : noResults ? (
+          <View
+            style={{
+              width: '100%',
+              height: '100%',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              alignItems: 'center',
+              paddingTop: StatusBar.currentHeight,
+              paddingBottom: StatusBar.currentHeight * 2 + 70,
+            }}>
+            <Text
+              style={{
+                textShadowColor: 'black',
+                textShadowOffset: {width: 0.5, height: 0.5},
+                textShadowRadius: 1,
+                color: 'white',
+                textAlign: 'center',
+                fontSize: 18,
+                fontWeight: 'bold',
+              }}>
+              Rezultatele căutării după "{search}"
+            </Text>
+            <Text
+              style={{
+                textShadowColor: 'black',
+                textShadowOffset: {width: 0.5, height: 0.5},
+                textShadowRadius: 1,
+                color: 'white',
+                textAlign: 'center',
+                fontSize: 18,
+                fontWeight: 'bold',
+              }}>
+              Nu s-a găsit nimic
+            </Text>
+            <Text
+              style={{
+                marginTop: 10,
+                textShadowColor: 'black',
+                textShadowOffset: {width: 0.5, height: 0.5},
+                textShadowRadius: 1,
+                color: 'white',
+                textAlign: 'center',
+              }}>
+              Încearcă din nou cu alt șir de căutare
+            </Text>
+          </View>
+        ) : listSearch !== null ? (
+          <FlatList
+            style={{marginBottom: 16}}
+            data={listSearch}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+          />
+        ) : listImdb !== null ? (
+          <FlatList
+            style={{marginBottom: 16}}
+            data={listImdb}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+          />
+        ) : (
+          <FlatList
+            refreshControl={
+              <RefreshControl
+                progressViewOffset={55}
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+              />
+            }
+            style={{marginBottom: 16}}
+            data={listLatest}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+          />
+        )}
+        <View
+          style={{
+            width: 50,
+            height: 50,
+            zIndex: 12,
+            elevation: 12,
+            overflow: 'hidden',
+            bottom: 20,
+            right: 20,
+            borderRadius: 50 / 2,
+            position: 'absolute',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: ACCENT_COLOR,
+          }}>
+          <Pressable
+            android_ripple={{
+              color: 'white',
+              borderless: false,
+            }}
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: 50 / 2,
+              position: 'absolute',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: ACCENT_COLOR,
+            }}
+            onPress={() => setIsFilters(!isFilters)}>
+            <FontAwesomeIcon color={'white'} size={25} icon={faFilter} />
+          </Pressable>
+        </View>
         <Animated.View
           style={[
             {
@@ -1672,7 +2015,7 @@ function Home() {
               bottom: 0,
               backgroundColor: ACCENT_COLOR,
               width: '100%',
-              justifyContent: 'flex-end',
+              justifyContent: 'center',
               alignItems: 'center',
             },
             {height: showStatus},
@@ -1683,8 +2026,6 @@ function Home() {
                 textShadowColor: 'black',
                 textShadowOffset: {width: 0.5, height: 0.5},
                 textShadowRadius: 1,
-                position: 'relative',
-                bottom: 7,
                 fontSize: 14,
                 color: 'white',
                 fontWeight: 'bold',
@@ -1699,8 +2040,6 @@ function Home() {
                 textShadowColor: 'black',
                 textShadowOffset: {width: 0.5, height: 0.5},
                 textShadowRadius: 1,
-                position: 'relative',
-                bottom: 7,
                 fontSize: 14,
                 color: 'white',
                 paddingBottom: 5,
@@ -1719,7 +2058,7 @@ function Home() {
               bottom: 0,
               backgroundColor: ACCENT_COLOR,
               width: '100%',
-              justifyContent: 'flex-end',
+              justifyContent: 'center',
               alignItems: 'center',
             },
             {height: showClipboardStatus},
@@ -1730,8 +2069,6 @@ function Home() {
                 textShadowColor: 'black',
                 textShadowOffset: {width: 0.5, height: 0.5},
                 textShadowRadius: 1,
-                position: 'relative',
-                bottom: 21,
                 fontSize: 14,
                 color: 'white',
                 fontWeight: 'bold',
@@ -1748,7 +2085,7 @@ function Home() {
 
 function Login() {
   const dispatch = useDispatch();
-  const {latest, error} = useSelector((state) => state.appConfig);
+  const {listLatest, latestError} = useSelector((state) => state.appConfig);
   const [userModal, setUserModal] = useState(false);
   const [passModal, setPassModal] = useState(false);
   const [aboutModal, setAboutModal] = useState(false);
@@ -1761,7 +2098,7 @@ function Login() {
   const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
-    if (error !== null) {
+    if (latestError !== null) {
       setLoginLoading(false);
     }
 
@@ -1782,14 +2119,14 @@ function Login() {
       keyboardDidHideListener.remove();
       keyboardDidShowListener.remove();
     };
-  }, [latest, error]);
+  }, [listLatest, latestError]);
 
   const storeData = async (value0, value1) => {
     try {
       await AsyncStorage.setItem('username', value0);
       await AsyncStorage.setItem('passkey', value1);
     } catch (e) {
-      console.log(e);
+      alert(e);
     }
   };
 
@@ -1818,9 +2155,9 @@ function Login() {
     }
     if (user.length > 0 && pass.length > 0) {
       await storeData(user, pass);
-      dispatch(AppConfigActions.setLatest(user, pass));
+      dispatch(AppConfigActions.getLatest(user, pass));
       setTimeout(() => {
-        dispatch(AppConfigActions.setError());
+        dispatch(AppConfigActions.latestError());
       }, 5000);
     }
   };
@@ -1833,7 +2170,7 @@ function Login() {
         overlayStyle={{
           width: '90%',
           height: '30%',
-          backgroundColor: 'black',
+          backgroundColor: MAIN_COLOR,
           justifyContent: 'center',
           alignItems: 'center',
         }}
@@ -1858,7 +2195,7 @@ function Login() {
               alignItems: 'center',
               paddingBottom: 5,
             }}>
-            <Text style={{color: 'white', fontWeight: 'bold', fontSize: 18}}>
+            <Text style={{color: 'black', fontWeight: 'bold', fontSize: 18}}>
               Go to
             </Text>
             <Pressable
@@ -1899,7 +2236,7 @@ function Login() {
         overlayStyle={{
           width: '90%',
           height: '30%',
-          backgroundColor: 'black',
+          backgroundColor: MAIN_COLOR,
           justifyContent: 'center',
           alignItems: 'center',
         }}
@@ -1924,7 +2261,7 @@ function Login() {
               alignItems: 'center',
               paddingBottom: 5,
             }}>
-            <Text style={{color: 'white', fontWeight: 'bold', fontSize: 18}}>
+            <Text style={{color: 'black', fontWeight: 'bold', fontSize: 18}}>
               Go to
             </Text>
             <Pressable
@@ -1966,7 +2303,7 @@ function Login() {
           top: '4%',
           width: '90%',
           height: '25%',
-          backgroundColor: 'black',
+          backgroundColor: MAIN_COLOR,
           justifyContent: 'center',
           alignItems: 'center',
         }}
@@ -2001,7 +2338,7 @@ function Login() {
                 alignItems: 'flex-start',
                 paddingLeft: 20,
               }}>
-              <Text style={{color: MAIN_COLOR, fontWeight: 'bold'}}>About</Text>
+              <Text style={{color: 'black', fontWeight: 'bold'}}>About</Text>
             </View>
             <View
               style={{
@@ -2034,8 +2371,7 @@ function Login() {
                 alignItems: 'flex-start',
                 paddingLeft: 20,
               }}>
-              <Text
-                style={{color: MAIN_COLOR, fontWeight: 'bold', fontSize: 12}}>
+              <Text style={{color: 'black', fontWeight: 'bold', fontSize: 12}}>
                 Version:
               </Text>
               <View
@@ -2050,8 +2386,7 @@ function Login() {
                   backgroundColor: '#303030',
                 }}
               />
-              <Text
-                style={{color: MAIN_COLOR, fontWeight: 'bold', fontSize: 12}}>
+              <Text style={{color: 'black', fontWeight: 'bold', fontSize: 12}}>
                 Publisher:
               </Text>
               <View
@@ -2066,8 +2401,7 @@ function Login() {
                   backgroundColor: '#303030',
                 }}
               />
-              <Text
-                style={{color: MAIN_COLOR, fontWeight: 'bold', fontSize: 12}}>
+              <Text style={{color: 'black', fontWeight: 'bold', fontSize: 12}}>
                 Developed with:
               </Text>
             </View>
@@ -2245,7 +2579,7 @@ function Login() {
                 onChangeText={(pass) => setPass(pass)}
                 value={pass}
               />
-              {error && (
+              {latestError && (
                 <Text style={Main.error}>Utilizator sau passkey incorect</Text>
               )}
               {invalid && (
@@ -2327,11 +2661,11 @@ function Loading() {
 function Auth() {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
-  const {latest} = useSelector((state) => state.appConfig);
+  const {listLatest} = useSelector((state) => state.appConfig);
 
   useEffect(() => {
-    if (!latest) {
-      dispatch(AppConfigActions.getLatest());
+    if (!listLatest) {
+      dispatch(AppConfigActions.retrieveLatest());
       setTimeout(() => {
         setLoading(false);
       }, 100);
@@ -2345,7 +2679,7 @@ function Auth() {
         cardStyle: {backgroundColor: MAIN_COLOR},
       }}
       headerMode="none">
-      {latest ? (
+      {listLatest ? (
         <Stack.Screen
           name="Home"
           component={Home}

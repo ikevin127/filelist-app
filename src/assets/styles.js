@@ -3,7 +3,6 @@ import EStyleSheet from 'react-native-extended-stylesheet';
 
 // Colors
 const MAIN_COLOR = '#E8E6E6';
-const RIPPLE_COLOR = '#808080';
 const ACCENT_COLOR = '#1598F4';
 
 // MAIN //
