@@ -38,8 +38,9 @@ import {
   faCopy,
   faDownload,
   faDatabase,
+  faCaretDown,
   faCalendarWeek,
-  faFilter,
+  faSearchPlus,
   faStar,
   faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
@@ -80,6 +81,7 @@ const Stack = createStackNavigator();
 function Home() {
   const dispatch = useDispatch();
   const [search, setSearch] = useState('');
+  const [advSearchText, setAdvSearchText] = useState('');
   const {
     listLatest,
     listSearch,
@@ -98,11 +100,17 @@ function Home() {
   const [IMDbID, setIMDbID] = useState(null);
   const [IMDbData, setIMDbData] = useState(null);
   const [IMDbLoading, setIMDbLoading] = useState(false);
-  const [isFilters, setIsFilters] = useState(false);
+  const [advSearch, setAdvSearch] = useState(false);
   const [searchValidation, setSearchValidation] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
+  const [searchBy, setSearchBy] = useState(false);
+  const [advIMDb, setAdvIMDb] = useState(false);
+  const [advKeyword, setAdvKeyword] = useState(false);
+  const [isSearch, setIsSearch] = useState(false);
   const SearchBarRef = useRef();
+  const AdvSearchRef = useRef();
+  const searchValidationTimeout = useRef();
 
   useEffect(() => {
     if (IMDbID !== null) {
@@ -118,7 +126,14 @@ function Home() {
         setSearchLoading(false);
       }, 1000);
     }
-    if (JSON.stringify(listSearch) === '[]') {
+    if (
+      JSON.stringify(listSearch) === '[]' ||
+      JSON.stringify(listImdb) === '[]'
+    ) {
+      setNoResults(true);
+    }
+    if (searchError !== null || imdbError !== null) {
+      setSearchLoading(false);
       setNoResults(true);
     }
 
@@ -137,6 +152,7 @@ function Home() {
     );
 
     return () => {
+      clearTimeout(searchValidationTimeout.current);
       keyboardDidHideListener.remove();
       keyboardDidShowListener.remove();
     };
@@ -147,6 +163,7 @@ function Home() {
   const handleSearch = async () => {
     try {
       Keyboard.dismiss();
+      setIsSearch(true);
       const value0 = await AsyncStorage.getItem('username');
       const value1 = await AsyncStorage.getItem('passkey');
       if (value0 !== null && value1 !== null && search !== '') {
@@ -162,7 +179,7 @@ function Home() {
         }
       } else if (search === '') {
         setSearchValidation(true);
-        setTimeout(() => {
+        searchValidationTimeout.current = setTimeout(() => {
           setSearchValidation(false);
         }, 3000);
       }
@@ -182,6 +199,7 @@ function Home() {
     dispatch(AppConfigActions.retrieveImdb());
     dispatch(AppConfigActions.searchError());
     dispatch(AppConfigActions.imdbError());
+    setIsSearch(false);
     setNoResults(false);
     SearchBarRef.current.blur();
     SearchBarRef.current.clear();
@@ -439,51 +457,51 @@ function Home() {
               <Text
                 style={{
                   textShadowColor: 'black',
-                  textShadowOffset: {width: 0.5, height: 0.5},
+                  textShadowOffset: {width: 1, height: 1},
                   textShadowRadius: 1,
                   paddingHorizontal: 2,
-                  borderColor: 'yellowgreen',
+                  borderColor: '#1ec621',
                   borderWidth: 0.5,
-                  fontSize: 10,
+                  fontSize: 9,
                   color: 'aliceblue',
                   marginLeft: 5,
-                  backgroundColor: 'green',
+                  backgroundColor: '#09580a',
                 }}>
-                Freeleech
+                FREELEECH
               </Text>
             ) : null}
             {item.doubleup === 1 ? (
               <Text
                 style={{
                   textShadowColor: 'black',
-                  textShadowOffset: {width: 0.5, height: 0.5},
+                  textShadowOffset: {width: 1, height: 1},
                   textShadowRadius: 1,
                   paddingHorizontal: 2,
-                  borderColor: 'fuchsia',
+                  borderColor: '#7c00ff',
                   borderWidth: 0.5,
-                  fontSize: 10,
+                  fontSize: 9,
                   color: 'aliceblue',
                   marginLeft: 5,
-                  backgroundColor: 'darkmagenta',
+                  backgroundColor: '#370f61',
                 }}>
-                Doubleup
+                2X UPLOAD
               </Text>
             ) : null}
             {item.internal === 1 ? (
               <Text
                 style={{
                   textShadowColor: 'black',
-                  textShadowOffset: {width: 0.5, height: 0.5},
+                  textShadowOffset: {width: 1, height: 1},
                   textShadowRadius: 1,
                   paddingHorizontal: 2,
-                  borderColor: 'deepskyblue',
+                  borderColor: '#1e87c6',
                   borderWidth: 0.5,
-                  fontSize: 10,
+                  fontSize: 9,
                   color: 'aliceblue',
                   marginLeft: 5,
-                  backgroundColor: 'darkblue',
+                  backgroundColor: '#093b58',
                 }}>
-                Internal
+                INTERNAL
               </Text>
             ) : null}
           </View>
@@ -520,6 +538,194 @@ function Home() {
           flex: 1,
           backgroundColor: '#202020',
         }}>
+        <Overlay
+          statusBarTranslucent
+          animationType="fade"
+          overlayStyle={{
+            top: '1%',
+            width: '87%',
+            height: '78%',
+            backgroundColor: '#202020',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+          isVisible={advSearch}
+          onBackdropPress={() => {
+            AdvSearchRef.current.clear();
+            setAdvIMDb(false);
+            setAdvKeyword(false);
+            setSearchBy(false);
+            setAdvSearch(false);
+          }}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View
+              style={{
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#202020',
+                flexDirection: 'column',
+                justifyContent: 'flex-start',
+                alignItems: 'flex-start',
+              }}>
+              {searchBy ? (
+                <View
+                  style={{
+                    elevation: 10,
+                    zIndex: 30,
+                    position: 'absolute',
+                    top: 0,
+                    height: 140,
+                    width: '100%',
+                    flexDirection: 'row',
+                    backgroundColor: '#303030',
+                    padding: 10,
+                  }}>
+                  <View
+                    style={{
+                      height: '100%',
+                      width: '50%',
+                      backgroundColor: 'transparent',
+                    }}>
+                    <Pressable
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                      android_ripple={{
+                        color: 'grey',
+                        borderless: false,
+                      }}
+                      onPress={() => {
+                        setAdvIMDb(true);
+                        setSearchBy(!searchBy);
+                      }}>
+                      <Text
+                        style={{
+                          textAlign: 'center',
+                          fontWeight: 'bold',
+                          fontSize: 13,
+                        }}>
+                        Căutare după cuvânt cheie
+                      </Text>
+                    </Pressable>
+                  </View>
+                  <View
+                    style={{
+                      height: '100%',
+                      width: '50%',
+                      backgroundColor: 'transparent',
+                    }}>
+                    <Pressable
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                      android_ripple={{
+                        color: 'grey',
+                        borderless: false,
+                      }}
+                      onPress={() => {
+                        setAdvKeyword(true);
+                        setSearchBy(!searchBy);
+                      }}>
+                      <Text
+                        style={{
+                          textAlign: 'center',
+                          fontWeight: 'bold',
+                          fontSize: 13,
+                        }}>
+                        Căutare după cod IMDb
+                      </Text>
+                      <Text style={{textAlign: 'center', fontSize: 11}}>
+                        (tt4719744 ori 4719744)
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : null}
+              <View style={{height: 70, width: '100%', flexDirection: 'row'}}>
+                <Input
+                  ref={AdvSearchRef}
+                  style={{
+                    color: 'white',
+                    fontSize: 14,
+                  }}
+                  containerStyle={{
+                    height: 70,
+                    width: '90%',
+                    paddingTop: 12,
+                    justifyContent: 'flex-start',
+                    paddingBottom: 2,
+                    alignItems: 'center',
+                    backgroundColor: '#202020',
+                  }}
+                  inputContainerStyle={{
+                    borderBottomWidth: 1,
+                    borderColor: 'grey',
+                    height: '80%',
+                    width: '100%',
+                    paddingLeft: 5,
+                    paddingRight: 2.5,
+                  }}
+                  keyboardType="default"
+                  selectionColor="grey"
+                  autoCapitalize="none"
+                  placeholder={
+                    advIMDb === false && advKeyword === false
+                      ? 'Căutare după...'
+                      : advIMDb
+                      ? 'Căutare după cuvânt cheie...'
+                      : 'Căutare după cod Imdb...'
+                  }
+                  placeholderTextColor={'grey'}
+                  leftIcon={
+                    <FontAwesomeIcon size={18} color={'grey'} icon={faSearch} />
+                  }
+                  onChangeText={(advSearchText) =>
+                    setAdvSearchText(advSearchText)
+                  }
+                  value={advSearchText}
+                />
+                <View
+                  style={{
+                    height: 70,
+                    width: '10%',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#202020',
+                  }}>
+                  <Pressable
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                    android_ripple={{
+                      color: 'grey',
+                      borderless: false,
+                      radius: 15,
+                    }}
+                    onPress={() => {
+                      setAdvKeyword(false);
+                      setAdvIMDb(false);
+                      setSearchBy(!searchBy);
+                    }}>
+                    <FontAwesomeIcon
+                      size={20}
+                      icon={faCaretDown}
+                      color={'grey'}
+                    />
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Overlay>
         <Overlay
           statusBarTranslucent
           animationType="fade"
@@ -711,51 +917,51 @@ function Home() {
                           <Text
                             style={{
                               textShadowColor: 'black',
-                              textShadowOffset: {width: 0.5, height: 0.5},
+                              textShadowOffset: {width: 1, height: 1},
                               textShadowRadius: 1,
                               paddingHorizontal: 2,
-                              borderColor: 'yellowgreen',
+                              borderColor: '#1ec621',
                               borderWidth: 0.5,
-                              fontSize: 10,
+                              fontSize: 9,
                               color: 'aliceblue',
-                              marginRight: 10,
-                              backgroundColor: 'green',
+                              marginLeft: 5,
+                              backgroundColor: '#09580a',
                             }}>
-                            Freeleech
+                            FREELEECH
                           </Text>
                         ) : null}
                         {item.doubleup === 1 ? (
                           <Text
                             style={{
                               textShadowColor: 'black',
-                              textShadowOffset: {width: 0.5, height: 0.5},
+                              textShadowOffset: {width: 1, height: 1},
                               textShadowRadius: 1,
                               paddingHorizontal: 2,
-                              borderColor: 'fuchsia',
+                              borderColor: '#7c00ff',
                               borderWidth: 0.5,
-                              fontSize: 10,
+                              fontSize: 9,
                               color: 'aliceblue',
-                              marginRight: 10,
-                              backgroundColor: 'darkmagenta',
+                              marginLeft: 5,
+                              backgroundColor: '#370f61',
                             }}>
-                            Doubleup
+                            2X UPLOAD
                           </Text>
                         ) : null}
                         {item.internal === 1 ? (
                           <Text
                             style={{
                               textShadowColor: 'black',
-                              textShadowOffset: {width: 0.5, height: 0.5},
+                              textShadowOffset: {width: 1, height: 1},
                               textShadowRadius: 1,
                               paddingHorizontal: 2,
-                              borderColor: 'deepskyblue',
+                              borderColor: '#1e87c6',
                               borderWidth: 0.5,
-                              fontSize: 10,
+                              fontSize: 9,
                               color: 'aliceblue',
-                              marginRight: 10,
-                              backgroundColor: 'darkblue',
+                              marginLeft: 5,
+                              backgroundColor: '#093b58',
                             }}>
-                            Internal
+                            INTERNAL
                           </Text>
                         ) : null}
                       </View>
@@ -1715,7 +1921,7 @@ function Home() {
                 fontWeight: 'bold',
                 marginBottom: 8,
               }}>
-              Recent adăugate
+              {isSearch ? 'Căutare' : 'Recent adăugate'}
             </Text>
             <View
               style={{
@@ -1733,7 +1939,7 @@ function Home() {
                   alignItems: 'center',
                 }}
                 android_ripple={{
-                  color: 'white',
+                  color: 'black',
                   borderless: false,
                 }}
                 onPress={handleLogout}>
@@ -1756,26 +1962,32 @@ function Home() {
           style={{
             position: 'absolute',
             top:
-              listSearch !== null || listImdb !== null
+              listSearch !== null ||
+              listImdb !== null ||
+              searchError != null ||
+              imdbError !== null
                 ? StatusBar.currentHeight * 3
                 : -100,
             zIndex: 12,
             elevation: 12,
             height: 70,
             width: '100%',
+            flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: '#202020',
           }}>
           <View
             style={{
-              height: '80%',
-              width: '95%',
+              position: 'absolute',
+              left: 25,
+              height: '60%',
+              width: '10%',
               overflow: 'hidden',
-              borderRadius: 34,
               flexDirection: 'row',
               justifyContent: 'center',
               alignItems: 'center',
+              borderRadius: 100,
               backgroundColor: ACCENT_COLOR,
             }}>
             <Pressable
@@ -1785,33 +1997,23 @@ function Home() {
                 flexDirection: 'row',
                 justifyContent: 'center',
                 alignItems: 'center',
+                borderRadius: 100,
                 backgroundColor: ACCENT_COLOR,
-                borderRadius: 34,
                 padding: 10,
               }}
               android_ripple={{
-                color: 'white',
+                color: 'black',
                 borderless: false,
               }}
               onPress={() => {
                 clearSearch();
               }}>
-              <FontAwesomeIcon size={26} color={'white'} icon={faArrowLeft} />
-              <Text
-                style={{
-                  textShadowColor: 'black',
-                  textShadowOffset: {width: 0.5, height: 0.5},
-                  textShadowRadius: 1,
-                  color: 'white',
-                  textAlign: 'center',
-                  fontSize: 28,
-                  fontWeight: 'bold',
-                  marginLeft: 15,
-                }}>
-                Înapoi
-              </Text>
+              <FontAwesomeIcon size={20} color={'white'} icon={faArrowLeft} />
             </Pressable>
           </View>
+          <Text style={{fontWeight: 'bold', color: 'white'}}>
+            Rezultatele căutării după "{search}"
+          </Text>
         </View>
         <Input
           ref={SearchBarRef}
@@ -1867,9 +2069,6 @@ function Home() {
                 android_ripple={{
                   color: ACCENT_COLOR,
                   borderless: false,
-                }}
-                onLongPress={() => {
-                  alert('Căutare avansată');
                 }}
                 onPress={() => {
                   handleSearch();
@@ -2002,8 +2201,8 @@ function Home() {
               alignItems: 'center',
               backgroundColor: ACCENT_COLOR,
             }}
-            onPress={() => setIsFilters(!isFilters)}>
-            <FontAwesomeIcon color={'white'} size={25} icon={faFilter} />
+            onPress={() => setAdvSearch(!advSearch)}>
+            <FontAwesomeIcon color={'white'} size={25} icon={faSearchPlus} />
           </Pressable>
         </View>
         <Animated.View
@@ -2096,6 +2295,10 @@ function Login() {
   const [invalidPass, setInvalidPass] = useState(false);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const err1 = useRef();
+  const err2 = useRef();
+  const err3 = useRef();
+  const err4 = useRef();
 
   useEffect(() => {
     if (latestError !== null) {
@@ -2116,6 +2319,10 @@ function Login() {
     );
 
     return () => {
+      clearInterval(err1.current);
+      clearInterval(err2.current);
+      clearInterval(err3.current);
+      clearInterval(err4.current);
       keyboardDidHideListener.remove();
       keyboardDidShowListener.remove();
     };
@@ -2135,28 +2342,28 @@ function Login() {
     if (user.length === 0 && pass.length > 0) {
       setInvalidUser(true);
       setLoginLoading(false);
-      setTimeout(() => {
+      err1.current = setTimeout(() => {
         setInvalidUser(false);
       }, 5000);
     }
     if (user.length > 0 && pass.length === 0) {
       setInvalidPass(true);
       setLoginLoading(false);
-      setTimeout(() => {
+      err2.current = setTimeout(() => {
         setInvalidPass(false);
       }, 5000);
     }
     if (user.length === 0 && pass.length === 0) {
       setInvalid(true);
       setLoginLoading(false);
-      setTimeout(() => {
+      err3.current = setTimeout(() => {
         setInvalid(false);
       }, 5000);
     }
     if (user.length > 0 && pass.length > 0) {
       await storeData(user, pass);
       dispatch(AppConfigActions.getLatest(user, pass));
-      setTimeout(() => {
+      err4.current = setTimeout(() => {
         dispatch(AppConfigActions.latestError());
       }, 5000);
     }
