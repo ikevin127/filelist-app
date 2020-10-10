@@ -6,9 +6,11 @@ const initState = {
   listLatest: null,
   listSearch: null,
   listImdb: null,
+  listAdvSearch: null,
   latestError: null,
   searchError: null,
   imdbError: null,
+  advSearchError: null,
 };
 
 export const actions = {
@@ -135,22 +137,78 @@ export const actions = {
   imdbError: () => async (dispatch) => {
     dispatch({type: types.APP_CONFIG.IMDB_SEARCH_ERROR, payload: null});
   },
+  getAdvSearch: (
+    user,
+    pass,
+    action,
+    type,
+    query,
+    category,
+    moderated,
+    internal,
+    freeleech,
+    doubleup,
+  ) => async (dispatch) => {
+    await Axios.get(
+      `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=${action}${type}${query}${category}${moderated}${internal}${freeleech}${doubleup}`,
+    )
+      .then(async (res) => {
+        let {data} = res;
+        dispatch({
+          type: types.APP_CONFIG.GET_ADV_SEARCH,
+          payload: data,
+        });
+        try {
+          await AsyncStorage.setItem('searchAdv', JSON.stringify(data));
+        } catch (e) {
+          console.log(e);
+        }
+      })
+      .catch((err) => {
+        dispatch({type: types.APP_CONFIG.SEARCH_ADV_ERROR, payload: err});
+      });
+  },
+  retrieveAdvSearch: () => async (dispatch) => {
+    try {
+      const searchAdv = await AsyncStorage.getItem('searchAdv');
+      if (searchAdv !== null) {
+        dispatch({
+          type: types.APP_CONFIG.GET_ADV_SEARCH,
+          payload: JSON.parse(searchAdv),
+        });
+      } else {
+        dispatch({
+          type: types.APP_CONFIG.GET_ADV_SEARCH,
+          payload: null,
+        });
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  },
+  searchAdvError: () => async (dispatch) => {
+    dispatch({type: types.APP_CONFIG.SEARCH_ADV_ERROR, payload: null});
+  },
 };
 
 export function reducer(state = initState, action) {
   switch (action.type) {
     case types.APP_CONFIG.GET_LATEST:
       return {...state, listLatest: action.payload};
-    case types.APP_CONFIG.LATEST_ERROR:
-      return {...state, latestError: action.payload};
     case types.APP_CONFIG.GET_SEARCH:
       return {...state, listSearch: action.payload};
-    case types.APP_CONFIG.SEARCH_ERROR:
-      return {...state, searchError: action.payload};
     case types.APP_CONFIG.GET_IMDB_SEARCH:
       return {...state, listImdb: action.payload};
+    case types.APP_CONFIG.GET_ADV_SEARCH:
+      return {...state, listAdvSearch: action.payload};
+    case types.APP_CONFIG.LATEST_ERROR:
+      return {...state, latestError: action.payload};
+    case types.APP_CONFIG.SEARCH_ERROR:
+      return {...state, searchError: action.payload};
     case types.APP_CONFIG.IMDB_SEARCH_ERROR:
       return {...state, imdbError: action.payload};
+    case types.APP_CONFIG.SEARCH_ADV_ERROR:
+      return {...state, advSearchError: action.payload};
     default:
       return state;
   }

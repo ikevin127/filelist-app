@@ -17,12 +17,13 @@ import {
   Pressable,
   TouchableWithoutFeedback,
   Keyboard,
+  ScrollView,
   StatusBar,
   ActivityIndicator,
   KeyboardAvoidingView,
   Linking,
 } from 'react-native';
-import {Input, Overlay} from 'react-native-elements';
+import {Input, Overlay, CheckBox} from 'react-native-elements';
 import FastImage from 'react-native-fast-image';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
@@ -38,15 +39,21 @@ import {
   faCopy,
   faDownload,
   faDatabase,
-  faCaretDown,
   faCalendarWeek,
+  faQuestionCircle,
   faSearchPlus,
   faStar,
+  faTasks,
+  faAngleDoubleUp,
+  faCheckSquare,
+  faTimes,
+  faCog,
   faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
 import SplashScreen from 'react-native-splash-screen';
 import Axios from 'axios';
 import {USERNAME, PASSKEY} from '../../env';
+import {catStrings, catValues} from '../assets/cat/catData';
 import a3d from '../assets/cat/3d.png';
 import a4k from '../assets/cat/4k.png';
 import a4kbd from '../assets/cat/4kBD.png';
@@ -80,39 +87,113 @@ const Stack = createStackNavigator();
 
 function Home() {
   const dispatch = useDispatch();
-  const [search, setSearch] = useState('');
-  const [advSearchText, setAdvSearchText] = useState('');
   const {
     listLatest,
     listSearch,
     listImdb,
+    listAdvSearch,
     searchError,
     imdbError,
+    advSearchError,
   } = useSelector((state) => state.appConfig);
-  const [refreshing, setRefreshing] = useState(false);
   const [showStatus] = useState(new Animated.Value(0));
   const [textOpacity] = useState(new Animated.Value(0));
   const [showClipboardStatus] = useState(new Animated.Value(0));
   const [textClipboardOpacity] = useState(new Animated.Value(0));
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const [infoModal, setInfoModal] = useState(false);
+  const [search, setSearch] = useState('');
+  const [advSearchText, setAdvSearchText] = useState('');
+  const [catNames, setCatNames] = useState('');
+  const [catIndex, setCatIndex] = useState('');
   const [modalData, setModalData] = useState(null);
   const [IMDbID, setIMDbID] = useState(null);
   const [IMDbData, setIMDbData] = useState(null);
+  const [advKeyword, setAdvKeyword] = useState(true);
+  const [advIMDb, setAdvIMDb] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [infoModal, setInfoModal] = useState(false);
   const [IMDbLoading, setIMDbLoading] = useState(false);
   const [advSearch, setAdvSearch] = useState(false);
   const [searchValidation, setSearchValidation] = useState(false);
+  const [advSearchValidation, setAdvSearchValidation] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
-  const [searchBy, setSearchBy] = useState(false);
-  const [advIMDb, setAdvIMDb] = useState(false);
-  const [advKeyword, setAdvKeyword] = useState(false);
+  const [catList, setCatList] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
+  const [isSearchBar, setIsSearchBar] = useState(false);
+  const [isSettings, setIsSettings] = useState(false);
+  const [animes, setAnimes] = useState(false);
+  const [audio, setAudio] = useState(false);
+  const [desene, setDesene] = useState(false);
+  const [diverse, setDiverse] = useState(false);
+  const [doc, setDoc] = useState(false);
+  const [filme3d, setFilme3d] = useState(false);
+  const [filme4k, setFilme4k] = useState(false);
+  const [filme4kbd, setFilme4kBD] = useState(false);
+  const [filmeBD, setFilmeBD] = useState(false);
+  const [filmeDvd, setFilmeDvd] = useState(false);
+  const [filmeDvdRo, setFilmeDvdRo] = useState(false);
+  const [filmeHd, setFilmeHd] = useState(false);
+  const [filmeHdRo, setFilmeHdRo] = useState(false);
+  const [filmeSd, setFilmeSd] = useState(false);
+  const [flacs, setFlacs] = useState(false);
+  const [jocConsole, setJocConsole] = useState(false);
+  const [jocPc, setJocPc] = useState(false);
+  const [lin, setLin] = useState(false);
+  const [mob, setMob] = useState(false);
+  const [software, setSoftware] = useState(false);
+  const [seriale4k, setSeriale4k] = useState(false);
+  const [serialeHd, setSerialeHd] = useState(false);
+  const [serialeSd, setSerialeSd] = useState(false);
+  const [sports, setSports] = useState(false);
+  const [videos, setVideos] = useState(false);
+  const [porn, setPorn] = useState(false);
+  const [doubleUp, setDoubleUp] = useState(false);
+  const [freeleech, setFreeleech] = useState(false);
+  const [internal, setInternal] = useState(false);
+  const [moderated, setModerated] = useState(false);
   const SearchBarRef = useRef();
   const AdvSearchRef = useRef();
   const searchValidationTimeout = useRef();
+  const advSearchValidationTimeout = useRef();
+
+  let catArray = [
+    animes,
+    audio,
+    desene,
+    diverse,
+    doc,
+    filme3d,
+    filme4k,
+    filme4kbd,
+    filmeBD,
+    filmeDvd,
+    filmeDvdRo,
+    filmeHd,
+    filmeHdRo,
+    filmeSd,
+    flacs,
+    jocConsole,
+    jocPc,
+    lin,
+    mob,
+    software,
+    seriale4k,
+    serialeHd,
+    serialeSd,
+    sports,
+    videos,
+    porn,
+  ];
+
+  let arrIndex = catArray.reduce(
+    (out, bool, index) => (bool ? out.concat(index) : out),
+    [],
+  );
 
   useEffect(() => {
+    setCatNames(arrIndex.map((index) => catStrings[index]));
+    setCatIndex(arrIndex.map((index) => catValues[index]));
+
     if (IMDbID !== null) {
       fetchIMDbInfo(IMDbID);
     }
@@ -126,83 +207,240 @@ function Home() {
         setSearchLoading(false);
       }, 1000);
     }
+    if (listAdvSearch !== null) {
+      setTimeout(() => {
+        setSearchLoading(false);
+      }, 1000);
+    }
     if (
       JSON.stringify(listSearch) === '[]' ||
-      JSON.stringify(listImdb) === '[]'
+      JSON.stringify(listImdb) === '[]' ||
+      JSON.stringify(listAdvSearch) === '[]'
     ) {
       setNoResults(true);
     }
-    if (searchError !== null || imdbError !== null) {
+    if (searchError !== null || imdbError !== null || advSearchError !== null) {
       setSearchLoading(false);
       setNoResults(true);
     }
 
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
-        setKeyboardVisible(true);
-      },
-    );
     const keyboardDidHideListener = Keyboard.addListener(
       'keyboardDidHide',
       () => {
-        setKeyboardVisible(false);
-        SearchBarRef.current.blur();
+        if (SearchBarRef.current) {
+          SearchBarRef.current.blur();
+        }
+        if (AdvSearchRef.current) {
+          AdvSearchRef.current.blur();
+        }
       },
     );
 
     return () => {
       clearTimeout(searchValidationTimeout.current);
+      clearTimeout(advSearchValidationTimeout.current);
       keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
     };
-  }, [modalData, IMDbID, listSearch, listImdb, searchError, imdbError]);
+  }, [
+    modalData,
+    IMDbID,
+    listSearch,
+    listImdb,
+    listAdvSearch,
+    searchError,
+    imdbError,
+    advSearchError,
+    animes,
+    audio,
+    desene,
+    diverse,
+    doc,
+    filme3d,
+    filme4k,
+    filme4kbd,
+    filmeBD,
+    filmeDvd,
+    filmeDvdRo,
+    filmeHd,
+    filmeHdRo,
+    filmeSd,
+    flacs,
+    jocConsole,
+    jocPc,
+    lin,
+    mob,
+    software,
+    seriale4k,
+    serialeHd,
+    serialeSd,
+    sports,
+    videos,
+    porn,
+  ]);
 
   // Functions
 
   const handleSearch = async () => {
-    try {
-      Keyboard.dismiss();
+    if (search !== '') {
+      setIsSearchBar(true);
       setIsSearch(true);
-      const value0 = await AsyncStorage.getItem('username');
-      const value1 = await AsyncStorage.getItem('passkey');
-      if (value0 !== null && value1 !== null && search !== '') {
-        if (/\d{6,}/.test(search)) {
-          setSearchLoading(true);
-          dispatch(AppConfigActions.getImdb(value0, value1, search));
-        } else if (/tt\d+/.test(search)) {
-          setSearchLoading(true);
-          dispatch(AppConfigActions.getImdb(value0, value1, search));
-        } else {
-          setSearchLoading(true);
-          dispatch(AppConfigActions.getSearch(value0, value1, search));
+      try {
+        Keyboard.dismiss();
+        const value0 = await AsyncStorage.getItem('username');
+        const value1 = await AsyncStorage.getItem('passkey');
+        if (value0 !== null && value1 !== null) {
+          if (/\d{6,}/.test(search)) {
+            setSearchLoading(true);
+            dispatch(AppConfigActions.getImdb(value0, value1, search));
+          } else if (/tt\d+/.test(search)) {
+            setSearchLoading(true);
+            dispatch(AppConfigActions.getImdb(value0, value1, search));
+          } else {
+            setSearchLoading(true);
+            dispatch(AppConfigActions.getSearch(value0, value1, search));
+          }
         }
-      } else if (search === '') {
-        setSearchValidation(true);
-        searchValidationTimeout.current = setTimeout(() => {
-          setSearchValidation(false);
-        }, 3000);
+      } catch (e) {
+        alert(e);
       }
-    } catch (e) {
-      alert(e);
+    } else {
+      setSearchValidation(true);
+      searchValidationTimeout.current = setTimeout(() => {
+        setSearchValidation(false);
+      }, 3000);
+    }
+  };
+
+  const handleAdvancedSearch = async () => {
+    if (advSearchText.length === 0) {
+      setAdvSearchValidation(true);
+      searchValidationTimeout.current = setTimeout(() => {
+        setAdvSearchValidation(false);
+      }, 3000);
+    } else {
+      Keyboard.dismiss();
+      setAdvSearch(false);
+      setIsSearchBar(true);
+      setIsSearch(true);
+      try {
+        const value0 = await AsyncStorage.getItem('username');
+        const value1 = await AsyncStorage.getItem('passkey');
+        if (value0 !== null && value1 !== null) {
+          if (advKeyword) {
+            setSearchLoading(true);
+            dispatch(
+              AppConfigActions.getAdvSearch(
+                value0,
+                value1,
+                'search-torrents',
+                '&type=name',
+                `&query=${advSearchText}`,
+                catIndex !== null ? `&category=${catIndex}` : '',
+                moderated ? '&moderated=1' : '',
+                doubleUp ? '&doubleup=1' : '',
+                internal ? '&internal=1' : '',
+                freeleech ? '&freeleech=1' : '',
+              ),
+            );
+          } else if (advIMDb) {
+            setSearchLoading(true);
+            dispatch(
+              AppConfigActions.getAdvSearch(
+                value0,
+                value1,
+                'search-torrents',
+                '&type=imdb',
+                `&query=${advSearchText}`,
+                catIndex !== null ? `&category=${catIndex}` : '',
+                moderated ? '&moderated=1' : '',
+                doubleUp ? '&doubleup=1' : '',
+                internal ? '&internal=1' : '',
+                freeleech ? '&freeleech=1' : '',
+              ),
+            );
+          } else {
+            Alert.alert(
+              'Alertă',
+              'Selectează categoria căutării de la săgeata din dreapta câmpului de căutare.',
+              [
+                {
+                  text: 'OK',
+                  onPress: () => {},
+                },
+              ],
+              {cancelable: true},
+            );
+          }
+        } else {
+          Alert.alert(
+            'Alertă',
+            'Căutarea nu poate continua deoarece Numele de utilizator si Passkey-ul nu a fost salvat. Este necesară o relogare pentru a înregistra din nou datele.',
+            [
+              {
+                text: 'OK',
+                onPress: () => {},
+              },
+            ],
+            {cancelable: true},
+          );
+        }
+      } catch (e) {
+        alert(e);
+      }
     }
   };
 
   const clearSearch = async () => {
+    setSearchLoading(true);
     try {
       await AsyncStorage.removeItem('search');
       await AsyncStorage.removeItem('imdb');
+      await AsyncStorage.removeItem('searchAdv');
     } catch (e) {
       alert(e);
     }
     dispatch(AppConfigActions.retrieveSearch());
     dispatch(AppConfigActions.retrieveImdb());
+    dispatch(AppConfigActions.retrieveAdvSearch());
     dispatch(AppConfigActions.searchError());
     dispatch(AppConfigActions.imdbError());
+    dispatch(AppConfigActions.searchAdvError());
+    setSearch('');
+    setAdvSearchText('');
+    setAnimes(false);
+    setAudio(false);
+    setDesene(false);
+    setDiverse(false);
+    setDoc(false);
+    setFilme3d(false);
+    setFilme4k(false);
+    setFilme4kBD(false);
+    setFilmeBD(false);
+    setFilmeDvd(false);
+    setFilmeDvdRo(false);
+    setFilmeHd(false);
+    setFilmeHdRo(false);
+    setFilmeSd(false);
+    setFlacs(false);
+    setJocConsole(false);
+    setJocPc(false);
+    setLin(false);
+    setMob(false);
+    setSoftware(false);
+    setSeriale4k(false);
+    setSerialeHd(false);
+    setSerialeSd(false);
+    setSports(false);
+    setVideos(false);
+    setPorn(false);
+    setDoubleUp(false);
+    setFreeleech(false);
+    setInternal(false);
+    setModerated(false);
+    setIsSearchBar(false);
     setIsSearch(false);
     setNoResults(false);
-    SearchBarRef.current.blur();
-    SearchBarRef.current.clear();
+    setSearchLoading(false);
   };
 
   const handleLogout = async () => {
@@ -243,7 +481,7 @@ function Home() {
     Clipboard.setString(`${string}`);
     setTimeout(() => {
       Animated.timing(showClipboardStatus, {
-        toValue: StatusBar.currentHeight * 2.5,
+        toValue: 1,
         duration: 300,
         useNativeDriver: false,
       }).start();
@@ -264,6 +502,7 @@ function Home() {
         duration: 300,
         useNativeDriver: false,
       }).start();
+      setRefreshing(false);
     }, 3500);
   };
 
@@ -284,7 +523,7 @@ function Home() {
     await getRefreshData();
     setTimeout(() => {
       Animated.timing(showStatus, {
-        toValue: StatusBar.currentHeight * 2.5,
+        toValue: 1,
         duration: 300,
         useNativeDriver: false,
       }).start();
@@ -306,7 +545,7 @@ function Home() {
         duration: 300,
         useNativeDriver: false,
       }).start();
-    }, 4000);
+    }, 4500);
   }, [refreshing]);
 
   const Item = ({item, onPress, style}) => (
@@ -321,7 +560,7 @@ function Home() {
       }}
       style={[
         {
-          elevation: 5,
+          elevation: 10,
           marginTop: 16,
           marginHorizontal: 16,
         },
@@ -334,13 +573,19 @@ function Home() {
           flexDirection: 'row',
           justifyContent: 'flex-start',
           alignItems: 'flex-start',
+          backgroundColor: 'rgba(0, 0, 0, 0.2)',
         }}>
         <View
           style={{
             height: 75,
             width: 75,
-            borderWidth: 0.5,
-            borderColor: 'grey',
+            borderTopWidth: 0.5,
+            borderLeftWidth: 0.5,
+            borderBottomWidth: 0.6,
+            borderColor: '#404040',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
           }}>
           <FastImage
             style={{height: '100%', width: '100%'}}
@@ -404,9 +649,7 @@ function Home() {
         </View>
         <View
           style={{
-            borderTopColor: 'grey',
-            borderRightColor: 'grey',
-            borderBottomColor: 'grey',
+            borderColor: '#404040',
             borderTopWidth: 0.5,
             borderRightWidth: 0.5,
             borderBottomWidth: 0.5,
@@ -420,6 +663,7 @@ function Home() {
             style={{
               paddingTop: 5,
               paddingLeft: 5,
+              paddingRight: 5,
               height: 57,
               width: '100%',
             }}>
@@ -514,9 +758,9 @@ function Home() {
     return (
       <Item
         onPress={() => {
-          setModalData(Array(item));
-          setIMDbID(item.imdb);
           setInfoModal(true);
+          setIMDbID(item.imdb);
+          setModalData(Array(item));
         }}
         item={item}
         style={{
@@ -536,25 +780,50 @@ function Home() {
       <SafeAreaView
         style={{
           flex: 1,
+          justifyContent: 'flex-start',
+          alignItems: 'center',
           backgroundColor: '#202020',
         }}>
         <Overlay
           statusBarTranslucent
-          animationType="fade"
+          animationType="slide"
           overlayStyle={{
-            top: '1%',
-            width: '87%',
-            height: '78%',
-            backgroundColor: '#202020',
+            width: '100%',
+            height: '50%',
+            backgroundColor: MAIN_COLOR,
             justifyContent: 'center',
             alignItems: 'center',
+            borderRadius: 0,
           }}
           isVisible={advSearch}
           onBackdropPress={() => {
             AdvSearchRef.current.clear();
-            setAdvIMDb(false);
-            setAdvKeyword(false);
-            setSearchBy(false);
+            setAnimes(false);
+            setAudio(false);
+            setDesene(false);
+            setDiverse(false);
+            setDoc(false);
+            setFilme3d(false);
+            setFilme4k(false);
+            setFilme4kBD(false);
+            setFilmeBD(false);
+            setFilmeDvd(false);
+            setFilmeDvdRo(false);
+            setFilmeHd(false);
+            setFilmeHdRo(false);
+            setFilmeSd(false);
+            setFlacs(false);
+            setJocConsole(false);
+            setJocPc(false);
+            setLin(false);
+            setMob(false);
+            setSoftware(false);
+            setSeriale4k(false);
+            setSerialeHd(false);
+            setSerialeSd(false);
+            setSports(false);
+            setVideos(false);
+            setPorn(false);
             setAdvSearch(false);
           }}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -562,29 +831,1089 @@ function Home() {
               style={{
                 width: '100%',
                 height: '100%',
-                backgroundColor: '#202020',
+                backgroundColor: MAIN_COLOR,
                 flexDirection: 'column',
                 justifyContent: 'flex-start',
-                alignItems: 'flex-start',
+                alignItems: 'center',
+                paddingTop: 10,
               }}>
-              {searchBy ? (
+              <Overlay
+                statusBarTranslucent
+                animationType="fade"
+                overlayStyle={{
+                  width: '70%',
+                  height: '80%',
+                  backgroundColor: MAIN_COLOR,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: 0,
+                }}
+                isVisible={catList}
+                onBackdropPress={() => setCatList(false)}>
                 <View
                   style={{
-                    elevation: 10,
-                    zIndex: 30,
-                    position: 'absolute',
-                    top: 0,
-                    height: 140,
                     width: '100%',
-                    flexDirection: 'row',
-                    backgroundColor: '#303030',
-                    padding: 10,
+                    height: '100%',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                   }}>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    style={{
+                      backgroundColor: MAIN_COLOR,
+                      width: '100%',
+                      height: '100%',
+                      marginBottom: 10,
+                    }}>
+                    <View
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                      }}>
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Anime"
+                        checked={animes}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setAnimes(!animes)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Audio"
+                        checked={audio}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setAudio(!audio)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Desene"
+                        checked={desene}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setDesene(!desene)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Diverse"
+                        checked={diverse}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setDiverse(!diverse)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Docs"
+                        checked={doc}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setDoc(!doc)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Filme 3D"
+                        checked={filme3d}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilme3d(!filme3d)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Filme 4K"
+                        checked={filme4k}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilme4k(!filme4k)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Filme 4K Blu-Ray"
+                        checked={filme4kbd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilme4kBD(!filme4kbd)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Filme Blu-Ray"
+                        checked={filmeBD}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeBD(!filmeBD)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Filme DVD"
+                        checked={filmeDvd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeDvd(!filmeDvd)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Filme DVD-RO"
+                        checked={filmeDvdRo}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeDvdRo(!filmeDvdRo)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Filme HD"
+                        checked={filmeHd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeHd(!filmeHd)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Filme HD-RO"
+                        checked={filmeHdRo}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeHdRo(!filmeHdRo)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Filme SD"
+                        checked={filmeSd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeSd(!filmeSd)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="FLAC"
+                        checked={flacs}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFlacs(!flacs)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Jocuri Console"
+                        checked={jocConsole}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setJocConsole(!jocConsole)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Jocuri PC"
+                        checked={jocPc}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setJocPc(!jocPc)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Linux"
+                        checked={lin}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setLin(!lin)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Mobile"
+                        checked={mob}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setMob(!mob)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Programe"
+                        checked={software}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setSoftware(!software)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Seriale 4K"
+                        checked={seriale4k}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setSeriale4k(!seriale4k)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Seriale HD"
+                        checked={serialeHd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setSerialeHd(!serialeHd)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Seriale SD"
+                        checked={serialeSd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setSerialeSd(!serialeSd)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Sport"
+                        checked={sports}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setSports(!sports)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderColor: 'black',
+                          borderBottomWidth: 1,
+                          borderTopWidth: 0,
+                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="Videoclip"
+                        checked={videos}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setVideos(!videos)}
+                      />
+                      <CheckBox
+                        containerStyle={{
+                          width: '100%',
+                          backgroundColor: 'transparent',
+                          borderWidth: 0,
+                          flexDirection: 'row',
+                          justifyContent: 'flex-start',
+                          alignItems: 'center',
+                        }}
+                        textStyle={{color: '#202020'}}
+                        center
+                        title="XXX"
+                        checked={porn}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              color: ACCENT_COLOR,
+                            }}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{
+                              borderRadius: 2,
+                              color: MAIN_COLOR,
+                              borderWidth: 2,
+                              borderColor: 'black',
+                            }}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setPorn(!porn)}
+                      />
+                    </View>
+                  </ScrollView>
                   <View
                     style={{
-                      height: '100%',
-                      width: '50%',
-                      backgroundColor: 'transparent',
+                      width: '100%',
+                      height: '5%',
+                      borderRadius: 34,
+                      overflow: 'hidden',
                     }}>
                     <Pressable
                       style={{
@@ -592,136 +1921,721 @@ function Home() {
                         height: '100%',
                         justifyContent: 'center',
                         alignItems: 'center',
+                        backgroundColor: ACCENT_COLOR,
+                        borderRadius: 34,
                       }}
                       android_ripple={{
-                        color: 'grey',
+                        color: 'black',
                         borderless: false,
                       }}
-                      onPress={() => {
-                        setAdvIMDb(true);
-                        setSearchBy(!searchBy);
-                      }}>
+                      onPress={() => setCatList(false)}>
                       <Text
                         style={{
+                          textShadowColor: 'black',
+                          textShadowOffset: {width: 0.5, height: 0.5},
+                          textShadowRadius: 1,
+                          color: 'white',
                           textAlign: 'center',
                           fontWeight: 'bold',
-                          fontSize: 13,
+                          fontSize: 14,
                         }}>
-                        Căutare după cuvânt cheie
-                      </Text>
-                    </Pressable>
-                  </View>
-                  <View
-                    style={{
-                      height: '100%',
-                      width: '50%',
-                      backgroundColor: 'transparent',
-                    }}>
-                    <Pressable
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                      android_ripple={{
-                        color: 'grey',
-                        borderless: false,
-                      }}
-                      onPress={() => {
-                        setAdvKeyword(true);
-                        setSearchBy(!searchBy);
-                      }}>
-                      <Text
-                        style={{
-                          textAlign: 'center',
-                          fontWeight: 'bold',
-                          fontSize: 13,
-                        }}>
-                        Căutare după cod IMDb
-                      </Text>
-                      <Text style={{textAlign: 'center', fontSize: 11}}>
-                        (tt4719744 ori 4719744)
+                        OK
                       </Text>
                     </Pressable>
                   </View>
                 </View>
-              ) : null}
-              <View style={{height: 70, width: '100%', flexDirection: 'row'}}>
-                <Input
-                  ref={AdvSearchRef}
+              </Overlay>
+              <View
+                style={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginBottom: '5%',
+                }}>
+                <Text
                   style={{
-                    color: 'white',
-                    fontSize: 14,
-                  }}
-                  containerStyle={{
-                    height: 70,
-                    width: '90%',
-                    paddingTop: 12,
-                    justifyContent: 'flex-start',
-                    paddingBottom: 2,
-                    alignItems: 'center',
-                    backgroundColor: '#202020',
-                  }}
-                  inputContainerStyle={{
-                    borderBottomWidth: 1,
-                    borderColor: 'grey',
-                    height: '80%',
-                    width: '100%',
-                    paddingLeft: 5,
-                    paddingRight: 2.5,
-                  }}
-                  keyboardType="default"
-                  selectionColor="grey"
-                  autoCapitalize="none"
-                  placeholder={
-                    advIMDb === false && advKeyword === false
-                      ? 'Căutare după...'
-                      : advIMDb
-                      ? 'Căutare după cuvânt cheie...'
-                      : 'Căutare după cod Imdb...'
-                  }
-                  placeholderTextColor={'grey'}
-                  leftIcon={
-                    <FontAwesomeIcon size={18} color={'grey'} icon={faSearch} />
-                  }
-                  onChangeText={(advSearchText) =>
-                    setAdvSearchText(advSearchText)
-                  }
-                  value={advSearchText}
-                />
-                <View
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    color: 'black',
+                    fontSize: 16,
+                  }}>
+                  Căutare avansată
+                </Text>
+                <Pressable
                   style={{
-                    height: 70,
+                    position: 'absolute',
+                    right: 0,
                     width: '10%',
+                    height: '100%',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    backgroundColor: '#202020',
+                  }}
+                  android_ripple={{
+                    color: 'black',
+                    borderless: true,
+                    radius: 15,
+                  }}
+                  onPress={() => {
+                    AdvSearchRef.current.clear();
+                    setAnimes(false);
+                    setAudio(false);
+                    setDesene(false);
+                    setDiverse(false);
+                    setDoc(false);
+                    setFilme3d(false);
+                    setFilme4k(false);
+                    setFilme4kBD(false);
+                    setFilmeBD(false);
+                    setFilmeDvd(false);
+                    setFilmeDvdRo(false);
+                    setFilmeHd(false);
+                    setFilmeHdRo(false);
+                    setFilmeSd(false);
+                    setFlacs(false);
+                    setJocConsole(false);
+                    setJocPc(false);
+                    setLin(false);
+                    setMob(false);
+                    setSoftware(false);
+                    setSeriale4k(false);
+                    setSerialeHd(false);
+                    setSerialeSd(false);
+                    setSports(false);
+                    setVideos(false);
+                    setPorn(false);
+                    setAdvSearch(false);
+                    Keyboard.dismiss();
                   }}>
+                  <FontAwesomeIcon size={25} color={'black'} icon={faTimes} />
+                </Pressable>
+              </View>
+              <Input
+                ref={AdvSearchRef}
+                style={{
+                  color: 'black',
+                  fontSize: 16,
+                  fontWeight: 'normal',
+                }}
+                containerStyle={{
+                  height: 70,
+                  width: '100%',
+                  paddingTop: 12,
+                  justifyContent: 'flex-start',
+                  paddingBottom: 2,
+                  alignItems: 'center',
+                  backgroundColor: MAIN_COLOR,
+                }}
+                inputContainerStyle={{
+                  borderBottomWidth: 1,
+                  borderColor: advSearchValidation ? 'crimson' : 'black',
+                  height: '80%',
+                  width: '100%',
+                  paddingLeft: 5,
+                  paddingRight: 2.5,
+                }}
+                keyboardType="default"
+                selectionColor="grey"
+                autoCapitalize="none"
+                placeholder={
+                  advIMDb
+                    ? 'Caută după Cod IMDb...'
+                    : 'Caută după Cuvânt Cheie...'
+                }
+                placeholderTextColor={advSearchValidation ? 'crimson' : 'grey'}
+                leftIcon={
+                  <FontAwesomeIcon
+                    size={20}
+                    color={advSearchValidation ? 'crimson' : 'black'}
+                    icon={faSearch}
+                  />
+                }
+                onChangeText={(advSearchText) =>
+                  setAdvSearchText(advSearchText)
+                }
+                value={advSearchText}
+              />
+              <View
+                style={{
+                  height: 70,
+                  width: '100%',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <View
+                  style={{
+                    height: '25%',
+                    width: '100%',
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                    paddingHorizontal: '2%',
+                  }}>
+                  <Text
+                    style={{
+                      textAlign: 'center',
+                      color: 'black',
+                      fontWeight: 'bold',
+                      fontSize: 12,
+                    }}>
+                    Tipul căutării
+                  </Text>
                   <Pressable
                     style={{
-                      width: '100%',
                       height: '100%',
+                      flexDirection: 'row',
                       justifyContent: 'center',
                       alignItems: 'center',
+                      marginLeft: '3%',
                     }}
                     android_ripple={{
                       color: 'grey',
                       borderless: false,
-                      radius: 15,
+                      radius: 10,
                     }}
                     onPress={() => {
-                      setAdvKeyword(false);
-                      setAdvIMDb(false);
-                      setSearchBy(!searchBy);
+                      Alert.alert(
+                        'Alertă',
+                        'Pentru informaţii suplimentare legate de diferenţa dintre cele două tipuri, ţine apăsat 1 secundă pe căsuţa nebifată şi vice-versa. Opţiunea standard este căutarea după Cuvinte Cheie.',
+                        [
+                          {
+                            text: 'OK',
+                            onPress: () => {},
+                          },
+                        ],
+                        {cancelable: true},
+                      );
+                      Keyboard.dismiss();
                     }}>
-                    <FontAwesomeIcon
-                      size={20}
-                      icon={faCaretDown}
-                      color={'grey'}
-                    />
+                    <FontAwesomeIcon color={'black'} icon={faQuestionCircle} />
                   </Pressable>
                 </View>
+                <View
+                  style={{
+                    height: '75%',
+                    width: '100%',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <View
+                    pointerEvents={advKeyword ? 'none' : 'auto'}
+                    style={{
+                      width: '50%',
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
+                    <CheckBox
+                      containerStyle={{
+                        width: '93%',
+                        backgroundColor: 'transparent',
+                        borderColor: advKeyword ? 'grey' : 'black',
+                        borderBottomWidth: 1,
+                        borderTopWidth: 0,
+                        borderRightWidth: 0,
+                        borderLeftWidth: 0,
+                        flexDirection: 'row',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                      }}
+                      textStyle={{color: advKeyword ? 'grey' : 'black'}}
+                      center
+                      title="Cuvânt cheie"
+                      checked={advKeyword}
+                      checkedIcon={
+                        <FontAwesomeIcon
+                          style={{
+                            color: 'grey',
+                          }}
+                          size={20}
+                          icon={faCheckSquare}
+                        />
+                      }
+                      uncheckedIcon={
+                        <FontAwesomeIcon
+                          style={{
+                            borderRadius: 2,
+                            color: MAIN_COLOR,
+                            borderWidth: 2,
+                            borderColor: advKeyword ? 'grey' : 'black',
+                          }}
+                          size={20}
+                          icon={faAngleDoubleUp}
+                        />
+                      }
+                      onLongPress={() =>
+                        Alert.alert(
+                          'Alertă',
+                          'Această opţiune permite căutarea după Cuvinte Cheie pe modelul: titanic.1997 ori titanic 1997.',
+                          [
+                            {
+                              text: 'OK',
+                              onPress: () => {},
+                            },
+                          ],
+                          {cancelable: true},
+                        )
+                      }
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setAdvKeyword(true);
+                        setAdvIMDb(false);
+                      }}
+                    />
+                  </View>
+                  <View
+                    pointerEvents={advIMDb ? 'none' : 'auto'}
+                    style={{
+                      width: '50%',
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
+                    <CheckBox
+                      containerStyle={{
+                        width: '92%',
+                        backgroundColor: 'transparent',
+                        borderColor: advIMDb ? 'grey' : 'black',
+                        borderBottomWidth: 1,
+                        borderTopWidth: 0,
+                        borderRightWidth: 0,
+                        borderLeftWidth: 0,
+                        flexDirection: 'row',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                      }}
+                      textStyle={{color: advIMDb ? 'grey' : 'black'}}
+                      center
+                      title="Cod IMDb"
+                      checked={advIMDb}
+                      checkedIcon={
+                        <FontAwesomeIcon
+                          style={{
+                            color: 'grey',
+                          }}
+                          size={20}
+                          icon={faCheckSquare}
+                        />
+                      }
+                      uncheckedIcon={
+                        <FontAwesomeIcon
+                          style={{
+                            borderRadius: 2,
+                            color: MAIN_COLOR,
+                            borderWidth: 2,
+                            borderColor: advIMDb ? 'grey' : 'black',
+                          }}
+                          size={20}
+                          icon={faAngleDoubleUp}
+                        />
+                      }
+                      onLongPress={() =>
+                        Alert.alert(
+                          'Alertă',
+                          'Această opţiune permite căutarea după Codul IMDb pe modelul modelul: tt4719744 ori 4719744.',
+                          [
+                            {
+                              text: 'OK',
+                              onPress: () => {},
+                            },
+                          ],
+                          {cancelable: true},
+                        )
+                      }
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setAdvKeyword(false);
+                        setAdvIMDb(true);
+                      }}
+                    />
+                  </View>
+                </View>
+              </View>
+              <View
+                style={{
+                  width: '96%',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginTop: 5,
+                  marginBottom: 15,
+                }}>
+                <CheckBox
+                  containerStyle={{
+                    width: '100%',
+                    backgroundColor: 'transparent',
+                    borderColor: 'black',
+                    borderBottomWidth: 1,
+                    borderTopWidth: 0,
+                    borderRightWidth: 0,
+                    borderLeftWidth: 0,
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                  }}
+                  textStyle={{
+                    color:
+                      animes ||
+                      audio ||
+                      desene ||
+                      diverse ||
+                      doc ||
+                      filme3d ||
+                      filme4k ||
+                      filme4kbd ||
+                      filmeBD ||
+                      filmeDvd ||
+                      filmeDvdRo ||
+                      filmeHd ||
+                      filmeHdRo ||
+                      filmeSd ||
+                      flacs ||
+                      jocConsole ||
+                      jocPc ||
+                      lin ||
+                      mob ||
+                      software ||
+                      seriale4k ||
+                      serialeHd ||
+                      serialeSd ||
+                      sports ||
+                      videos ||
+                      porn === true
+                        ? ACCENT_COLOR
+                        : 'grey',
+                  }}
+                  center
+                  title={
+                    animes ||
+                    audio ||
+                    desene ||
+                    diverse ||
+                    doc ||
+                    filme3d ||
+                    filme4k ||
+                    filme4kbd ||
+                    filmeBD ||
+                    filmeDvd ||
+                    filmeDvdRo ||
+                    filmeHd ||
+                    filmeHdRo ||
+                    filmeSd ||
+                    flacs ||
+                    jocConsole ||
+                    jocPc ||
+                    lin ||
+                    mob ||
+                    software ||
+                    seriale4k ||
+                    serialeHd ||
+                    serialeSd ||
+                    sports ||
+                    videos ||
+                    porn === true
+                      ? catNames !== ''
+                        ? catNames.toString().split(',').join(', ')
+                        : 'Categorii'
+                      : 'Categorii'
+                  }
+                  checked
+                  checkedIcon={
+                    <FontAwesomeIcon size={20} color={'black'} icon={faTasks} />
+                  }
+                  onPress={() => {
+                    setCatList(true);
+                    Keyboard.dismiss();
+                  }}
+                />
+              </View>
+              <View
+                style={{
+                  width: '96%',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <CheckBox
+                  containerStyle={{
+                    width: '47%',
+                    backgroundColor: 'transparent',
+                    borderColor: 'black',
+                    borderBottomWidth: 1,
+                    borderTopWidth: 0,
+                    borderRightWidth: 0,
+                    borderLeftWidth: 0,
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                  }}
+                  textStyle={{color: 'black'}}
+                  center
+                  title="2X Upload"
+                  checked={doubleUp}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: ACCENT_COLOR,
+                      }}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        borderRadius: 2,
+                        color: MAIN_COLOR,
+                        borderWidth: 2,
+                        borderColor: 'black',
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onLongPress={() =>
+                    Alert.alert(
+                      'Alertă',
+                      'Această opţiune filtrează torrentele care îţi oferă de 2 ori mai mult Upload, atât pe perioada descărcării şi după finalizaree, când sunt ţinute la Seed.',
+                      [
+                        {
+                          text: 'OK',
+                          onPress: () => {},
+                        },
+                      ],
+                      {cancelable: true},
+                    )
+                  }
+                  onPress={() => {
+                    setDoubleUp(!doubleUp);
+                    Keyboard.dismiss();
+                  }}
+                />
+                <CheckBox
+                  containerStyle={{
+                    width: '47%',
+                    backgroundColor: 'transparent',
+                    borderColor: 'black',
+                    borderBottomWidth: 1,
+                    borderTopWidth: 0,
+                    borderRightWidth: 0,
+                    borderLeftWidth: 0,
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                  }}
+                  textStyle={{color: 'black'}}
+                  center
+                  title="Freeleech"
+                  checked={freeleech}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: ACCENT_COLOR,
+                      }}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        borderRadius: 2,
+                        color: MAIN_COLOR,
+                        borderWidth: 2,
+                        borderColor: 'black',
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onLongPress={() =>
+                    Alert.alert(
+                      'Alertă',
+                      'Această opţiune filtrează torrentele a căror descărcare îţi oferă decât Upload, nu se contorizează la Download, fapt care face ca Raţia să nu-ţi fie afectată în nici un fel.',
+                      [
+                        {
+                          text: 'OK',
+                          onPress: () => {},
+                        },
+                      ],
+                      {cancelable: true},
+                    )
+                  }
+                  onPress={() => {
+                    setFreeleech(!freeleech);
+                    Keyboard.dismiss();
+                  }}
+                />
+              </View>
+              <View
+                style={{
+                  width: '96%',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <CheckBox
+                  containerStyle={{
+                    width: '47%',
+                    backgroundColor: 'transparent',
+                    borderColor: 'black',
+                    borderBottomWidth: 1,
+                    borderTopWidth: 0,
+                    borderRightWidth: 0,
+                    borderLeftWidth: 0,
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                  }}
+                  textStyle={{color: 'black'}}
+                  center
+                  title="Internal"
+                  checked={internal}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: ACCENT_COLOR,
+                      }}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        borderRadius: 2,
+                        color: MAIN_COLOR,
+                        borderWidth: 2,
+                        borderColor: 'black',
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onLongPress={() =>
+                    Alert.alert(
+                      'Alertă',
+                      'Această opţiune filtrează torrentele care aparţin grupurilor Play(HD|BD|SD|XD) care sunt grupuri Interne ale trackerului.',
+                      [
+                        {
+                          text: 'OK',
+                          onPress: () => {},
+                        },
+                      ],
+                      {cancelable: true},
+                    )
+                  }
+                  onPress={() => {
+                    setInternal(!internal);
+                    Keyboard.dismiss();
+                  }}
+                />
+                <CheckBox
+                  containerStyle={{
+                    width: '47%',
+                    backgroundColor: 'transparent',
+                    borderColor: 'black',
+                    borderBottomWidth: 1,
+                    borderTopWidth: 0,
+                    borderRightWidth: 0,
+                    borderLeftWidth: 0,
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                  }}
+                  textStyle={{color: 'black'}}
+                  center
+                  title="Moderated"
+                  checked={moderated}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: ACCENT_COLOR,
+                      }}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        borderRadius: 2,
+                        color: MAIN_COLOR,
+                        borderWidth: 2,
+                        borderColor: 'black',
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onLongPress={() =>
+                    Alert.alert(
+                      'Alertă',
+                      'Această opţiune filtrează torrentele care sunt verificate pentru a corespunde regulilor (titlu, descriere, gen, screens, subtitrare nedecalată, etc), verificate de către staff-ul Filelist.',
+                      [
+                        {
+                          text: 'OK',
+                          onPress: () => {},
+                        },
+                      ],
+                      {cancelable: true},
+                    )
+                  }
+                  onPress={() => {
+                    setModerated(!moderated);
+                    Keyboard.dismiss();
+                  }}
+                />
+              </View>
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  width: '50%',
+                  height: '10%',
+                  backgroundColor: ACCENT_COLOR,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  overflow: 'hidden',
+                  borderRadius: 34,
+                  marginBottom: 5,
+                }}>
+                <Pressable
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderRadius: 34,
+                  }}
+                  android_ripple={{
+                    color: 'black',
+                    borderless: false,
+                  }}
+                  onPress={handleAdvancedSearch}>
+                  <FontAwesomeIcon
+                    style={{
+                      color: 'white',
+                      marginRight: 15,
+                    }}
+                    size={20}
+                    icon={faSearch}
+                  />
+                  <Text
+                    style={{
+                      textShadowColor: 'black',
+                      textShadowOffset: {width: 0.5, height: 0.5},
+                      textShadowRadius: 1,
+                      fontSize: 18,
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      color: 'white',
+                    }}>
+                    Caută
+                  </Text>
+                </Pressable>
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -1033,25 +2947,27 @@ function Home() {
                                               alignItems: 'flex-start',
                                             }}
                                             onPress={() =>
-                                              Alert.alert(
-                                                'Alertă',
-                                                'Doreşti să vizitezi pagina IMDb asociată filmului ?',
-                                                [
-                                                  {
-                                                    text: 'Da',
-                                                    onPress: () =>
-                                                      Linking.openURL(
-                                                        item.link,
-                                                      ),
-                                                  },
-                                                  {
-                                                    text: 'Nu',
-                                                    onPress: () => {},
-                                                    style: 'cancel',
-                                                  },
-                                                ],
-                                                {cancelable: true},
-                                              )
+                                              typeof item.link === 'function'
+                                                ? {}
+                                                : Alert.alert(
+                                                    'Alertă',
+                                                    'Doreşti să vizitezi pagina IMDb asociată filmului ?',
+                                                    [
+                                                      {
+                                                        text: 'Da',
+                                                        onPress: () =>
+                                                          Linking.openURL(
+                                                            item.link,
+                                                          ),
+                                                      },
+                                                      {
+                                                        text: 'Nu',
+                                                        onPress: () => {},
+                                                        style: 'cancel',
+                                                      },
+                                                    ],
+                                                    {cancelable: true},
+                                                  )
                                             }>
                                             <FastImage
                                               style={{
@@ -1088,7 +3004,9 @@ function Home() {
                                                       fontSize: 18,
                                                       fontWeight: 'bold',
                                                     }}>
-                                                    {item.rating}
+                                                    {item.rating === undefined
+                                                      ? 'Fără'
+                                                      : item.rating}
                                                   </Text>
                                                   <FontAwesomeIcon
                                                     size={20}
@@ -1132,20 +3050,37 @@ function Home() {
                                               }}>
                                               Plot
                                             </Text>
-                                            <Text
-                                              style={{
-                                                fontSize: 10,
-                                                textShadowColor: 'black',
-                                                textShadowOffset: {
-                                                  width: 0.5,
-                                                  height: 0.5,
-                                                },
-                                                textShadowRadius: 1,
-                                                color: 'white',
-                                                paddingTop: '3%',
-                                              }}>
-                                              {item.plot.split('\n')[0]}
-                                            </Text>
+                                            {item.plot === undefined ? (
+                                              <Text
+                                                style={{
+                                                  fontSize: 10,
+                                                  textShadowColor: 'black',
+                                                  textShadowOffset: {
+                                                    width: 0.5,
+                                                    height: 0.5,
+                                                  },
+                                                  textShadowRadius: 1,
+                                                  color: 'white',
+                                                  paddingTop: '3%',
+                                                }}>
+                                                Acest material nu conţine plot
+                                              </Text>
+                                            ) : (
+                                              <Text
+                                                style={{
+                                                  fontSize: 10,
+                                                  textShadowColor: 'black',
+                                                  textShadowOffset: {
+                                                    width: 0.5,
+                                                    height: 0.5,
+                                                  },
+                                                  textShadowRadius: 1,
+                                                  color: 'white',
+                                                  paddingTop: '3%',
+                                                }}>
+                                                {item.plot.split('\n')[0]}
+                                              </Text>
+                                            )}
                                             {item.duration === '' ? null : (
                                               <>
                                                 <View
@@ -1186,7 +3121,9 @@ function Home() {
                                                       fontWeight: 'bold',
                                                     }}>
                                                     {' '}
-                                                    {item.duration}
+                                                    {item.duration === undefined
+                                                      ? 'Necunoscută'
+                                                      : item.duration}
                                                   </Text>
                                                 </Text>
                                               </>
@@ -1241,7 +3178,7 @@ function Home() {
                                 onPress={() =>
                                   Alert.alert(
                                     'Alertă',
-                                    'Mărimea totală a torrentului',
+                                    'Mărimea totală a torrentului.',
                                     [
                                       {
                                         text: 'OK',
@@ -1291,7 +3228,7 @@ function Home() {
                                 onPress={() =>
                                   Alert.alert(
                                     'Alertă',
-                                    'Numărul de fişiere din torrent',
+                                    'Numărul de fişiere din torrent.',
                                     [
                                       {
                                         text: 'OK',
@@ -1340,7 +3277,7 @@ function Home() {
                                 onPress={() =>
                                   Alert.alert(
                                     'Alertă',
-                                    'Numărul de persoane care ţin torrentul la seed în acest moment',
+                                    'Numărul de persoane care ţin torrentul la seed în acest moment.',
                                     [
                                       {
                                         text: 'OK',
@@ -1400,7 +3337,7 @@ function Home() {
                                 onPress={() =>
                                   Alert.alert(
                                     'Alertă',
-                                    'Data la care torrentul a apărut pe Filelist',
+                                    'Data la care torrentul a apărut pe Filelist.',
                                     [
                                       {
                                         text: 'OK',
@@ -1450,7 +3387,7 @@ function Home() {
                                 onPress={() =>
                                   Alert.alert(
                                     'Alertă',
-                                    'De câte ori a fost descărcat torrentul',
+                                    'De câte ori a fost descărcat torrentul.',
                                     [
                                       {
                                         text: 'OK',
@@ -1500,7 +3437,7 @@ function Home() {
                                 onPress={() =>
                                   Alert.alert(
                                     'Alertă',
-                                    'Numărul de persoane care descarcă torrentul în acest moment',
+                                    'Numărul de persoane care descarcă torrentul în acest moment.',
                                     [
                                       {
                                         text: 'OK',
@@ -1577,7 +3514,7 @@ function Home() {
                                   onPress={() =>
                                     Alert.alert(
                                       'Alertă',
-                                      'Mărimea totală a torrentului',
+                                      'Mărimea totală a torrentului.',
                                       [
                                         {
                                           text: 'OK',
@@ -1630,7 +3567,7 @@ function Home() {
                                   onPress={() =>
                                     Alert.alert(
                                       'Alertă',
-                                      'Numărul de fişiere din torrent',
+                                      'Numărul de fişiere din torrent.',
                                       [
                                         {
                                           text: 'OK',
@@ -1683,7 +3620,7 @@ function Home() {
                                   onPress={() =>
                                     Alert.alert(
                                       'Alertă',
-                                      'Numărul de persoane care ţin torrentul la seed în acest moment',
+                                      'Numărul de persoane care ţin torrentul la seed în acest moment.',
                                       [
                                         {
                                           text: 'OK',
@@ -1746,7 +3683,7 @@ function Home() {
                                   onPress={() =>
                                     Alert.alert(
                                       'Alertă',
-                                      'Data la care torrentul a apărut pe Filelist',
+                                      'Data la care torrentul a apărut pe Filelist.',
                                       [
                                         {
                                           text: 'OK',
@@ -1799,7 +3736,7 @@ function Home() {
                                   onPress={() =>
                                     Alert.alert(
                                       'Alertă',
-                                      'De câte ori a fost descărcat torrentul',
+                                      'De câte ori a fost descărcat torrentul.',
                                       [
                                         {
                                           text: 'OK',
@@ -1852,7 +3789,7 @@ function Home() {
                                   onPress={() =>
                                     Alert.alert(
                                       'Alertă',
-                                      'Numărul de persoane care descarcă torrentul în acest moment',
+                                      'Numărul de persoane care descarcă torrentul în acest moment.',
                                       [
                                         {
                                           text: 'OK',
@@ -1892,6 +3829,92 @@ function Home() {
               : null}
           </View>
         </Overlay>
+        <Overlay
+          statusBarTranslucent
+          animationType="slide"
+          backdropStyle={{backgroundColor: 'transparent'}}
+          overlayStyle={{
+            position: 'absolute',
+            bottom: 0,
+            width: '100%',
+            height: '25%',
+            backgroundColor: MAIN_COLOR,
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            borderRadius: 0,
+            padding: 0,
+            margin: 0,
+          }}
+          isVisible={isSettings}
+          onBackdropPress={() => {
+            setIsSettings(false);
+          }}>
+          <View
+            style={{
+              width: '100%',
+              height: '100%',
+              flexDirection: 'column',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+            }}>
+            <Pressable
+              style={{
+                position: 'absolute',
+                right: 0,
+                width: '15%',
+                height: '25%',
+                bottom: '75%',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+              android_ripple={{
+                color: 'black',
+                borderless: true,
+                radius: 20,
+              }}
+              onPress={() => setIsSettings(false)}>
+              <FontAwesomeIcon size={25} color={'black'} icon={faTimes} />
+            </Pressable>
+            <View
+              style={{
+                width: '100%',
+                height: '20%',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'crimson',
+              }}>
+              <Pressable
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'crimson',
+                }}
+                android_ripple={{
+                  color: 'black',
+                  borderless: false,
+                }}
+                onPress={() => {
+                  setIsSettings(false);
+                  handleLogout();
+                }}>
+                <Text
+                  style={{
+                    textShadowColor: 'black',
+                    textShadowOffset: {width: 0.5, height: 0.5},
+                    textShadowRadius: 1,
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                  }}>
+                  Logout
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Overlay>
         <View
           style={{
             height: StatusBar.currentHeight * 3,
@@ -1925,7 +3948,7 @@ function Home() {
             </Text>
             <View
               style={{
-                width: '20%',
+                width: '10%',
                 height: '40%',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -1940,20 +3963,11 @@ function Home() {
                 }}
                 android_ripple={{
                   color: 'black',
-                  borderless: false,
+                  borderless: true,
+                  radius: 22,
                 }}
-                onPress={handleLogout}>
-                <Text
-                  style={{
-                    textShadowColor: 'black',
-                    textShadowOffset: {width: 0.5, height: 0.5},
-                    textShadowRadius: 1,
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: 18,
-                  }}>
-                  Logout
-                </Text>
+                onPress={() => setIsSettings(true)}>
+                <FontAwesomeIcon size={24} color={'white'} icon={faCog} />
               </Pressable>
             </View>
           </View>
@@ -1961,28 +3975,22 @@ function Home() {
         <View
           style={{
             position: 'absolute',
-            top:
-              listSearch !== null ||
-              listImdb !== null ||
-              searchError != null ||
-              imdbError !== null
-                ? StatusBar.currentHeight * 3
-                : -100,
+            top: isSearchBar ? StatusBar.currentHeight * 3 : -100,
             zIndex: 12,
             elevation: 12,
             height: 70,
+            paddingLeft: 20,
+            paddingRight: 20,
             width: '100%',
             flexDirection: 'row',
-            justifyContent: 'center',
+            justifyContent: 'flex-start',
             alignItems: 'center',
             backgroundColor: '#202020',
           }}>
           <View
             style={{
-              position: 'absolute',
-              left: 25,
               height: '60%',
-              width: '10%',
+              width: '11%',
               overflow: 'hidden',
               flexDirection: 'row',
               justifyContent: 'center',
@@ -2011,8 +4019,26 @@ function Home() {
               <FontAwesomeIcon size={20} color={'white'} icon={faArrowLeft} />
             </Pressable>
           </View>
-          <Text style={{fontWeight: 'bold', color: 'white'}}>
-            Rezultatele căutării după "{search}"
+          <Text
+            style={{
+              fontWeight: 'normal',
+              color: 'white',
+              paddingLeft: 20,
+              paddingRight: 20,
+            }}>
+            Rezultatele căutării după "
+            <Text
+              style={{
+                color: 'white',
+                fontWeight: 'bold',
+              }}>
+              {search !== ''
+                ? search
+                : advSearchText !== ''
+                ? advSearchText
+                : ''}
+            </Text>
+            "
           </Text>
         </View>
         <Input
@@ -2088,13 +4114,14 @@ function Home() {
           <View
             style={{
               width: '100%',
-              height: '100%',
               justifyContent: 'flex-start',
-              paddingTop: StatusBar.currentHeight * 4,
               alignItems: 'center',
-              paddingBottom: StatusBar.currentHeight * 3 + 70,
             }}>
-            <ActivityIndicator size="large" color={ACCENT_COLOR} />
+            <ActivityIndicator
+              style={{marginTop: StatusBar.currentHeight * 4}}
+              size="large"
+              color={ACCENT_COLOR}
+            />
           </View>
         ) : noResults ? (
           <View
@@ -2117,23 +4144,11 @@ function Home() {
                 fontSize: 18,
                 fontWeight: 'bold',
               }}>
-              Rezultatele căutării după "{search}"
-            </Text>
-            <Text
-              style={{
-                textShadowColor: 'black',
-                textShadowOffset: {width: 0.5, height: 0.5},
-                textShadowRadius: 1,
-                color: 'white',
-                textAlign: 'center',
-                fontSize: 18,
-                fontWeight: 'bold',
-              }}>
               Nu s-a găsit nimic
             </Text>
             <Text
               style={{
-                marginTop: 10,
+                marginTop: 5,
                 textShadowColor: 'black',
                 textShadowOffset: {width: 0.5, height: 0.5},
                 textShadowRadius: 1,
@@ -2145,16 +4160,23 @@ function Home() {
           </View>
         ) : listSearch !== null ? (
           <FlatList
-            style={{marginBottom: 16}}
             data={listSearch}
             renderItem={renderItem}
+            contentContainerStyle={{paddingBottom: 16}}
             keyExtractor={(item) => item.id.toString()}
           />
         ) : listImdb !== null ? (
           <FlatList
-            style={{marginBottom: 16}}
             data={listImdb}
             renderItem={renderItem}
+            contentContainerStyle={{paddingBottom: 16}}
+            keyExtractor={(item) => item.id.toString()}
+          />
+        ) : listAdvSearch !== null ? (
+          <FlatList
+            data={listAdvSearch}
+            renderItem={renderItem}
+            contentContainerStyle={{paddingBottom: 16}}
             keyExtractor={(item) => item.id.toString()}
           />
         ) : (
@@ -2166,7 +4188,7 @@ function Home() {
                 onRefresh={onRefresh}
               />
             }
-            style={{marginBottom: 16}}
+            contentContainerStyle={{paddingBottom: 16}}
             data={listLatest}
             renderItem={renderItem}
             keyExtractor={(item) => item.id.toString()}
@@ -2176,8 +4198,8 @@ function Home() {
           style={{
             width: 50,
             height: 50,
-            zIndex: 12,
-            elevation: 12,
+            zIndex: 16,
+            elevation: 16,
             overflow: 'hidden',
             bottom: 20,
             right: 20,
@@ -2201,32 +4223,42 @@ function Home() {
               alignItems: 'center',
               backgroundColor: ACCENT_COLOR,
             }}
-            onPress={() => setAdvSearch(!advSearch)}>
+            onPress={() => {
+              setAdvSearch(!advSearch);
+              setAdvKeyword(true);
+              setAdvIMDb(false);
+              setAdvSearchText('');
+            }}>
             <FontAwesomeIcon color={'white'} size={25} icon={faSearchPlus} />
           </Pressable>
         </View>
         <Animated.View
           style={[
             {
+              height: StatusBar.currentHeight * 2,
               elevation: 15,
               zIndex: 15,
               position: 'absolute',
-              bottom: 0,
-              backgroundColor: ACCENT_COLOR,
-              width: '100%',
+              bottom: '1.6%',
+              backgroundColor: 'rgba(50, 205, 50, 0.8)',
+              width: '93%',
               justifyContent: 'center',
               alignItems: 'center',
+              borderRadius: 34,
             },
-            {height: showStatus},
+            {
+              transform: [
+                {
+                  scale: showStatus,
+                },
+              ],
+            },
           ]}>
           <Animated.Text
             style={[
               {
-                textShadowColor: 'black',
-                textShadowOffset: {width: 0.5, height: 0.5},
-                textShadowRadius: 1,
                 fontSize: 14,
-                color: 'white',
+                color: 'black',
                 fontWeight: 'bold',
               },
               {opacity: textOpacity},
@@ -2236,11 +4268,8 @@ function Home() {
           <Animated.Text
             style={[
               {
-                textShadowColor: 'black',
-                textShadowOffset: {width: 0.5, height: 0.5},
-                textShadowRadius: 1,
                 fontSize: 14,
-                color: 'white',
+                color: 'black',
                 paddingBottom: 5,
               },
               {opacity: textOpacity},
@@ -2251,30 +4280,35 @@ function Home() {
         <Animated.View
           style={[
             {
+              height: StatusBar.currentHeight * 2,
               elevation: 15,
               zIndex: 15,
               position: 'absolute',
-              bottom: 0,
-              backgroundColor: ACCENT_COLOR,
-              width: '100%',
+              bottom: '1.6%',
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              width: '93%',
               justifyContent: 'center',
               alignItems: 'center',
+              borderRadius: 34,
             },
-            {height: showClipboardStatus},
+            {
+              transform: [
+                {
+                  scale: showClipboardStatus,
+                },
+              ],
+            },
           ]}>
           <Animated.Text
             style={[
               {
-                textShadowColor: 'black',
-                textShadowOffset: {width: 0.5, height: 0.5},
-                textShadowRadius: 1,
-                fontSize: 14,
-                color: 'white',
+                fontSize: 13,
+                color: 'black',
                 fontWeight: 'bold',
               },
               {opacity: textClipboardOpacity},
             ]}>
-            Ai copiat linkul de descărcare al torrentului
+            Link descărcare copiat în Clipboard
           </Animated.Text>
         </Animated.View>
       </SafeAreaView>
@@ -2403,7 +4437,7 @@ function Login() {
               paddingBottom: 5,
             }}>
             <Text style={{color: 'black', fontWeight: 'bold', fontSize: 18}}>
-              Go to
+              Deschide
             </Text>
             <Pressable
               style={{
@@ -2424,7 +4458,7 @@ function Login() {
                   fontWeight: 'bold',
                   fontSize: 18,
                 }}>
-                Filelist
+                Filelist.io
               </Text>
             </Pressable>
           </View>
@@ -2469,7 +4503,7 @@ function Login() {
               paddingBottom: 5,
             }}>
             <Text style={{color: 'black', fontWeight: 'bold', fontSize: 18}}>
-              Go to
+              Deschide
             </Text>
             <Pressable
               style={{
@@ -2490,7 +4524,7 @@ function Login() {
                   fontWeight: 'bold',
                   fontSize: 18,
                 }}>
-                Filelist
+                Filelist.io
               </Text>
             </Pressable>
           </View>
