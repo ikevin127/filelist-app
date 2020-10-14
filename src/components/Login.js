@@ -35,8 +35,8 @@ export default function Login() {
   const [userModal, setUserModal] = useState(false);
   const [passModal, setPassModal] = useState(false);
   const [aboutModal, setAboutModal] = useState(false);
-  const [user, setUser] = useState(USERNAME);
-  const [pass, setPass] = useState(PASSKEY);
+  const [user, setUser] = useState('');
+  const [pass, setPass] = useState('');
   const [invalid, setInvalid] = useState(false);
   const [invalidUser, setInvalidUser] = useState(false);
   const [invalidPass, setInvalidPass] = useState(false);

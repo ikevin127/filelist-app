@@ -38,7 +38,6 @@ import {
   faTasks,
   faAngleDoubleUp,
   faCheckSquare,
-  faTimes,
   faCog,
   faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
@@ -101,6 +100,7 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [infoModal, setInfoModal] = useState(false);
   const [IMDbLoading, setIMDbLoading] = useState(false);
+  const [listLatestLoading, setListLatestLoading] = useState(false);
   const [advSearch, setAdvSearch] = useState(false);
   const [searchValidation, setSearchValidation] = useState(false);
   const [advSearchValidation, setAdvSearchValidation] = useState(false);
@@ -491,7 +491,6 @@ export default function Home() {
         duration: 150,
         useNativeDriver: false,
       }).start();
-      setRefreshing(false);
     }, 3500);
   };
 
@@ -501,6 +500,34 @@ export default function Home() {
       const value1 = await AsyncStorage.getItem('passkey');
       if (value0 !== null && value1 !== null) {
         dispatch(AppConfigActions.getLatest(value0, value1));
+        setTimeout(() => {
+          setListLatestLoading(false);
+          setTimeout(() => {
+            Animated.timing(showStatus, {
+              toValue: 1,
+              duration: 400,
+              useNativeDriver: false,
+            }).start();
+            Animated.timing(textOpacity, {
+              toValue: 1,
+              duration: 800,
+              useNativeDriver: false,
+            }).start();
+            setRefreshing(false);
+          }, 500);
+          setTimeout(() => {
+            Animated.timing(showStatus, {
+              toValue: 0,
+              duration: 250,
+              useNativeDriver: false,
+            }).start();
+            Animated.timing(textOpacity, {
+              toValue: 0,
+              duration: 150,
+              useNativeDriver: false,
+            }).start();
+          }, 4000);
+        }, 3000);
       }
     } catch (e) {
       alert(e);
@@ -508,33 +535,8 @@ export default function Home() {
   };
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
+    setListLatestLoading(true);
     await getRefreshData();
-    setTimeout(() => {
-      Animated.timing(showStatus, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: false,
-      }).start();
-      Animated.timing(textOpacity, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: false,
-      }).start();
-      setRefreshing(false);
-    }, 1000);
-    setTimeout(() => {
-      Animated.timing(showStatus, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: false,
-      }).start();
-      Animated.timing(textOpacity, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: false,
-      }).start();
-    }, 5000);
   }, [refreshing]);
 
   const Item = ({item, onPress, style}) => (
@@ -700,7 +702,7 @@ export default function Home() {
                 onBackdropPress={() => setCatList(false)}>
                 <View style={HomePage.catCheckContainer}>
                   <ScrollView
-                    showsVerticalScrollIndicator={false}
+                    showsVerticalScrollIndicator={true}
                     style={HomePage.catCheckScrollView}>
                     <View style={HomePage.catCheckScrollContainer}>
                       <CheckBox
@@ -1349,7 +1351,7 @@ export default function Home() {
                         Keyboard.dismiss();
                         Alert.alert(
                           'Alertă',
-                          'Pentru informaţii suplimentare legate de diferenţa dintre cele două tipuri, ţine apăsat 1 secundă pe căsuţa nebifată şi vice-versa. Opţiunea standard este căutarea după Cuvinte Cheie.',
+                          'Pentru informaţii suplimentare legate de diferenţa dintre cele două tipuri, ţine apăsat 1 secundă pe căsuţa nebifată şi vice-versa.',
                           [
                             {
                               text: 'OK',
@@ -1732,7 +1734,7 @@ export default function Home() {
           animationType="fade"
           overlayStyle={[
             HomePage.imdbOverlayStyle,
-            {height: IMDbID !== null ? '60%' : '50%'},
+            {height: IMDbID !== null ? '70%' : '40%'},
           ]}
           isVisible={infoModal}
           onBackdropPress={() => {
@@ -1740,7 +1742,10 @@ export default function Home() {
             setModalData(null);
             setIMDbID(null);
           }}>
-          <View style={HomePage.imdbInfoContainer}>
+          <ScrollView
+                showsVerticalScrollIndicator={true}
+                contentContainerStyle={HomePage.imdbInfoContainer}
+                style={HomePage.imdbInfoContainerStyle}>
             {modalData
               ? modalData.map((item, index) => {
                   return (
@@ -1814,7 +1819,6 @@ export default function Home() {
                           </Text>
                         </View>
                       </View>
-                      <View style={HomePage.imdbInfoSeparator} />
                       <View style={HomePage.imdbInfoTitleSection}>
                         <Text style={HomePage.imdbInfoTitleText}>
                           {item.name}
@@ -1848,9 +1852,8 @@ export default function Home() {
                           </Text>
                         ) : null}
                       </View>
-                      <View style={HomePage.imdbInfoSeparator} />
-                      {IMDbID !== null ? (
-                        <View style={HomePage.imdbInfoIDnull}>
+                      {IMDbID !== null ? (<>
+                        <View style={HomePage.imdbInfoDataContainer}>
                           {IMDbLoading ? (
                             <View style={HomePage.imdbInfoActivityIndicator}>
                               <ActivityIndicator
@@ -1984,6 +1987,7 @@ export default function Home() {
                                             )}
                                           </View>
                                         </View>
+                                        
                                       </View>
                                     );
                                   })
@@ -1991,445 +1995,418 @@ export default function Home() {
                             </>
                           )}
                         </View>
-                      ) : null}
-                      {IMDbID !== null ? (
                         <View style={HomePage.imdbInfoMainFooter}>
-                          <View style={HomePage.imdbInfoMainFooterView}>
-                            <View style={HomePage.imdbInfoMainFooter3rd}>
-                              <Pressable
-                                style={HomePage.imdbInfoMainFooter3rdPressable}
-                                android_ripple={{
-                                  color: 'grey',
-                                  borderless: false,
-                                  radius: 40,
-                                }}
-                                onPress={() =>
-                                  Alert.alert(
-                                    'Alertă',
-                                    'Mărimea totală a torrentului.',
-                                    [
-                                      {
-                                        text: 'OK',
-                                        onPress: () => {},
-                                      },
-                                    ],
-                                    {cancelable: true},
-                                  )
-                                }>
-                                <FontAwesomeIcon
-                                  size={14}
-                                  icon={faDatabase}
-                                  color={ACCENT_COLOR}
-                                />
-                                <Text
-                                  style={HomePage.imdbInfoMainFooter3rdText}>
-                                  {formatBytes(item.size)}
-                                </Text>
-                              </Pressable>
-                            </View>
-                            <View style={HomePage.imdbInfoMainFooter3rd}>
-                              <Pressable
-                                style={HomePage.imdbInfoMainFooter3rdPressable}
-                                android_ripple={{
-                                  color: 'grey',
-                                  borderless: false,
-                                  radius: 40,
-                                }}
-                                onPress={() =>
-                                  Alert.alert(
-                                    'Alertă',
-                                    'Numărul de fişiere din torrent.',
-                                    [
-                                      {
-                                        text: 'OK',
-                                      },
-                                    ],
-                                    {onDismiss: () => {}, cancelable: true},
-                                  )
-                                }>
-                                <FontAwesomeIcon
-                                  size={14}
-                                  icon={faCopy}
-                                  color={ACCENT_COLOR}
-                                />
-                                <Text
-                                  style={HomePage.imdbInfoMainFooter3rdText}>
-                                  {item.files}
-                                </Text>
-                              </Pressable>
-                            </View>
-                            <View style={HomePage.imdbInfoMainFooter3rd}>
-                              <Pressable
-                                style={HomePage.imdbInfoMainFooter3rdPressable}
-                                android_ripple={{
-                                  color: 'grey',
-                                  borderless: false,
-                                  radius: 40,
-                                }}
-                                onPress={() =>
-                                  Alert.alert(
-                                    'Alertă',
-                                    'Numărul de persoane care ţin torrentul la seed în acest moment.',
-                                    [
-                                      {
-                                        text: 'OK',
-                                        onPress: () => {},
-                                      },
-                                    ],
-                                    {cancelable: true},
-                                  )
-                                }>
-                                <FontAwesomeIcon
-                                  size={14}
-                                  icon={faChevronCircleUp}
-                                  color={'limegreen'}
-                                />
-                                <Text
-                                  style={HomePage.imdbInfoMainFooter3rdText}>
-                                  {item.seeders}
-                                </Text>
-                              </Pressable>
-                            </View>
+                        <View style={HomePage.imdbInfoMainFooterView}>
+                          <View style={HomePage.imdbInfoMainFooter3rd}>
+                            <Pressable
+                              style={HomePage.imdbInfoMainFooter3rdPressable}
+                              android_ripple={{
+                                color: 'grey',
+                                borderless: false,
+                                radius: 40,
+                              }}
+                              onPress={() =>
+                                Alert.alert(
+                                  'Alertă',
+                                  'Mărimea totală a torrentului.',
+                                  [
+                                    {
+                                      text: 'OK',
+                                      onPress: () => {},
+                                    },
+                                  ],
+                                  {cancelable: true},
+                                )
+                              }>
+                              <FontAwesomeIcon
+                                size={14}
+                                icon={faDatabase}
+                                color={ACCENT_COLOR}
+                              />
+                              <Text
+                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                {formatBytes(item.size)}
+                              </Text>
+                            </Pressable>
                           </View>
-                          <View style={HomePage.imdbInfoMainFooterView2}>
-                            <View style={HomePage.imdbInfoMainFooter3rd}>
-                              <Pressable
-                                style={HomePage.imdbInfoMainFooter3rdPressable}
-                                android_ripple={{
-                                  color: 'grey',
-                                  borderless: false,
-                                  radius: 40,
-                                }}
-                                onPress={() =>
-                                  Alert.alert(
-                                    'Alertă',
-                                    'Data la care torrentul a apărut pe Filelist.',
-                                    [
-                                      {
-                                        text: 'OK',
-                                        onPress: () => {},
-                                      },
-                                    ],
-                                    {cancelable: true},
-                                  )
-                                }>
-                                <FontAwesomeIcon
-                                  size={14}
-                                  icon={faCalendarWeek}
-                                  color={ACCENT_COLOR}
-                                />
-                                <Text
-                                  style={HomePage.imdbInfoMainFooter3rdText}>
-                                  {item.upload_date.substring(0, 10)}
-                                </Text>
-                              </Pressable>
-                            </View>
-                            <View style={HomePage.imdbInfoMainFooter3rd}>
-                              <Pressable
-                                style={HomePage.imdbInfoMainFooter3rdPressable}
-                                android_ripple={{
-                                  color: 'grey',
-                                  borderless: false,
-                                  radius: 40,
-                                }}
-                                onPress={() =>
-                                  Alert.alert(
-                                    'Alertă',
-                                    'De câte ori a fost descărcat torrentul.',
-                                    [
-                                      {
-                                        text: 'OK',
-                                        onPress: () => {},
-                                      },
-                                    ],
-                                    {cancelable: true},
-                                  )
-                                }>
-                                <FontAwesomeIcon
-                                  size={14}
-                                  icon={faDownload}
-                                  color={ACCENT_COLOR}
-                                />
-                                <Text
-                                  style={HomePage.imdbInfoMainFooter3rdText}>
-                                  {item.times_completed}
-                                </Text>
-                              </Pressable>
-                            </View>
-                            <View style={HomePage.imdbInfoMainFooter3rd}>
-                              <Pressable
-                                style={HomePage.imdbInfoMainFooter3rdPressable}
-                                android_ripple={{
-                                  color: 'grey',
-                                  borderless: false,
-                                  radius: 40,
-                                }}
-                                onPress={() =>
-                                  Alert.alert(
-                                    'Alertă',
-                                    'Numărul de persoane care descarcă torrentul în acest moment.',
-                                    [
-                                      {
-                                        text: 'OK',
-                                        onPress: () => {},
-                                      },
-                                    ],
-                                    {cancelable: true},
-                                  )
-                                }>
-                                <FontAwesomeIcon
-                                  size={14}
-                                  icon={faChevronCircleDown}
-                                  color={'crimson'}
-                                />
-                                <Text
-                                  style={HomePage.imdbInfoMainFooter3rdText}>
-                                  {item.leechers}
-                                </Text>
-                              </Pressable>
-                            </View>
+                          <View style={HomePage.imdbInfoMainFooter3rd}>
+                            <Pressable
+                              style={HomePage.imdbInfoMainFooter3rdPressable}
+                              android_ripple={{
+                                color: 'grey',
+                                borderless: false,
+                                radius: 40,
+                              }}
+                              onPress={() =>
+                                Alert.alert(
+                                  'Alertă',
+                                  'Numărul de fişiere din torrent.',
+                                  [
+                                    {
+                                      text: 'OK',
+                                    },
+                                  ],
+                                  {onDismiss: () => {}, cancelable: true},
+                                )
+                              }>
+                              <FontAwesomeIcon
+                                size={14}
+                                icon={faCopy}
+                                color={ACCENT_COLOR}
+                              />
+                              <Text
+                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                {item.files}
+                              </Text>
+                            </Pressable>
+                          </View>
+                          <View style={HomePage.imdbInfoMainFooter3rd}>
+                            <Pressable
+                              style={HomePage.imdbInfoMainFooter3rdPressable}
+                              android_ripple={{
+                                color: 'grey',
+                                borderless: false,
+                                radius: 40,
+                              }}
+                              onPress={() =>
+                                Alert.alert(
+                                  'Alertă',
+                                  'Numărul de persoane care ţin torrentul la seed în acest moment.',
+                                  [
+                                    {
+                                      text: 'OK',
+                                      onPress: () => {},
+                                    },
+                                  ],
+                                  {cancelable: true},
+                                )
+                              }>
+                              <FontAwesomeIcon
+                                size={14}
+                                icon={faChevronCircleUp}
+                                color={'limegreen'}
+                              />
+                              <Text
+                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                {item.seeders}
+                              </Text>
+                            </Pressable>
                           </View>
                         </View>
-                      ) : (
-                        <View style={HomePage.imdbInfoMainFooterTall}>
-                          <View style={HomePage.imdbInfoMainFooterTallView}>
-                            <View style={HomePage.imdbInfoMainFooterView}>
-                              <View style={HomePage.imdbInfoMainFooter3rd}>
-                                <Pressable
-                                  style={
-                                    HomePage.imdbInfoMainFooter3rdPressable
-                                  }
-                                  android_ripple={{
-                                    color: 'grey',
-                                    borderless: false,
-                                    radius: 40,
-                                  }}
-                                  onPress={() =>
-                                    Alert.alert(
-                                      'Alertă',
-                                      'Mărimea totală a torrentului.',
-                                      [
-                                        {
-                                          text: 'OK',
-                                          onPress: () => {},
-                                        },
-                                      ],
-                                      {cancelable: true},
-                                    )
-                                  }>
-                                  <FontAwesomeIcon
-                                    size={14}
-                                    icon={faDatabase}
-                                    color={ACCENT_COLOR}
-                                  />
-                                  <Text
-                                    style={HomePage.imdbInfoMainFooter3rdText}>
-                                    {formatBytes(item.size)}
-                                  </Text>
-                                </Pressable>
-                              </View>
-                              <View style={HomePage.imdbInfoMainFooter3rd}>
-                                <Pressable
-                                  style={
-                                    HomePage.imdbInfoMainFooter3rdPressable
-                                  }
-                                  android_ripple={{
-                                    color: 'grey',
-                                    borderless: false,
-                                    radius: 40,
-                                  }}
-                                  onPress={() =>
-                                    Alert.alert(
-                                      'Alertă',
-                                      'Numărul de fişiere din torrent.',
-                                      [
-                                        {
-                                          text: 'OK',
-                                          onPress: () => {},
-                                        },
-                                      ],
-                                      {cancelable: true},
-                                    )
-                                  }>
-                                  <FontAwesomeIcon
-                                    size={14}
-                                    icon={faCopy}
-                                    color={ACCENT_COLOR}
-                                  />
-                                  <Text
-                                    style={HomePage.imdbInfoMainFooter3rdText}>
-                                    {item.files}
-                                  </Text>
-                                </Pressable>
-                              </View>
-                              <View style={HomePage.imdbInfoMainFooter3rd}>
-                                <Pressable
-                                  style={
-                                    HomePage.imdbInfoMainFooter3rdPressable
-                                  }
-                                  android_ripple={{
-                                    color: 'grey',
-                                    borderless: false,
-                                    radius: 40,
-                                  }}
-                                  onPress={() =>
-                                    Alert.alert(
-                                      'Alertă',
-                                      'Numărul de persoane care ţin torrentul la seed în acest moment.',
-                                      [
-                                        {
-                                          text: 'OK',
-                                          onPress: () => {},
-                                        },
-                                      ],
-                                      {cancelable: true},
-                                    )
-                                  }>
-                                  <FontAwesomeIcon
-                                    size={14}
-                                    icon={faChevronCircleUp}
-                                    color={'limegreen'}
-                                  />
-                                  <Text
-                                    style={HomePage.imdbInfoMainFooter3rdText}>
-                                    {item.seeders}
-                                  </Text>
-                                </Pressable>
-                              </View>
-                            </View>
-                            <View style={HomePage.imdbInfoMainFooterView2}>
-                              <View style={HomePage.imdbInfoMainFooter3rd}>
-                                <Pressable
-                                  style={
-                                    HomePage.imdbInfoMainFooter3rdPressable
-                                  }
-                                  android_ripple={{
-                                    color: 'grey',
-                                    borderless: false,
-                                    radius: 40,
-                                  }}
-                                  onPress={() =>
-                                    Alert.alert(
-                                      'Alertă',
-                                      'Data la care torrentul a apărut pe Filelist.',
-                                      [
-                                        {
-                                          text: 'OK',
-                                          onPress: () => {},
-                                        },
-                                      ],
-                                      {cancelable: true},
-                                    )
-                                  }>
-                                  <FontAwesomeIcon
-                                    size={14}
-                                    icon={faCalendarWeek}
-                                    color={ACCENT_COLOR}
-                                  />
-                                  <Text
-                                    style={HomePage.imdbInfoMainFooter3rdText}>
-                                    {item.upload_date.substring(0, 10)}
-                                  </Text>
-                                </Pressable>
-                              </View>
-                              <View style={HomePage.imdbInfoMainFooter3rd}>
-                                <Pressable
-                                  style={
-                                    HomePage.imdbInfoMainFooter3rdPressable
-                                  }
-                                  android_ripple={{
-                                    color: 'grey',
-                                    borderless: false,
-                                    radius: 40,
-                                  }}
-                                  onPress={() =>
-                                    Alert.alert(
-                                      'Alertă',
-                                      'De câte ori a fost descărcat torrentul.',
-                                      [
-                                        {
-                                          text: 'OK',
-                                          onPress: () => {},
-                                        },
-                                      ],
-                                      {cancelable: true},
-                                    )
-                                  }>
-                                  <FontAwesomeIcon
-                                    size={14}
-                                    icon={faDownload}
-                                    color={ACCENT_COLOR}
-                                  />
-                                  <Text
-                                    style={HomePage.imdbInfoMainFooter3rdText}>
-                                    {item.times_completed}
-                                  </Text>
-                                </Pressable>
-                              </View>
-                              <View style={HomePage.imdbInfoMainFooter3rd}>
-                                <Pressable
-                                  style={
-                                    HomePage.imdbInfoMainFooter3rdPressable
-                                  }
-                                  android_ripple={{
-                                    color: 'grey',
-                                    borderless: false,
-                                    radius: 40,
-                                  }}
-                                  onPress={() =>
-                                    Alert.alert(
-                                      'Alertă',
-                                      'Numărul de persoane care descarcă torrentul în acest moment.',
-                                      [
-                                        {
-                                          text: 'OK',
-                                          onPress: () => {},
-                                        },
-                                      ],
-                                      {cancelable: true},
-                                    )
-                                  }>
-                                  <FontAwesomeIcon
-                                    size={14}
-                                    icon={faChevronCircleDown}
-                                    color={'crimson'}
-                                  />
-                                  <Text
-                                    style={HomePage.imdbInfoMainFooter3rdText}>
-                                    {item.leechers}
-                                  </Text>
-                                </Pressable>
-                              </View>
-                            </View>
+                        <View style={HomePage.imdbInfoMainFooterView2}>
+                          <View style={HomePage.imdbInfoMainFooter3rd}>
+                            <Pressable
+                              style={HomePage.imdbInfoMainFooter3rdPressable}
+                              android_ripple={{
+                                color: 'grey',
+                                borderless: false,
+                                radius: 40,
+                              }}
+                              onPress={() =>
+                                Alert.alert(
+                                  'Alertă',
+                                  'Data la care torrentul a apărut pe Filelist.',
+                                  [
+                                    {
+                                      text: 'OK',
+                                      onPress: () => {},
+                                    },
+                                  ],
+                                  {cancelable: true},
+                                )
+                              }>
+                              <FontAwesomeIcon
+                                size={14}
+                                icon={faCalendarWeek}
+                                color={ACCENT_COLOR}
+                              />
+                              <Text
+                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                {item.upload_date.substring(0, 10)}
+                              </Text>
+                            </Pressable>
+                          </View>
+                          <View style={HomePage.imdbInfoMainFooter3rd}>
+                            <Pressable
+                              style={HomePage.imdbInfoMainFooter3rdPressable}
+                              android_ripple={{
+                                color: 'grey',
+                                borderless: false,
+                                radius: 40,
+                              }}
+                              onPress={() =>
+                                Alert.alert(
+                                  'Alertă',
+                                  'De câte ori a fost descărcat torrentul.',
+                                  [
+                                    {
+                                      text: 'OK',
+                                      onPress: () => {},
+                                    },
+                                  ],
+                                  {cancelable: true},
+                                )
+                              }>
+                              <FontAwesomeIcon
+                                size={14}
+                                icon={faDownload}
+                                color={ACCENT_COLOR}
+                              />
+                              <Text
+                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                {item.times_completed}
+                              </Text>
+                            </Pressable>
+                          </View>
+                          <View style={HomePage.imdbInfoMainFooter3rd}>
+                            <Pressable
+                              style={HomePage.imdbInfoMainFooter3rdPressable}
+                              android_ripple={{
+                                color: 'grey',
+                                borderless: false,
+                                radius: 40,
+                              }}
+                              onPress={() =>
+                                Alert.alert(
+                                  'Alertă',
+                                  'Numărul de persoane care descarcă torrentul în acest moment.',
+                                  [
+                                    {
+                                      text: 'OK',
+                                      onPress: () => {},
+                                    },
+                                  ],
+                                  {cancelable: true},
+                                )
+                              }>
+                              <FontAwesomeIcon
+                                size={14}
+                                icon={faChevronCircleDown}
+                                color={'crimson'}
+                              />
+                              <Text
+                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                {item.leechers}
+                              </Text>
+                            </Pressable>
                           </View>
                         </View>
-                      )}
+                      </View></>
+                      ) : 
+                          <>
+                      <View style={HomePage.imdbInfoMainFooter}>
+                      <View style={HomePage.imdbInfoMainFooterView}>
+                        <View style={HomePage.imdbInfoMainFooter3rd}>
+                          <Pressable
+                            style={HomePage.imdbInfoMainFooter3rdPressable}
+                            android_ripple={{
+                              color: 'grey',
+                              borderless: false,
+                              radius: 40,
+                            }}
+                            onPress={() =>
+                              Alert.alert(
+                                'Alertă',
+                                'Mărimea totală a torrentului.',
+                                [
+                                  {
+                                    text: 'OK',
+                                    onPress: () => {},
+                                  },
+                                ],
+                                {cancelable: true},
+                              )
+                            }>
+                            <FontAwesomeIcon
+                              size={14}
+                              icon={faDatabase}
+                              color={ACCENT_COLOR}
+                            />
+                            <Text
+                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              {formatBytes(item.size)}
+                            </Text>
+                          </Pressable>
+                        </View>
+                        <View style={HomePage.imdbInfoMainFooter3rd}>
+                          <Pressable
+                            style={HomePage.imdbInfoMainFooter3rdPressable}
+                            android_ripple={{
+                              color: 'grey',
+                              borderless: false,
+                              radius: 40,
+                            }}
+                            onPress={() =>
+                              Alert.alert(
+                                'Alertă',
+                                'Numărul de fişiere din torrent.',
+                                [
+                                  {
+                                    text: 'OK',
+                                  },
+                                ],
+                                {onDismiss: () => {}, cancelable: true},
+                              )
+                            }>
+                            <FontAwesomeIcon
+                              size={14}
+                              icon={faCopy}
+                              color={ACCENT_COLOR}
+                            />
+                            <Text
+                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              {item.files}
+                            </Text>
+                          </Pressable>
+                        </View>
+                        <View style={HomePage.imdbInfoMainFooter3rd}>
+                          <Pressable
+                            style={HomePage.imdbInfoMainFooter3rdPressable}
+                            android_ripple={{
+                              color: 'grey',
+                              borderless: false,
+                              radius: 40,
+                            }}
+                            onPress={() =>
+                              Alert.alert(
+                                'Alertă',
+                                'Numărul de persoane care ţin torrentul la seed în acest moment.',
+                                [
+                                  {
+                                    text: 'OK',
+                                    onPress: () => {},
+                                  },
+                                ],
+                                {cancelable: true},
+                              )
+                            }>
+                            <FontAwesomeIcon
+                              size={14}
+                              icon={faChevronCircleUp}
+                              color={'limegreen'}
+                            />
+                            <Text
+                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              {item.seeders}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                      <View style={HomePage.imdbInfoMainFooterView2}>
+                        <View style={HomePage.imdbInfoMainFooter3rd}>
+                          <Pressable
+                            style={HomePage.imdbInfoMainFooter3rdPressable}
+                            android_ripple={{
+                              color: 'grey',
+                              borderless: false,
+                              radius: 40,
+                            }}
+                            onPress={() =>
+                              Alert.alert(
+                                'Alertă',
+                                'Data la care torrentul a apărut pe Filelist.',
+                                [
+                                  {
+                                    text: 'OK',
+                                    onPress: () => {},
+                                  },
+                                ],
+                                {cancelable: true},
+                              )
+                            }>
+                            <FontAwesomeIcon
+                              size={14}
+                              icon={faCalendarWeek}
+                              color={ACCENT_COLOR}
+                            />
+                            <Text
+                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              {item.upload_date.substring(0, 10)}
+                            </Text>
+                          </Pressable>
+                        </View>
+                        <View style={HomePage.imdbInfoMainFooter3rd}>
+                          <Pressable
+                            style={HomePage.imdbInfoMainFooter3rdPressable}
+                            android_ripple={{
+                              color: 'grey',
+                              borderless: false,
+                              radius: 40,
+                            }}
+                            onPress={() =>
+                              Alert.alert(
+                                'Alertă',
+                                'De câte ori a fost descărcat torrentul.',
+                                [
+                                  {
+                                    text: 'OK',
+                                    onPress: () => {},
+                                  },
+                                ],
+                                {cancelable: true},
+                              )
+                            }>
+                            <FontAwesomeIcon
+                              size={14}
+                              icon={faDownload}
+                              color={ACCENT_COLOR}
+                            />
+                            <Text
+                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              {item.times_completed}
+                            </Text>
+                          </Pressable>
+                        </View>
+                        <View style={HomePage.imdbInfoMainFooter3rd}>
+                          <Pressable
+                            style={HomePage.imdbInfoMainFooter3rdPressable}
+                            android_ripple={{
+                              color: 'grey',
+                              borderless: false,
+                              radius: 40,
+                            }}
+                            onPress={() =>
+                              Alert.alert(
+                                'Alertă',
+                                'Numărul de persoane care descarcă torrentul în acest moment.',
+                                [
+                                  {
+                                    text: 'OK',
+                                    onPress: () => {},
+                                  },
+                                ],
+                                {cancelable: true},
+                              )
+                            }>
+                            <FontAwesomeIcon
+                              size={14}
+                              icon={faChevronCircleDown}
+                              color={'crimson'}
+                            />
+                            <Text
+                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              {item.leechers}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      </View>
                     </View>
+                          </>}
+                      </View>
                   );
                 })
               : null}
-          </View>
+              </ScrollView>
         </Overlay>
         <Overlay
           statusBarTranslucent
           animationType="slide"
-          backdropStyle={HomePage.settingsOverlayBackdrop}
           overlayStyle={HomePage.settingsOverlay}
           isVisible={isSettings}
           onBackdropPress={() => {
             setIsSettings(false);
           }}>
           <View style={HomePage.settingsOverlayCloseContainer}>
-            <Pressable
-              style={HomePage.settingsOverlayClosePressable}
-              android_ripple={{
-                color: 'white',
-                borderless: true,
-                radius: 20,
-              }}
-              onPress={() => setIsSettings(false)}>
-              <FontAwesomeIcon size={25} color={'white'} icon={faTimes} />
-            </Pressable>
             <View style={HomePage.settingsOverlayLogoutContainer}>
               <Pressable
                 style={HomePage.settingsOverlayLogoutPressable}
@@ -2465,13 +2442,8 @@ export default function Home() {
             </View>
           </View>
         </View>
-        <View
-          style={[
-            HomePage.mainClearSearchBar,
-            {
-              top: isSearchBar ? StatusBar.currentHeight * 3 : -100,
-            },
-          ]}>
+        {isSearchBar ? <View
+          style={HomePage.mainClearSearchBar}>
           <View style={HomePage.mainClearSearchBarContainer}>
             <Pressable
               style={HomePage.mainClearSearchBarPressable}
@@ -2496,8 +2468,7 @@ export default function Home() {
             </Text>
             "
           </Text>
-        </View>
-        <Input
+        </View> : <Input
           ref={SearchBarRef}
           style={HomePage.searchInputStyle}
           containerStyle={HomePage.searchInputContainerStyle}
@@ -2537,7 +2508,7 @@ export default function Home() {
           }
           onChangeText={(search) => setSearch(search)}
           value={search}
-        />
+        />}
         {searchLoading ? (
           <View style={HomePage.searchLoadingContainer}>
             <ActivityIndicator
@@ -2586,8 +2557,16 @@ export default function Home() {
               />
             }
             contentContainerStyle={HomePage.flatListsContentContainer}
-            data={listLatest}
-            renderItem={renderItem}
+            data={listLatestLoading ? [{id: 'ABC'}] : listLatest}
+            renderItem={listLatestLoading ? (item, index) => (
+              <View key={index} style={HomePage.searchLoadingContainer}>
+            <ActivityIndicator
+              style={HomePage.searchLoadingAI}
+              size="large"
+              color={ACCENT_COLOR}
+            />
+          </View>
+            ) : renderItem}
             keyExtractor={(item) => item.id.toString()}
           />
         )}
@@ -2658,7 +2637,7 @@ const HomePage = EStyleSheet.create({
       marginBottom: '15rem',
     },
     itemPressableContainer: {
-      height: '64rem',
+      height: '75rem',
       width: '100%',
       borderColor: '#181818',
       borderWidth: '0.5rem',
@@ -2668,18 +2647,18 @@ const HomePage = EStyleSheet.create({
       backgroundColor: 'rgba(255, 255, 255, 0.05)',
     },
     itemPresssablePic: {
-      height: '63.8rem',
-      width: '63.8rem',
+      height: '73.7rem',
+      width: '73.7rem',
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
     },
     itemPresssableFastImage: {height: '100%', width: '100%'},
     itemPressableContentContainer: {
-      height: '64rem',
+      height: '75rem',
       width: '80%',
       flexDirection: 'column',
-      justifyContent: 'flex-start',
+      justifyContent: 'space-around',
       alignItems: 'flex-start',
     },
     itemPressableNameContainer: {
@@ -2692,7 +2671,7 @@ const HomePage = EStyleSheet.create({
       textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      fontSize: '11rem',
+      fontSize: '10rem',
       color: 'white',
     },
     itemPressableUploadContainer: {
@@ -3043,30 +3022,35 @@ const HomePage = EStyleSheet.create({
     },
     imdbInfoContainer: {
       width: '100%',
-      height: '100%',
+      paddingBottom: StatusBar.currentHeight,
       flexDirection: 'column',
       justifyContent: 'flex-start',
-      alignItems: 'center',
+      alignItems: 'flex-start'
+    },
+    imdbInfoContainerStyle: {
+      width: '100%',
+      
     },
     imdbInfoView: {
       width: '100%',
       height: '100%',
       flexDirection: 'column',
       justifyContent: 'flex-start',
-      alignItems: 'center',
+      alignItems: 'flex-start',
     },
     imdbInfoHeader: {
       width: '100%',
-      height: '8.5%',
+      height: '45rem',
       flexDirection: 'row',
       justifyContent: 'flex-end',
       alignItems: 'center',
+      marginBottom: '8rem'
     },
     imdbInfoHeaderFastImage: {
       position: 'absolute',
       left: 0,
-      height: '100%',
-      width: 45,
+      height: '45rem',
+      width: '45rem',
     },
     imdbInfoHeaderText: {
       width: '85%',
@@ -3081,7 +3065,7 @@ const HomePage = EStyleSheet.create({
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
       color: MAIN_LIGHT,
-      fontSize: 18,
+      fontSize: '16rem',
     },
     imdbInfoHeaderDesc: {
       textShadowColor: 'black',
@@ -3092,29 +3076,22 @@ const HomePage = EStyleSheet.create({
       fontWeight: 'bold',
       textAlign: 'center',
     },
-    imdbInfoSeparator: {
-      position: 'relative',
-      top: 0,
-      left: 0,
-      marginTop: 10,
-      marginBottom: 10,
-      width: '100%',
-      height: '0.1%',
-      backgroundColor: '#303030',
-    },
     imdbInfoTitleSection: {
       width: '100%',
-      height: '10%',
+      height: '60rem',
       flexDirection: 'row',
       justifyContent: 'flex-start',
       alignItems: 'flex-start',
+      borderTopWidth: '0.5rem',
+      borderTopColor: '#303030',
+      paddingTop: '6rem'
     },
     imdbInfoTitleText: {
       textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
       color: MAIN_LIGHT,
-      fontSize: 12,
+      fontSize: '10rem',
       fontWeight: 'bold',
     },
     imdbInfoTitleBadges: {
@@ -3122,50 +3099,54 @@ const HomePage = EStyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'flex-start',
       alignItems: 'center',
+      marginBottom: '6rem'
     },
     imdbInfoFreeleechBadge: {
       textShadowColor: 'black',
       textShadowOffset: {width: '1rem', height: '1rem'},
       textShadowRadius: '1rem',
-      paddingHorizontal: 2,
+      paddingHorizontal:'1rem',
       borderColor: '#1ec621',
       borderWidth: '0.5rem',
       fontSize: '7.5rem',
       color: 'aliceblue',
-      marginLeft: 5,
+      marginLeft: '4rem',
       backgroundColor: '#09580a',
     },
     imdbInfoDoubleUpBadge: {
       textShadowColor: 'black',
       textShadowOffset: {width: '1rem', height: '1rem'},
       textShadowRadius: '1rem',
-      paddingHorizontal: 2,
+      paddingHorizontal:'1rem',
       borderColor: '#7c00ff',
       borderWidth: '0.5rem',
       fontSize: '7.5rem',
       color: 'aliceblue',
-      marginLeft: 5,
+      marginLeft: '4rem',
       backgroundColor: '#370f61',
     },
     imdbInfoInternalBadge: {
       textShadowColor: 'black',
       textShadowOffset: {width: '1rem', height: '1rem'},
       textShadowRadius: '1rem',
-      paddingHorizontal: 2,
+      paddingHorizontal:'1rem',
       borderColor: '#1e87c6',
       borderWidth: '0.5rem',
       fontSize: '7.5rem',
       color: 'aliceblue',
-      marginLeft: 5,
+      marginLeft: '4rem',
       backgroundColor: '#093b58',
     },
-    imdbInfoIDnull: {
+    imdbInfoDataContainer: {
+      borderTopColor: '#303030',
+      borderTopWidth: '0.5rem',
+      paddingTop: '12rem',
       width: '100%',
-      height: '50%',
+      height: '250rem',
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: '7%',
+      marginBottom: '15rem'
     },
     imdbInfoActivityIndicator: {
       width: '100%',
@@ -3187,7 +3168,7 @@ const HomePage = EStyleSheet.create({
       height: '100%',
       flexDirection: 'column',
       justifyContent: 'flex-start',
-      alignItems: 'flex-start',
+      alignItems: 'flex-start'
     },
     imdbInfoPosterPressable: {
       width: '100%',
@@ -3197,29 +3178,29 @@ const HomePage = EStyleSheet.create({
       alignItems: 'flex-start',
     },
     imdbInfoMainPosterFastImage: {
-      width: '85%',
-      height: '80%',
+      width: '90%',
+      height: '79%',
     },
     imdbInfoRatingView: {
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      width: '85%',
-      height: '20%',
+      width: '90%',
+      height: '21%',
     },
     imdbInfoRatingText: {
-      fontSize: 10,
+      fontSize: '8rem',
       textShadowColor: 'black',
       textShadowOffset: {
-        width: 0.5,
-        height: 0.5,
+        width: '1rem',
+        height: '1rem',
       },
       textShadowRadius: '1rem',
       color: 'white',
-      fontSize: 18,
+      fontSize: '16rem',
       fontWeight: 'bold',
     },
-    imdbInfoRatingIcon: {marginLeft: 10},
+    imdbInfoRatingIcon: {marginLeft: '8rem'},
     imdbInfoMainPlotView: {
       width: '50%',
       height: '100%',
@@ -3236,22 +3217,22 @@ const HomePage = EStyleSheet.create({
       alignItems: 'flex-start',
     },
     imdbInfoMainPlotTitle: {
-      fontSize: 10,
+      fontSize: '10rem',
       textShadowColor: 'black',
       textShadowOffset: {
-        width: 0.5,
-        height: 0.5,
+        width: '1rem',
+        height: '1rem',
       },
       textShadowRadius: '1rem',
       color: 'grey',
       fontWeight: 'bold',
     },
     imdbInfoMainPlotText: {
-      fontSize: 10,
+      fontSize: '9rem',
       textShadowColor: 'black',
       textShadowOffset: {
-        width: 0.5,
-        height: 0.5,
+        width: '1rem',
+        height: '1rem',
       },
       textShadowRadius: '1rem',
       color: 'white',
@@ -3261,37 +3242,39 @@ const HomePage = EStyleSheet.create({
       position: 'relative',
       top: 0,
       left: 0,
-      marginTop: '4%',
-      marginBottom: '4%',
+      marginVertical: '5rem',
       width: '100%',
-      height: '0.2%',
-      backgroundColor: '#404040',
+      height: '0.5rem',
+      backgroundColor: '#303030',
     },
     imdbInfoMainETATitle: {
-      fontSize: 10,
+      fontSize: '10rem',
       textShadowColor: 'black',
       textShadowOffset: {
-        width: 0.5,
-        height: 0.5,
+        width: '1rem',
+        height: '1rem',
       },
       textShadowRadius: '1rem',
       color: 'grey',
       fontWeight: 'bold',
     },
     imdbInfoMainETAText: {
-      fontSize: 10,
+      fontSize: '9rem',
       textShadowColor: 'black',
       textShadowOffset: {
-        width: 0.5,
-        height: 0.5,
+        width: '1rem',
+        height: '1rem',
       },
       textShadowRadius: '1rem',
       color: 'white',
       fontWeight: 'bold',
     },
     imdbInfoMainFooter: {
+      borderTopWidth: '0.5rem',
+      borderTopColor: '#303030',
       width: '100%',
-      height: '14%',
+      paddingTop: '12rem',
+      height: '80rem',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
@@ -3309,7 +3292,7 @@ const HomePage = EStyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: 12,
+      marginTop: '10rem',
     },
     imdbInfoMainFooter3rd: {
       width: '33.33%',
@@ -3325,7 +3308,7 @@ const HomePage = EStyleSheet.create({
       alignItems: 'center',
     },
     imdbInfoMainFooter3rdText: {
-      fontSize: 10,
+      fontSize: '9rem',
       textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
@@ -3333,7 +3316,7 @@ const HomePage = EStyleSheet.create({
     },
     imdbInfoMainFooterTall: {
       width: '100%',
-      height: '64%',
+      height: '200rem',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
@@ -3345,7 +3328,6 @@ const HomePage = EStyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
     },
-    settingsOverlayBackdrop: {backgroundColor: 'transparent'},
     settingsOverlay: {
       position: 'absolute',
       bottom: 0,
@@ -3365,6 +3347,7 @@ const HomePage = EStyleSheet.create({
       flexDirection: 'column',
       justifyContent: 'flex-end',
       alignItems: 'center',
+      backgroundColor: '#202020'
     },
     settingsOverlayClosePressable: {
       position: 'absolute',
@@ -3405,7 +3388,7 @@ const HomePage = EStyleSheet.create({
       justifyContent: 'flex-start',
       alignItems: 'flex-end',
       backgroundColor: ACCENT_COLOR,
-      paddingBottom: 6,
+      paddingBottom: '5rem',
     },
     mainHeaderContainer: {
       flex: 1,
@@ -3437,7 +3420,6 @@ const HomePage = EStyleSheet.create({
       alignItems: 'center',
     },
     mainClearSearchBar: {
-      position: 'absolute',
       zIndex: 8,
       elevation: 8,
       height: '64rem',
@@ -3499,7 +3481,7 @@ const HomePage = EStyleSheet.create({
       paddingRight: '1.5rem',
     },
     searchInputRIContainer: {
-      height: '100%',
+      height: '35rem',
       width: '35rem',
       borderRadius: 100,
       justifyContent: 'center',
@@ -3576,50 +3558,41 @@ const HomePage = EStyleSheet.create({
     },
     refreshContainer: {
       height: StatusBar.currentHeight * 2,
+      width: '93%',
       elevation: 9,
       zIndex: 9,
       position: 'absolute',
-      bottom: '1.7%',
-      backgroundColor: 'rgba(21, 171, 244, 0.8)',
-      width: '93%',
+      top: '50%',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 34,
     },
     refreshTextPrimary: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '1rem', height: '1rem'},
-      textShadowRadius: '1rem',
       fontSize: '12rem',
-      color: 'white',
+      color: 'black',
       fontWeight: 'bold',
     },
     refreshTextSecondary: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
       fontSize: '12rem',
-      color: 'white',
+      color: 'black',
       paddingBottom: '4rem',
     },
     clipboardAlertContainer: {
+      width: '93%',
       height: StatusBar.currentHeight * 2,
       elevation: 9,
       zIndex: 9,
       position: 'absolute',
-      bottom: '1.7%',
-      backgroundColor: 'rgba(21, 171, 244, 0.8)',
-      width: '93%',
+      top: '50%',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 34,
     },
     clipboardAlertText: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '1rem', height: '1rem'},
-      textShadowRadius: '1rem',
       fontSize: '12rem',
-      color: 'white',
+      color: 'black',
       fontWeight: 'bold',
     },
   });
