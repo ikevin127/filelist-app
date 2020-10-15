@@ -491,7 +491,7 @@ export default function Home() {
         duration: 150,
         useNativeDriver: false,
       }).start();
-    }, 3500);
+    }, 2500);
   };
 
   const getRefreshData = async () => {
@@ -551,7 +551,8 @@ export default function Home() {
       }}
       style={[HomePage.itemPressable, style]}>
       <View style={HomePage.itemPressableContainer}>
-        <View style={HomePage.itemPresssablePic}>
+        <View style={HomePage.itemPressableFirst}>
+          <View style={HomePage.itemPresssablePic}>
           <FastImage
             style={HomePage.itemPresssableFastImage}
             resizeMode={FastImage.resizeMode.contain}
@@ -611,15 +612,16 @@ export default function Home() {
                 : null
             }
           />
-        </View>
-        <View style={HomePage.itemPressableContentContainer}>
+          </View>
           <View style={HomePage.itemPressableNameContainer}>
             <Text style={HomePage.itemPressableNameText}>{item.name}</Text>
-          </View>
-          <View style={HomePage.itemPressableUploadContainer}>
             <Text style={HomePage.itemPressableUploadText}>
               [ {item.upload_date.substring(0, 16)} ]
             </Text>
+          </View>
+        </View>
+        <View style={HomePage.itemPressableContentContainer}>
+          <View style={HomePage.itemPressableUploadContainer}>
             {item.doubleup === 1 ? (
               <Text style={HomePage.itemPressableDoubleUpText}>2X UPLOAD</Text>
             ) : null}
@@ -2637,57 +2639,66 @@ const HomePage = EStyleSheet.create({
       marginBottom: '15rem',
     },
     itemPressableContainer: {
-      height: '75rem',
+      height: '80rem',
       width: '100%',
       borderColor: '#181818',
       borderWidth: '0.5rem',
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
+      flexDirection: 'column',
+      justifyContent: 'center',
       alignItems: 'flex-start',
       backgroundColor: 'rgba(255, 255, 255, 0.05)',
     },
-    itemPresssablePic: {
-      height: '73.7rem',
-      width: '73.7rem',
+    itemPressableFirst: {
+      height: '76%',
+      width: '100%',
       flexDirection: 'row',
       justifyContent: 'center',
-      alignItems: 'center',
-    },
-    itemPresssableFastImage: {height: '100%', width: '100%'},
-    itemPressableContentContainer: {
-      height: '75rem',
-      width: '80%',
-      flexDirection: 'column',
-      justifyContent: 'space-around',
       alignItems: 'flex-start',
     },
+    itemPresssablePic: {
+      height: '100%',
+      width: '20%',
+      paddingTop: '6rem',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'flex-start'
+    },
+    itemPresssableFastImage: {height: '100%', width: '100%'},
     itemPressableNameContainer: {
+      justifyContent: 'space-between',
       paddingTop: '4rem',
       paddingHorizontal: '6rem',
-      height: '50rem',
-      width: '100%',
+      height: '100%',
+      width: '78%',
     },
     itemPressableNameText: {
       textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
       fontSize: '10rem',
-      color: 'white',
-    },
-    itemPressableUploadContainer: {
-      height: '13rem',
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
+      color: 'white'
     },
     itemPressableUploadText: {
-      fontSize: '7.5rem',
+      fontSize: '8rem',
       color: 'silver',
       textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      paddingLeft: '6rem',
+    },
+    itemPressableContentContainer: {
+      height: '24%',
+      width: '100%',
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      paddingLeft: '21.5%'
+    },
+    itemPressableUploadContainer: {
+      height: '20rem',
+      width: '100%',
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
     },
     itemPressableFreeleechText: {
       textShadowColor: 'black',
@@ -2985,7 +2996,7 @@ const HomePage = EStyleSheet.create({
       borderColor: 'white',
     },
     advSearchPressableContainer: {
-      width: StatusBar.currentHeight * 6,
+      width: StatusBar.currentHeight * 7,
       height: '10%',
       backgroundColor: ACCENT_COLOR,
       overflow: 'hidden',
@@ -3360,7 +3371,7 @@ const HomePage = EStyleSheet.create({
     },
     settingsOverlayLogoutContainer: {
       width: '100%',
-      height: '20%',
+      height: '25%',
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: 'crimson',
@@ -3378,7 +3389,7 @@ const HomePage = EStyleSheet.create({
       textShadowRadius: '1rem',
       color: 'white',
       fontWeight: 'bold',
-      fontSize: 18,
+      fontSize: '16rem',
     },
     mainHeader: {
       height: StatusBar.currentHeight * 3,
