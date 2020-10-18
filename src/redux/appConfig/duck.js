@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-community/async-storage';
 import {types} from '../types';
 
 const initState = {
+  lightTheme: false,
   listLatest: null,
   listSearch: null,
   listImdb: null,
@@ -14,6 +15,9 @@ const initState = {
 };
 
 export const actions = {
+  toggleLightTheme: () => ({
+    type: types.APP_CONFIG.LIGHT_THEME,
+  }),
   getLatest: (user, pass) => async (dispatch) => {
     await Axios.get(
       `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=latest-torrents&limit=50`,
@@ -193,6 +197,8 @@ export const actions = {
 
 export function reducer(state = initState, action) {
   switch (action.type) {
+    case types.APP_CONFIG.LIGHT_THEME:
+      return {...state, lightTheme: !state.lightTheme};
     case types.APP_CONFIG.GET_LATEST:
       return {...state, listLatest: action.payload};
     case types.APP_CONFIG.GET_SEARCH:

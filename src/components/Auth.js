@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import AsyncStorage from '@react-native-community/async-storage';
 import Loading from './Loading';
 import Login from './Login';
 import Home from './Home';
@@ -18,6 +19,7 @@ export default function Auth() {
   const {listLatest} = useSelector((state) => state.appConfig);
 
   useEffect(() => {
+    establishTheme();
     if (!listLatest) {
       dispatch(AppConfigActions.retrieveLatest());
       setTimeout(() => {
@@ -25,6 +27,23 @@ export default function Auth() {
       }, 100);
     }
   }, []);
+
+  const establishTheme = async () => {
+    try {
+      const currentTheme = await AsyncStorage.getItem('theme');
+      if (currentTheme !== null) {
+        if (currentTheme === 'light') {
+          dispatch(AppConfigActions.toggleLightTheme())
+        } else {
+          // do notin'
+        }
+      } else {
+        await AsyncStorage.setItem('theme', 'dark');
+      }
+    } catch (e) {
+      alert(e);
+    }
+  }
 
   return (
     <Stack.Navigator
@@ -38,7 +57,7 @@ export default function Auth() {
           name="Home"
           component={Home}
           options={{
-            animationTypeForReplace: 'pop',
+            animationTypeForReplace: 'push',
           }}
         />
       ) : loading ? (

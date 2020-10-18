@@ -31,7 +31,7 @@ const ACCENT_COLOR = '#15ABF4';
 
 export default function Login() {
   const dispatch = useDispatch();
-  const {listLatest, latestError} = useSelector((state) => state.appConfig);
+  const {lightTheme, listLatest, latestError} = useSelector((state) => state.appConfig);
   const [userModal, setUserModal] = useState(false);
   const [passModal, setPassModal] = useState(false);
   const [aboutModal, setAboutModal] = useState(false);
@@ -40,38 +40,20 @@ export default function Login() {
   const [invalid, setInvalid] = useState(false);
   const [invalidUser, setInvalidUser] = useState(false);
   const [invalidPass, setInvalidPass] = useState(false);
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const err1 = useRef();
   const err2 = useRef();
   const err3 = useRef();
-  const err4 = useRef();
 
   useEffect(() => {
     if (latestError !== null) {
       setLoginLoading(false);
     }
 
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
-        setKeyboardVisible(true);
-      },
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        setKeyboardVisible(false);
-      },
-    );
-
     return () => {
       clearInterval(err1.current);
       clearInterval(err2.current);
       clearInterval(err3.current);
-      clearInterval(err4.current);
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
     };
   }, [listLatest, latestError]);
 
@@ -110,7 +92,7 @@ export default function Login() {
     if (user.length > 0 && pass.length > 0) {
       await storeData(user, pass);
       dispatch(AppConfigActions.getLatest(user, pass));
-      err4.current = setTimeout(() => {
+      setTimeout(() => {
         dispatch(AppConfigActions.latestError());
       }, 5000);
     }
@@ -121,14 +103,18 @@ export default function Login() {
       <Overlay
         statusBarTranslucent
         animationType="fade"
-        overlayStyle={LoginPage.dataOverlay}
+        overlayStyle={{width: '90%',
+        height: '30%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 0,backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}}
         isVisible={userModal}
         onBackdropPress={() => {
           setUserModal(false);
         }}>
         <View style={LoginPage.dataContainer}>
           <View style={LoginPage.openFilelist}>
-            <Text style={LoginPage.openText}>Deschide</Text>
+            <Text style={{color: lightTheme ? MAIN_DARK : 'white', fontWeight: 'bold'}}>Deschide</Text>
             <Pressable
               style={LoginPage.filelistPressable}
               android_ripple={{
@@ -151,14 +137,18 @@ export default function Login() {
       <Overlay
         statusBarTranslucent
         animationType="fade"
-        overlayStyle={LoginPage.dataOverlay}
+        overlayStyle={{width: '90%',
+        height: '30%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 0,backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}}
         isVisible={passModal}
         onBackdropPress={() => {
           setPassModal(false);
         }}>
         <View style={LoginPage.dataContainer}>
           <View style={LoginPage.openFilelist}>
-            <Text style={LoginPage.openText}>Deschide</Text>
+            <Text style={{color: lightTheme ? MAIN_DARK : 'white', fontWeight: 'bold'}}>Deschide</Text>
             <Pressable
               style={LoginPage.filelistPressable}
               android_ripple={{
@@ -181,7 +171,11 @@ export default function Login() {
       <Overlay
         statusBarTranslucent
         animationType="fade"
-        overlayStyle={LoginPage.dataOverlay}
+        overlayStyle={{width: '90%',
+        height: '30%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 0,backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}}
         isVisible={aboutModal}
         onBackdropPress={() => {
           setAboutModal(false);
@@ -189,25 +183,37 @@ export default function Login() {
         <View style={LoginPage.dataContainer}>
           <ScrollView
             showsVerticalScrollIndicator={true}
-            contentContainerStyle={LoginPage.aboutScrollView}>
+            contentContainerStyle={[LoginPage.aboutScrollView, {backgroundColor: lightTheme ? MAIN_LIGHT:MAIN_DARK}]}>
             <View style={LoginPage.aboutFirst}>
               <View style={LoginPage.aboutLeftHalf}>
-                <Text style={LoginPage.aboutLeftText}>About</Text>
+                <Text style={{fontWeight: 'bold',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 1,color: lightTheme ? MAIN_DARK:MAIN_LIGHT, textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>About</Text>
               </View>
               <View style={LoginPage.aboutRightHalf}>
-                <Text style={LoginPage.aboutRightText}>Filelist App</Text>
+                <Text style={{color: ACCENT_COLOR,
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 1,textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>Filelist App</Text>
               </View>
             </View>
             <View style={LoginPage.aboutSecond}>
               <View style={LoginPage.aboutLeftHalf}>
-                <Text style={LoginPage.aboutLeftText}>Version</Text>
+                <Text style={{fontWeight: 'bold',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 1,color: lightTheme ? MAIN_DARK:MAIN_LIGHT, textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>Version</Text>
                 <View style={LoginPage.aboutSeparator} />
-                <Text style={LoginPage.aboutLeftText}>Publisher</Text>
+                <Text style={{fontWeight: 'bold',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 1,color: lightTheme ? MAIN_DARK:MAIN_LIGHT, textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>Publisher</Text>
                 <View style={LoginPage.aboutSeparator} />
-                <Text style={LoginPage.aboutLeftText}>Developed with</Text>
+                <Text style={{fontWeight: 'bold',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 1,color: lightTheme ? MAIN_DARK:MAIN_LIGHT, textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>Developed with</Text>
               </View>
               <View style={LoginPage.aboutRightHalf}>
-                <Text style={LoginPage.aboutRightText}>v1.0.0</Text>
+                <Text style={{color: ACCENT_COLOR,
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 1,textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>v1.0.0</Text>
                 <View style={LoginPage.aboutSeparator} />
                 <View style={LoginPage.aboutPressView}>
                   <Pressable
@@ -218,7 +224,10 @@ export default function Login() {
                     onPress={() =>
                       Linking.openURL('https://github.com/baderproductions')
                     }>
-                    <Text style={LoginPage.aboutRightTextUnderlined}>
+                    <Text style={{color: ACCENT_COLOR,
+    textDecorationLine: 'underline',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 1,textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>
                       BADERproductions
                     </Text>
                   </Pressable>
@@ -235,7 +244,10 @@ export default function Login() {
                         'https://www.npmjs.com/package/react-native',
                       )
                     }>
-                    <Text style={LoginPage.aboutRightTextUnderlined}>
+                    <Text style={{color: ACCENT_COLOR,
+    textDecorationLine: 'underline',
+    textShadowOffset: {width: 1, height: 1},
+    textShadowRadius: 1,textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>
                       React Native v0.63.3
                     </Text>
                   </Pressable>
@@ -246,7 +258,7 @@ export default function Login() {
         </View>
       </Overlay>
       <StatusBar
-        barStyle={'light-content'}
+        barStyle={lightTheme ? 'dark-content':'light-content'}
         backgroundColor={'transparent'}
         translucent={true}
       />
@@ -255,7 +267,7 @@ export default function Login() {
           enabled={false}
           style={LoginPage.KeyboardAvoidingView}
           behavior={'padding'}>
-          <View style={LoginPage.container}>
+          <View style={[LoginPage.container, {backgroundColor: lightTheme ? MAIN_LIGHT:MAIN_DARK}]}>
             <View style={LoginPage.profilePicContainer}>
               <FastImage
                 style={LoginPage.picture}
@@ -265,19 +277,20 @@ export default function Login() {
             </View>
             <View style={LoginPage.form}>
               <Input
-                style={LoginPage.input}
+                style={{height: 45,
+                fontSize: 13,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                 containerStyle={LoginPage.inputContainer}
                 inputContainerStyle={LoginPage.inputContainerInner}
                 keyboardType="default"
                 selectionColor="grey"
-                underlineColorAndroid={'white'}
+                underlineColorAndroid={lightTheme ? MAIN_DARK:'white'}
                 autoCapitalize="none"
                 placeholder="Nume utilizator"
                 placeholderTextColor={'grey'}
                 leftIcon={
                   <FontAwesomeIcon
                     size={22}
-                    color={'white'}
+                    color={lightTheme ? MAIN_DARK:'white'}
                     icon={faUserLock}
                   />
                 }
@@ -291,7 +304,7 @@ export default function Login() {
                     onPress={() => setUserModal(true)}>
                     <FontAwesomeIcon
                       size={22}
-                      color={'white'}
+                      color={lightTheme ? MAIN_DARK:'white'}
                       icon={faInfoCircle}
                     />
                   </Pressable>
@@ -300,11 +313,12 @@ export default function Login() {
                 value={user}
               />
               <Input
-                style={LoginPage.input}
+                style={{height: 45,
+                fontSize: 13,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                 containerStyle={LoginPage.inputContainer}
                 inputContainerStyle={LoginPage.inputContainerInner}
                 leftIcon={
-                  <FontAwesomeIcon size={22} color={'white'} icon={faKey} />
+                  <FontAwesomeIcon size={22} color={lightTheme ? MAIN_DARK:'white'} icon={faKey} />
                 }
                 rightIcon={
                   <Pressable
@@ -316,13 +330,13 @@ export default function Login() {
                     onPress={() => setPassModal(true)}>
                     <FontAwesomeIcon
                       size={22}
-                      color={'white'}
+                      color={lightTheme ? MAIN_DARK:'white'}
                       icon={faInfoCircle}
                     />
                   </Pressable>
                 }
                 selectionColor="grey"
-                underlineColorAndroid={'white'}
+                underlineColorAndroid={lightTheme ? MAIN_DARK:'white'}
                 autoCapitalize="none"
                 placeholder="Passkey"
                 placeholderTextColor={'grey'}
@@ -359,7 +373,7 @@ export default function Login() {
                   {loginLoading ? (
                     <ActivityIndicator size="small" color={'white'} />
                   ) : (
-                    <Text style={LoginPage.btnText}>Logare</Text>
+                    <Text style={LoginPage.btnText}>Login</Text>
                   )}
                 </Pressable>
               </View>
@@ -368,11 +382,11 @@ export default function Login() {
               <Pressable
                 style={LoginPage.aboutPressable}
                 android_ripple={{
-                  color: 'white',
+                  color: lightTheme ? MAIN_DARK:'white',
                   borderless: false,
                 }}
                 onPress={() => setAboutModal(true)}>
-                <Text style={LoginPage.aboutText}>About</Text>
+                <Text style={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>About</Text>
               </Pressable>
             </View>
           </View>
@@ -384,14 +398,6 @@ export default function Login() {
 
 const LoginPage = EStyleSheet.create({
   // user pass info overlay
-  dataOverlay: {
-    width: '90%',
-    height: '30%',
-    backgroundColor: MAIN_DARK,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 0,
-  },
   dataContainer: {
     width: '100%',
     height: '100%',
@@ -407,7 +413,6 @@ const LoginPage = EStyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  openText: {color: 'white', fontWeight: 'bold'},
   filelistPressable: {
     width: '20%',
     height: '100%',
@@ -430,7 +435,6 @@ const LoginPage = EStyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: MAIN_DARK,
   },
   aboutFirst: {
     width: '100%',
@@ -462,26 +466,6 @@ const LoginPage = EStyleSheet.create({
     alignItems: 'flex-start',
     paddingRight: '20rem',
   },
-  aboutLeftText: {
-    color: 'white',
-    fontWeight: 'bold',
-    textShadowColor: 'black',
-    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-    textShadowRadius: '0.5rem',
-  },
-  aboutRightText: {
-    color: ACCENT_COLOR,
-    textShadowColor: 'black',
-    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-    textShadowRadius: '0.5rem',
-  },
-  aboutRightTextUnderlined: {
-    color: ACCENT_COLOR,
-    textDecorationLine: 'underline',
-    textShadowColor: 'black',
-    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-    textShadowRadius: '0.5rem',
-  },
   aboutPressView: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -507,18 +491,17 @@ const LoginPage = EStyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: MAIN_DARK,
   },
   profilePicContainer: {
     width: '100%',
-    height: '40%',
+    height: '35%',
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
   },
   form: {
     width: '100%',
-    height: '60%',
+    height: '65%',
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
@@ -535,11 +518,6 @@ const LoginPage = EStyleSheet.create({
   inputContainerInner: {
     borderBottomWidth: 0,
     width: '85%',
-  },
-  input: {
-    height: '40rem',
-    color: 'white',
-    fontSize: '12rem',
   },
   error: {
     textAlign: 'center',
@@ -600,5 +578,4 @@ const LoginPage = EStyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  aboutText: {color: 'white'},
 });

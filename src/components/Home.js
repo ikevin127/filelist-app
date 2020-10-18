@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import AsyncStorage from '@react-native-community/async-storage';
 import Axios from 'axios';
 import Clipboard from '@react-native-community/clipboard';
+import NetInfo from "@react-native-community/netinfo";
 import EStyleSheet from 'react-native-extended-stylesheet';
 import FastImage from 'react-native-fast-image';
 import {
@@ -17,6 +18,7 @@ import {
   Keyboard,
   ScrollView,
   StatusBar,
+  Switch,
   ActivityIndicator,
   Linking,
 } from 'react-native';
@@ -74,8 +76,9 @@ const MAIN_DARK = '#202020';
 const ACCENT_COLOR = '#15ABF4';
 
 export default function Home() {
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const {
+    lightTheme,
     listLatest,
     listSearch,
     listImdb,
@@ -88,6 +91,8 @@ export default function Home() {
   const [textOpacity] = useState(new Animated.Value(0));
   const [showClipboardStatus] = useState(new Animated.Value(0));
   const [textClipboardOpacity] = useState(new Animated.Value(0));
+  const [showNetworkAlert] = useState(new Animated.Value(-StatusBar.currentHeight * 4));
+  const [showNetworkAlertText] = useState(new Animated.Value(0));
   const [search, setSearch] = useState('');
   const [advSearchText, setAdvSearchText] = useState('');
   const [catNames, setCatNames] = useState('');
@@ -96,6 +101,7 @@ export default function Home() {
   const [IMDbID, setIMDbID] = useState(null);
   const [IMDbData, setIMDbData] = useState(null);
   const [advKeyword, setAdvKeyword] = useState(true);
+  const [isNetReachable, setIsNetReachable] = useState(true);
   const [advIMDb, setAdvIMDb] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [infoModal, setInfoModal] = useState(false);
@@ -180,8 +186,42 @@ export default function Home() {
   );
 
   useEffect(() => {
+    if (IMDbID !== null) {
+      fetchIMDbInfo(IMDbID);
+    }
     setCatNames(arrIndex.map((index) => catStrings[index]));
     setCatIndex(arrIndex.map((index) => catValues[index]));
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (state.isInternetReachable === true) {
+        setIsNetReachable(true);
+      } else {
+        setIsNetReachable(false);
+        setTimeout(() => {
+          Animated.timing(showNetworkAlert, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: false,
+          }).start();
+          Animated.timing(showNetworkAlertText, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: false,
+          }).start();
+        }, 100);
+        setTimeout(() => {
+          Animated.timing(showNetworkAlert, {
+            toValue: -StatusBar.currentHeight * 4,
+            duration: 700,
+            useNativeDriver: false,
+          }).start();
+          Animated.timing(showNetworkAlertText, {
+            toValue: 0,
+            duration: 700,
+            useNativeDriver: false,
+          }).start();
+        }, 4000);
+      }
+    });
 
     if (IMDbID !== null) {
       fetchIMDbInfo(IMDbID);
@@ -226,11 +266,13 @@ export default function Home() {
     );
 
     return () => {
+      unsubscribe();
       clearTimeout(searchValidationTimeout.current);
       clearTimeout(advSearchValidationTimeout.current);
       keyboardDidHideListener.remove();
     };
   }, [
+    isNetReachable,
     modalData,
     IMDbID,
     listSearch,
@@ -270,38 +312,52 @@ export default function Home() {
   // Functions
 
   const handleSearch = async () => {
-    if (search !== '') {
-      setIsSearchBar(true);
-      setIsSearch(true);
-      try {
-        Keyboard.dismiss();
-        const value0 = await AsyncStorage.getItem('username');
-        const value1 = await AsyncStorage.getItem('passkey');
-        if (value0 !== null && value1 !== null) {
-          if (/\d{6,}/.test(search)) {
-            setSearchLoading(true);
-            dispatch(AppConfigActions.getImdb(value0, value1, search));
-          } else if (/tt\d+/.test(search)) {
-            setSearchLoading(true);
-            dispatch(AppConfigActions.getImdb(value0, value1, search));
-          } else {
-            setSearchLoading(true);
-            dispatch(AppConfigActions.getSearch(value0, value1, search));
+    if (isNetReachable) {
+      if (search !== '') {
+        setIsSearchBar(true);
+        setIsSearch(true);
+        try {
+          Keyboard.dismiss();
+          const value0 = await AsyncStorage.getItem('username');
+          const value1 = await AsyncStorage.getItem('passkey');
+          if (value0 !== null && value1 !== null) {
+            if (/\d{6,}/.test(search)) {
+              setSearchLoading(true);
+              dispatch(AppConfigActions.getImdb(value0, value1, search));
+            } else if (/tt\d+/.test(search)) {
+              setSearchLoading(true);
+              dispatch(AppConfigActions.getImdb(value0, value1, search));
+            } else {
+              setSearchLoading(true);
+              dispatch(AppConfigActions.getSearch(value0, value1, search));
+            }
           }
+        } catch (e) {
+          alert(e);
         }
-      } catch (e) {
-        alert(e);
+      } else {
+        setSearchValidation(true);
+        searchValidationTimeout.current = setTimeout(() => {
+          setSearchValidation(false);
+        }, 3000);
       }
     } else {
-      setSearchValidation(true);
-      searchValidationTimeout.current = setTimeout(() => {
-        setSearchValidation(false);
-      }, 3000);
+      Alert.alert(
+        'Alertă',
+        'Conexiune internet indisponibilă. Reconectează-te pentru a putea folosi funcţia de Căutare.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {},
+          },
+        ],
+        {cancelable: true},
+      );
     }
   };
 
   const handleAdvancedSearch = async () => {
-    if (advSearchText.length === 0) {
+    if (isNetReachable) {if (advSearchText.length === 0) {
       setAdvSearchValidation(true);
       searchValidationTimeout.current = setTimeout(() => {
         setAdvSearchValidation(false);
@@ -376,7 +432,17 @@ export default function Home() {
       } catch (e) {
         alert(e);
       }
-    }
+    }} else {Alert.alert(
+      'Alertă',
+      'Conexiune internet indisponibilă. Reconectează-te pentru a putea folosi funcţia de Căutare avansată.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );}
   };
 
   const clearSearch = async () => {
@@ -443,16 +509,39 @@ export default function Home() {
     dispatch(AppConfigActions.latestError());
   };
 
+  const switchTheme = async () => {
+    try {
+      const currentTheme = await AsyncStorage.getItem('theme');
+      if (currentTheme !== null) {
+        if (currentTheme === 'dark') {
+          await AsyncStorage.setItem('theme', 'light');
+          dispatch(AppConfigActions.toggleLightTheme())
+        } else {
+          await AsyncStorage.setItem('theme', 'dark');
+          dispatch(AppConfigActions.toggleLightTheme())
+        }
+      } else {
+        await AsyncStorage.setItem('theme', 'dark');
+      }
+    } catch (e) {
+      alert(e);
+    }
+  }
+
   const fetchIMDbInfo = async (id) => {
-    setIMDbLoading(true);
-    await Axios.get('https://spleeter.co.uk/' + id)
-      .then((res) => {
-        setIMDbData(Array(res.data));
-        setIMDbLoading(false);
-      })
-      .catch((e) => {
-        alert(e);
-      });
+    if (isNetReachable) {
+      setIMDbLoading(true);
+      await Axios.get('https://spleeter.co.uk/' + id)
+        .then((res) => {
+          setIMDbData(Array(res.data));
+          setIMDbLoading(false);
+        })
+        .catch((e) => {
+          alert(e);
+        });
+    } else {
+      setIMDbData(false);
+    }
   };
 
   const formatBytes = (a, b = 2) => {
@@ -614,14 +703,13 @@ export default function Home() {
           />
           </View>
           <View style={HomePage.itemPressableNameContainer}>
-            <Text style={HomePage.itemPressableNameText}>{item.name}</Text>
-            <Text style={HomePage.itemPressableUploadText}>
+            <Text style={[HomePage.itemPressableNameText, {textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+          color: lightTheme ? MAIN_DARK : 'white'}]}>{item.name}</Text>
+            <Text style={[HomePage.itemPressableUploadText, {textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+          color: lightTheme ? 'grey' : 'silver'}]}>
               [ {item.upload_date.substring(0, 16)} ]
             </Text>
-          </View>
-        </View>
-        <View style={HomePage.itemPressableContentContainer}>
-          <View style={HomePage.itemPressableUploadContainer}>
+            <View style={HomePage.itemPressableUploadContainer}>
             {item.doubleup === 1 ? (
               <Text style={HomePage.itemPressableDoubleUpText}>2X UPLOAD</Text>
             ) : null}
@@ -631,6 +719,7 @@ export default function Home() {
             {item.freeleech === 1 ? (
               <Text style={HomePage.itemPressableFreeleechText}>FREELEECH</Text>
             ) : null}
+          </View>
           </View>
         </View>
       </View>
@@ -658,11 +747,12 @@ export default function Home() {
         backgroundColor={'transparent'}
         translucent={true}
       />
-      <SafeAreaView style={HomePage.mainSafeAreaView}>
+      <SafeAreaView style={[HomePage.mainSafeAreaView, {
+      backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
         <Overlay
           statusBarTranslucent
           animationType="slide"
-          overlayStyle={HomePage.advSearchOverlay}
+          overlayStyle={[HomePage.advSearchOverlay, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,}]}
           isVisible={advSearch}
           onBackdropPress={() => {
             AdvSearchRef.current.clear();
@@ -699,17 +789,17 @@ export default function Home() {
               <Overlay
                 statusBarTranslucent
                 animationType="fade"
-                overlayStyle={HomePage.catCheckOverlay}
+                overlayStyle={[HomePage.catCheckOverlay, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}
                 isVisible={catList}
                 onBackdropPress={() => setCatList(false)}>
                 <View style={HomePage.catCheckContainer}>
                   <ScrollView
                     showsVerticalScrollIndicator={true}
-                    style={HomePage.catCheckScrollView}>
+                    style={[HomePage.catCheckScrollView,{backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
                     <View style={HomePage.catCheckScrollContainer}>
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Anime"
                         checked={animes}
@@ -722,7 +812,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -731,7 +821,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Audio"
                         checked={audio}
@@ -744,7 +834,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -753,7 +843,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Desene"
                         checked={desene}
@@ -766,7 +856,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -775,7 +865,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Diverse"
                         checked={diverse}
@@ -788,7 +878,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -797,7 +887,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Docs"
                         checked={doc}
@@ -810,7 +900,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -819,7 +909,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme 3D"
                         checked={filme3d}
@@ -832,7 +922,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -841,7 +931,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme 4K"
                         checked={filme4k}
@@ -854,7 +944,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -863,7 +953,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme 4K Blu-Ray"
                         checked={filme4kbd}
@@ -876,7 +966,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -885,7 +975,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme Blu-Ray"
                         checked={filmeBD}
@@ -898,7 +988,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -907,7 +997,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme DVD"
                         checked={filmeDvd}
@@ -920,7 +1010,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -929,7 +1019,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme DVD-RO"
                         checked={filmeDvdRo}
@@ -942,7 +1032,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -951,7 +1041,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme HD"
                         checked={filmeHd}
@@ -964,7 +1054,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -973,7 +1063,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme HD-RO"
                         checked={filmeHdRo}
@@ -986,7 +1076,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -995,7 +1085,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme SD"
                         checked={filmeSd}
@@ -1008,7 +1098,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1017,7 +1107,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="FLAC"
                         checked={flacs}
@@ -1030,7 +1120,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1039,7 +1129,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Jocuri Console"
                         checked={jocConsole}
@@ -1052,7 +1142,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1061,7 +1151,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Jocuri PC"
                         checked={jocPc}
@@ -1074,7 +1164,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1083,7 +1173,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Linux"
                         checked={lin}
@@ -1096,7 +1186,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1105,7 +1195,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Mobile"
                         checked={mob}
@@ -1118,7 +1208,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1127,7 +1217,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Programe"
                         checked={software}
@@ -1140,7 +1230,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1149,7 +1239,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Seriale 4K"
                         checked={seriale4k}
@@ -1162,7 +1252,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1171,7 +1261,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Seriale HD"
                         checked={serialeHd}
@@ -1184,7 +1274,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1193,7 +1283,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Seriale SD"
                         checked={serialeSd}
@@ -1206,7 +1296,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1215,7 +1305,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Sport"
                         checked={sports}
@@ -1228,7 +1318,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1237,7 +1327,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Videoclip"
                         checked={videos}
@@ -1250,7 +1340,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1259,7 +1349,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBoxLast}
-                        textStyle={HomePage.catCheckBoxText}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="XXX"
                         checked={porn}
@@ -1272,7 +1362,7 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={HomePage.catUncheckedIcon}
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1298,20 +1388,20 @@ export default function Home() {
                 showsVerticalScrollIndicator={true}
                 contentContainerStyle={HomePage.advSearchScrollView}>
                 <View style={HomePage.advSearchView}>
-                  <Text style={HomePage.advSearchViewText}>
+                  <Text style={[HomePage.advSearchViewText, {color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                     Căutare avansată
                   </Text>
                 </View>
                 <Input
                   ref={AdvSearchRef}
-                  style={HomePage.advSearchInputStyle}
-                  containerStyle={HomePage.advSearchContainerStyle}
+                  style={[HomePage.advSearchInputStyle, {color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}
+                  containerStyle={[HomePage.advSearchContainerStyle, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,}]}
                   inputContainerStyle={[
                     HomePage.advSearchInputContainerStyle,
                     {
                       borderBottomColor: advSearchValidation
                         ? 'crimson'
-                        : MAIN_LIGHT,
+                        : lightTheme ? MAIN_DARK : MAIN_LIGHT,
                     },
                   ]}
                   keyboardType="default"
@@ -1320,7 +1410,7 @@ export default function Home() {
                   placeholder={
                     advIMDb
                       ? 'Caută după Cod IMDb...'
-                      : 'Caută după Cuvânt Cheie...'
+                      : 'Caută după Cuvinte Cheie...'
                   }
                   placeholderTextColor={
                     advSearchValidation ? 'crimson' : 'grey'
@@ -1339,7 +1429,7 @@ export default function Home() {
                 />
                 <View style={HomePage.advSearchTypeViewContainer}>
                   <View style={HomePage.advSearchTypeView}>
-                    <Text style={HomePage.advSearchTypeText}>
+                    <Text style={[HomePage.advSearchTypeText, {color: lightTheme ? MAIN_DARK : MAIN_LIGHT,}]}>
                       Tipul căutării
                     </Text>
                     <Pressable
@@ -1364,7 +1454,7 @@ export default function Home() {
                         );
                       }}>
                       <FontAwesomeIcon
-                        color={MAIN_LIGHT}
+                        color={lightTheme ? MAIN_DARK : MAIN_LIGHT}
                         icon={faQuestionCircle}
                       />
                     </Pressable>
@@ -1376,9 +1466,9 @@ export default function Home() {
                       <CheckBox
                         containerStyle={[
                           HomePage.advSearchTypeCheckBox1,
-                          {borderColor: advKeyword ? 'grey' : MAIN_LIGHT},
+                          {borderColor: advKeyword ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT},
                         ]}
-                        textStyle={{color: advKeyword ? 'grey' : MAIN_LIGHT}}
+                        textStyle={{color: advKeyword ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Cuvânt cheie"
                         checked={advKeyword}
@@ -1394,7 +1484,8 @@ export default function Home() {
                             style={[
                               HomePage.advSearchTypeUnchecked,
                               {
-                                borderColor: advKeyword ? 'grey' : MAIN_LIGHT,
+                                color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                                borderColor: advKeyword ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT,
                               },
                             ]}
                             size={20}
@@ -1427,9 +1518,9 @@ export default function Home() {
                       <CheckBox
                         containerStyle={[
                           HomePage.advSearchTypeCheckBox2,
-                          {borderColor: advIMDb ? 'grey' : MAIN_LIGHT},
+                          {borderColor: advIMDb ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT},
                         ]}
-                        textStyle={{color: advIMDb ? 'grey' : MAIN_LIGHT}}
+                        textStyle={{color: advIMDb ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Cod IMDb"
                         checked={advIMDb}
@@ -1445,7 +1536,8 @@ export default function Home() {
                             style={[
                               HomePage.advSearchTypeUnchecked,
                               {
-                                borderColor: advIMDb ? 'grey' : MAIN_LIGHT,
+                                color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                                borderColor: advIMDb ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT,
                               },
                             ]}
                             size={20}
@@ -1476,7 +1568,7 @@ export default function Home() {
                 </View>
                 <View style={HomePage.advSearchCatContainer}>
                   <CheckBox
-                    containerStyle={HomePage.advSearchCatCheck}
+                    containerStyle={[HomePage.advSearchCatCheck, {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}
                     textStyle={{
                       color:
                         animes ||
@@ -1545,7 +1637,7 @@ export default function Home() {
                     checkedIcon={
                       <FontAwesomeIcon
                         size={20}
-                        color={'white'}
+                        color={lightTheme ? MAIN_DARK : MAIN_LIGHT}
                         icon={faTasks}
                       />
                     }
@@ -1557,8 +1649,8 @@ export default function Home() {
                 </View>
                 <View style={HomePage.advSearchOptions}>
                   <CheckBox
-                    containerStyle={HomePage.advSearchOptionsCheck}
-                    textStyle={HomePage.advSearchOptionsText}
+                    containerStyle={[HomePage.advSearchOptionsCheck, {borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
+                    textStyle={{color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
                     center
                     title="2X Upload"
                     checked={doubleUp}
@@ -1571,7 +1663,9 @@ export default function Home() {
                     }
                     uncheckedIcon={
                       <FontAwesomeIcon
-                        style={HomePage.advSearchOptionsUnchecked}
+                        style={[HomePage.advSearchOptionsUnchecked, {
+                          color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                          borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
                         size={20}
                         icon={faAngleDoubleUp}
                       />
@@ -1595,8 +1689,8 @@ export default function Home() {
                     }}
                   />
                   <CheckBox
-                    containerStyle={HomePage.advSearchOptionsCheck}
-                    textStyle={HomePage.advSearchOptionsText}
+                    containerStyle={[HomePage.advSearchOptionsCheck, {borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
+                    textStyle={{color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
                     center
                     title="Freeleech"
                     checked={freeleech}
@@ -1609,7 +1703,9 @@ export default function Home() {
                     }
                     uncheckedIcon={
                       <FontAwesomeIcon
-                        style={HomePage.advSearchOptionsUnchecked}
+                        style={[HomePage.advSearchOptionsUnchecked, {
+                          color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                          borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
                         size={20}
                         icon={faAngleDoubleUp}
                       />
@@ -1635,8 +1731,8 @@ export default function Home() {
                 </View>
                 <View style={HomePage.advSearchOptions}>
                   <CheckBox
-                    containerStyle={HomePage.advSearchOptionsCheck}
-                    textStyle={HomePage.advSearchOptionsText}
+                    containerStyle={[HomePage.advSearchOptionsCheck,{borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
+                    textStyle={{color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
                     center
                     title="Internal"
                     checked={internal}
@@ -1649,7 +1745,9 @@ export default function Home() {
                     }
                     uncheckedIcon={
                       <FontAwesomeIcon
-                        style={HomePage.advSearchOptionsUnchecked}
+                        style={[HomePage.advSearchOptionsUnchecked, {
+                          color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                          borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
                         size={20}
                         icon={faAngleDoubleUp}
                       />
@@ -1673,8 +1771,8 @@ export default function Home() {
                     }}
                   />
                   <CheckBox
-                    containerStyle={HomePage.advSearchOptionsCheck}
-                    textStyle={HomePage.advSearchOptionsText}
+                    containerStyle={[HomePage.advSearchOptionsCheck,{borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
+                    textStyle={{color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
                     center
                     title="Moderated"
                     checked={moderated}
@@ -1687,7 +1785,9 @@ export default function Home() {
                     }
                     uncheckedIcon={
                       <FontAwesomeIcon
-                        style={HomePage.advSearchOptionsUnchecked}
+                        style={[HomePage.advSearchOptionsUnchecked, {
+                          color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                          borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
                         size={20}
                         icon={faAngleDoubleUp}
                       />
@@ -1736,7 +1836,8 @@ export default function Home() {
           animationType="fade"
           overlayStyle={[
             HomePage.imdbOverlayStyle,
-            {height: IMDbID !== null ? '70%' : '40%'},
+            {height: IMDbID !== null ? '70%' : '40%',
+          backgroundColor: lightTheme ? MAIN_LIGHT:MAIN_DARK},
           ]}
           isVisible={infoModal}
           onBackdropPress={() => {
@@ -1813,16 +1914,16 @@ export default function Home() {
                           }
                         />
                         <View style={HomePage.imdbInfoHeaderText}>
-                          <Text style={HomePage.imdbInfoHeaderCat}>
+                          <Text style={[HomePage.imdbInfoHeaderCat, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                             {item.category}
                           </Text>
-                          <Text style={HomePage.imdbInfoHeaderDesc}>
+                          <Text style={[HomePage.imdbInfoHeaderDesc, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
                             [ {item.small_description} ]
                           </Text>
                         </View>
                       </View>
                       <View style={HomePage.imdbInfoTitleSection}>
-                        <Text style={HomePage.imdbInfoTitleText}>
+                        <Text style={[HomePage.imdbInfoTitleText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                           {item.name}
                         </Text>
                       </View>
@@ -1930,7 +2031,7 @@ export default function Home() {
                                                     style={
                                                       HomePage.imdbInfoRatingIcon
                                                     }
-                                                    color={'gold'}
+                                                    color={lightTheme ? 'goldenrod':'gold'}
                                                     icon={faStar}
                                                   />
                                                 </View>
@@ -1943,26 +2044,15 @@ export default function Home() {
                                           <View
                                             style={HomePage.imdbInfoMainPlot}>
                                             <Text
-                                              style={
-                                                HomePage.imdbInfoMainPlotTitle
-                                              }>
+                                              style={[HomePage.imdbInfoMainPlotTitle, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
                                               Plot
                                             </Text>
-                                            {item.plot === undefined ? (
-                                              <Text
-                                                style={
+                                            <Text
+                                                style={[
                                                   HomePage.imdbInfoMainPlotText
-                                                }>
-                                                Acest material nu conţine plot
-                                              </Text>
-                                            ) : (
-                                              <Text
-                                                style={
-                                                  HomePage.imdbInfoMainPlotText
-                                                }>
-                                                {item.plot.split('\n')[0]}
-                                              </Text>
-                                            )}
+                                                , {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                                            {item.plot === undefined ? "Acest material nu conţine plot" : item.plot.split('\n')[0]}
+                                            </Text>
                                             {item.duration === '' ? null : (
                                               <>
                                                 <View
@@ -1971,14 +2061,14 @@ export default function Home() {
                                                   }
                                                 />
                                                 <Text
-                                                  style={
+                                                  style={[
                                                     HomePage.imdbInfoMainETATitle
-                                                  }>
+                                                  ,{textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
                                                   Durată:
                                                   <Text
-                                                    style={
+                                                    style={[
                                                       HomePage.imdbInfoMainETAText
-                                                    }>
+                                                    , {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                                     {' '}
                                                     {item.duration === undefined
                                                       ? 'Necunoscută'
@@ -1989,11 +2079,10 @@ export default function Home() {
                                             )}
                                           </View>
                                         </View>
-                                        
                                       </View>
                                     );
                                   })
-                                : null}
+                                : <View style={{width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center'}}><Text style={{textAlign: 'center', color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>Conexiune internet indisponibilă.</Text><Text style={{textAlign: 'center', color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>Reconectează-te pentru a vedea mai multe informaţii despre acest material.</Text></View>}
                             </>
                           )}
                         </View>
@@ -2026,7 +2115,7 @@ export default function Home() {
                                 color={ACCENT_COLOR}
                               />
                               <Text
-                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                style={[HomePage.imdbInfoMainFooter3rdText,{textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {formatBytes(item.size)}
                               </Text>
                             </Pressable>
@@ -2057,7 +2146,7 @@ export default function Home() {
                                 color={ACCENT_COLOR}
                               />
                               <Text
-                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {item.files}
                               </Text>
                             </Pressable>
@@ -2089,7 +2178,7 @@ export default function Home() {
                                 color={'limegreen'}
                               />
                               <Text
-                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {item.seeders}
                               </Text>
                             </Pressable>
@@ -2123,7 +2212,7 @@ export default function Home() {
                                 color={ACCENT_COLOR}
                               />
                               <Text
-                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {item.upload_date.substring(0, 10)}
                               </Text>
                             </Pressable>
@@ -2155,7 +2244,7 @@ export default function Home() {
                                 color={ACCENT_COLOR}
                               />
                               <Text
-                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {item.times_completed}
                               </Text>
                             </Pressable>
@@ -2187,7 +2276,7 @@ export default function Home() {
                                 color={'crimson'}
                               />
                               <Text
-                                style={HomePage.imdbInfoMainFooter3rdText}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {item.leechers}
                               </Text>
                             </Pressable>
@@ -2225,7 +2314,7 @@ export default function Home() {
                               color={ACCENT_COLOR}
                             />
                             <Text
-                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {formatBytes(item.size)}
                             </Text>
                           </Pressable>
@@ -2256,7 +2345,7 @@ export default function Home() {
                               color={ACCENT_COLOR}
                             />
                             <Text
-                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {item.files}
                             </Text>
                           </Pressable>
@@ -2288,7 +2377,7 @@ export default function Home() {
                               color={'limegreen'}
                             />
                             <Text
-                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {item.seeders}
                             </Text>
                           </Pressable>
@@ -2322,7 +2411,7 @@ export default function Home() {
                               color={ACCENT_COLOR}
                             />
                             <Text
-                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {item.upload_date.substring(0, 10)}
                             </Text>
                           </Pressable>
@@ -2354,7 +2443,7 @@ export default function Home() {
                               color={ACCENT_COLOR}
                             />
                             <Text
-                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {item.times_completed}
                             </Text>
                           </Pressable>
@@ -2386,7 +2475,7 @@ export default function Home() {
                               color={'crimson'}
                             />
                             <Text
-                              style={HomePage.imdbInfoMainFooter3rdText}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {item.leechers}
                             </Text>
                           </Pressable>
@@ -2408,7 +2497,18 @@ export default function Home() {
           onBackdropPress={() => {
             setIsSettings(false);
           }}>
-          <View style={HomePage.settingsOverlayCloseContainer}>
+          <View style={[HomePage.settingsOverlayCloseContainer, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+            <View style={HomePage.settingsOverlayThemeContainer}>
+              <Text style={[HomePage.settingsOverlayThemeText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+              color: lightTheme ? MAIN_DARK : 'white'}]}>Temă curentă: {lightTheme ? " Light" : " Dark"}</Text>
+              <Switch
+                trackColor={{ false: 'grey', true: 'grey' }}
+                thumbColor={lightTheme ? "black" : "white"}
+                ios_backgroundColor="#3e3e3e"
+                onValueChange={switchTheme}
+                value={lightTheme}
+              />
+            </View>
             <View style={HomePage.settingsOverlayLogoutContainer}>
               <Pressable
                 style={HomePage.settingsOverlayLogoutPressable}
@@ -2445,7 +2545,7 @@ export default function Home() {
           </View>
         </View>
         {isSearchBar ? <View
-          style={HomePage.mainClearSearchBar}>
+          style={[HomePage.mainClearSearchBar, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
           <View style={HomePage.mainClearSearchBarContainer}>
             <Pressable
               style={HomePage.mainClearSearchBarPressable}
@@ -2459,9 +2559,9 @@ export default function Home() {
               <FontAwesomeIcon size={20} color={'white'} icon={faArrowLeft} />
             </Pressable>
           </View>
-          <Text style={HomePage.mainClearSearchBarText}>
+          <Text style={[HomePage.mainClearSearchBarText, {color: lightTheme ? MAIN_DARK : 'white'}]}>
             Rezultatele căutării după "
-            <Text style={HomePage.mainClearSearchBarTextSecond}>
+            <Text style={[HomePage.mainClearSearchBarTextSecond, {color: lightTheme ? MAIN_DARK : 'white'}]}>
               {search !== ''
                 ? search
                 : advSearchText !== ''
@@ -2472,8 +2572,8 @@ export default function Home() {
           </Text>
         </View> : <Input
           ref={SearchBarRef}
-          style={HomePage.searchInputStyle}
-          containerStyle={HomePage.searchInputContainerStyle}
+          style={{color: lightTheme ? MAIN_DARK : 'white'}}
+          containerStyle={[HomePage.searchInputContainerStyle, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}
           inputContainerStyle={[
             HomePage.searchInContainerStyle,
             {
@@ -2485,8 +2585,8 @@ export default function Home() {
           autoCapitalize="none"
           placeholder={
             searchValidation
-              ? 'Căsuţa este goală...'
-              : 'Caută după cuvânt cheie, IMDb...'
+              ? 'Căsuţa nu poate fi goală...'
+              : 'Caută după cuvinte cheie, IMDb...'
           }
           placeholderTextColor={searchValidation ? 'crimson' : 'grey'}
           rightIcon={
@@ -2521,10 +2621,10 @@ export default function Home() {
           </View>
         ) : noResults ? (
           <View style={HomePage.searchNoResults}>
-            <Text style={HomePage.searchNoResultsTextPrimary}>
+            <Text style={[HomePage.searchNoResultsTextPrimary, {textShadowColor: lightTheme ? MAIN_LIGHT : 'black', color: lightTheme ? MAIN_DARK:'white'}]}>
               Nu s-a găsit nimic
             </Text>
-            <Text style={HomePage.searchNoResultsTextSecondary}>
+            <Text style={[HomePage.searchNoResultsTextSecondary, {textShadowColor: lightTheme ? MAIN_LIGHT : 'black', color: lightTheme ? MAIN_DARK:'white'}]}>
               Încearcă din nou cu alt șir de căutare
             </Text>
           </View>
@@ -2592,6 +2692,7 @@ export default function Home() {
           style={[
             HomePage.refreshContainer,
             {
+              backgroundColor: lightTheme ? 'rgba(0, 0, 0, 0.7)':'rgba(255, 255, 255, 0.9)',
               transform: [
                 {
                   scale: showStatus,
@@ -2600,11 +2701,11 @@ export default function Home() {
             },
           ]}>
           <Animated.Text
-            style={[HomePage.refreshTextPrimary, {opacity: textOpacity}]}>
+            style={[HomePage.refreshTextPrimary, {opacity: textOpacity,color: lightTheme ? 'white' : 'black'}]}>
             Actualizare completă
           </Animated.Text>
           <Animated.Text
-            style={[HomePage.refreshTextSecondary, {opacity: textOpacity}]}>
+            style={[HomePage.refreshTextSecondary, {opacity: textOpacity,color: lightTheme ? 'white' : 'black'}]}>
             (nu există torrente noi)
           </Animated.Text>
         </Animated.View>
@@ -2612,6 +2713,7 @@ export default function Home() {
           style={[
             HomePage.clipboardAlertContainer,
             {
+              backgroundColor: lightTheme ? 'rgba(0, 0, 0, 0.7)':'rgba(255, 255, 255, 0.9)',
               transform: [
                 {
                   scale: showClipboardStatus,
@@ -2622,9 +2724,28 @@ export default function Home() {
           <Animated.Text
             style={[
               HomePage.clipboardAlertText,
-              {opacity: textClipboardOpacity},
+              {opacity: textClipboardOpacity, color: lightTheme ? 'white' : 'black'},
             ]}>
             Link descărcare copiat în Clipboard
+          </Animated.Text>
+        </Animated.View>
+        <Animated.View
+          style={[
+            HomePage.networkAlertContainer,
+            {
+              backgroundColor: isNetReachable ? 'limegreen' : 'crimson',
+              transform: [
+                {
+                  translateY: showNetworkAlert,
+                },
+              ],
+            },
+          ]}>
+          <Animated.Text
+            style={{fontSize: 13,
+            fontWeight: 'bold', opacity: showNetworkAlertText,color: 'white'}
+            }>
+            {isNetReachable ? 'Conexiune stabilită cu succes' : 'Reconectează-te pentru a putea continua'}
           </Animated.Text>
         </Animated.View>
       </SafeAreaView>
@@ -2639,7 +2760,7 @@ const HomePage = EStyleSheet.create({
       marginBottom: '15rem',
     },
     itemPressableContainer: {
-      height: '80rem',
+      height: '70rem',
       width: '100%',
       borderColor: '#181818',
       borderWidth: '0.5rem',
@@ -2649,56 +2770,47 @@ const HomePage = EStyleSheet.create({
       backgroundColor: 'rgba(255, 255, 255, 0.05)',
     },
     itemPressableFirst: {
-      height: '76%',
+      height: '90%',
       width: '100%',
       flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
+      justifyContent: 'flex-start',
+      alignItems: 'flex-start'
     },
     itemPresssablePic: {
       height: '100%',
       width: '20%',
-      paddingTop: '6rem',
+      paddingLeft: '4rem',
       flexDirection: 'row',
       justifyContent: 'center',
-      alignItems: 'flex-start'
+      alignItems: 'flex-start',
     },
     itemPresssableFastImage: {height: '100%', width: '100%'},
     itemPressableNameContainer: {
       justifyContent: 'space-between',
-      paddingTop: '4rem',
-      paddingHorizontal: '6rem',
+      paddingHorizontal: '4rem',
       height: '100%',
       width: '78%',
     },
     itemPressableNameText: {
-      textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
       fontSize: '10rem',
-      color: 'white'
     },
     itemPressableUploadText: {
       fontSize: '8rem',
       color: 'silver',
-      textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
     },
-    itemPressableContentContainer: {
-      height: '24%',
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      paddingLeft: '21.5%'
-    },
     itemPressableUploadContainer: {
-      height: '20rem',
-      width: '100%',
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      height: '14rem',
+      width: '70%',
       flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
+      justifyContent: 'flex-end',
+      alignItems: 'center'
     },
     itemPressableFreeleechText: {
       textShadowColor: 'black',
@@ -2743,12 +2855,10 @@ const HomePage = EStyleSheet.create({
       flex: 1,
       justifyContent: 'flex-start',
       alignItems: 'center',
-      backgroundColor: MAIN_DARK,
     },
     advSearchOverlay: {
       width: '100%',
-      height: '50%',
-      backgroundColor: MAIN_DARK,
+      height: '55%',
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 0,
@@ -2756,7 +2866,6 @@ const HomePage = EStyleSheet.create({
     advSearchContainer: {
       width: '100%',
       height: '100%',
-      backgroundColor: MAIN_DARK,
       flexDirection: 'column',
       justifyContent: 'flex-start',
       alignItems: 'center',
@@ -2765,7 +2874,6 @@ const HomePage = EStyleSheet.create({
     catCheckOverlay: {
       width: '70%',
       height: '80%',
-      backgroundColor: MAIN_DARK,
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 0,
@@ -2777,7 +2885,6 @@ const HomePage = EStyleSheet.create({
       alignItems: 'center',
     },
     catCheckScrollView: {
-      backgroundColor: MAIN_DARK,
       width: '100%',
       height: '100%',
       marginBottom: '8rem',
@@ -2806,16 +2913,15 @@ const HomePage = EStyleSheet.create({
       justifyContent: 'flex-start',
       alignItems: 'center',
     },
-    catCheckBoxText: {color: MAIN_LIGHT},
     catCheckedIcon: {
       color: ACCENT_COLOR,
     },
-    catUncheckedIcon: {
-      borderRadius: '1rem',
-      color: MAIN_DARK,
-      borderWidth: '1rem',
-      borderColor: MAIN_LIGHT,
-    },
+    // catUncheckedIcon: {
+    //   // color: 'red',
+    //   // borderColor: 'red',
+    //   borderRadius: '1rem',
+    //   borderWidth: '1rem',
+    // },
     catCheckOverlayFooter: {
       width: '100%',
       height: '5%',
@@ -2852,11 +2958,9 @@ const HomePage = EStyleSheet.create({
     advSearchViewText: {
       textAlign: 'center',
       fontWeight: 'bold',
-      color: MAIN_LIGHT,
       fontSize: '14rem',
     },
     advSearchInputStyle: {
-      color: MAIN_LIGHT,
       fontSize: '14rem',
       fontWeight: 'normal',
     },
@@ -2867,7 +2971,6 @@ const HomePage = EStyleSheet.create({
       paddingBottom: '1rem',
       justifyContent: 'flex-start',
       alignItems: 'center',
-      backgroundColor: MAIN_DARK,
     },
     advSearchInputContainerStyle: {
       height: '80%',
@@ -2893,7 +2996,6 @@ const HomePage = EStyleSheet.create({
     },
     advSearchTypeText: {
       textAlign: 'center',
-      color: MAIN_LIGHT,
       fontWeight: 'bold',
       fontSize: '10rem',
     },
@@ -2943,7 +3045,6 @@ const HomePage = EStyleSheet.create({
       color: 'grey',
     },
     advSearchTypeUnchecked: {
-      color: MAIN_DARK,
       borderRadius: '1rem',
       borderWidth: '1rem',
     },
@@ -2958,7 +3059,6 @@ const HomePage = EStyleSheet.create({
     advSearchCatCheck: {
       width: '100%',
       backgroundColor: 'transparent',
-      borderColor: 'white',
       borderBottomWidth: '0.5rem',
       borderTopWidth: 0,
       borderRightWidth: 0,
@@ -2976,7 +3076,6 @@ const HomePage = EStyleSheet.create({
     advSearchOptionsCheck: {
       width: '47%',
       backgroundColor: 'transparent',
-      borderColor: 'white',
       borderBottomWidth: '0.5rem',
       borderTopWidth: 0,
       borderRightWidth: 0,
@@ -2985,15 +3084,12 @@ const HomePage = EStyleSheet.create({
       justifyContent: 'flex-start',
       alignItems: 'center',
     },
-    advSearchOptionsText: {color: 'white'},
     advSearchOptionsChecked: {
       color: ACCENT_COLOR,
     },
     advSearchOptionsUnchecked: {
       borderRadius: '1rem',
-      color: MAIN_DARK,
       borderWidth: '1rem',
-      borderColor: 'white',
     },
     advSearchPressableContainer: {
       width: StatusBar.currentHeight * 7,
@@ -3027,7 +3123,6 @@ const HomePage = EStyleSheet.create({
     },
     imdbOverlayStyle: {
       width: '87%',
-      backgroundColor: MAIN_DARK,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -3040,7 +3135,6 @@ const HomePage = EStyleSheet.create({
     },
     imdbInfoContainerStyle: {
       width: '100%',
-      
     },
     imdbInfoView: {
       width: '100%',
@@ -3072,14 +3166,11 @@ const HomePage = EStyleSheet.create({
       paddingLeft: '2%',
     },
     imdbInfoHeaderCat: {
-      textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      color: MAIN_LIGHT,
       fontSize: '16rem',
     },
     imdbInfoHeaderDesc: {
-      textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
       color: 'grey',
@@ -3098,10 +3189,8 @@ const HomePage = EStyleSheet.create({
       paddingTop: '6rem'
     },
     imdbInfoTitleText: {
-      textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      color: MAIN_LIGHT,
       fontSize: '10rem',
       fontWeight: 'bold',
     },
@@ -3116,36 +3205,33 @@ const HomePage = EStyleSheet.create({
       textShadowColor: 'black',
       textShadowOffset: {width: '1rem', height: '1rem'},
       textShadowRadius: '1rem',
-      paddingHorizontal:'1rem',
       borderColor: '#1ec621',
       borderWidth: '0.5rem',
       fontSize: '7.5rem',
       color: 'aliceblue',
-      marginLeft: '4rem',
+      marginRight: '4rem',
       backgroundColor: '#09580a',
     },
     imdbInfoDoubleUpBadge: {
       textShadowColor: 'black',
       textShadowOffset: {width: '1rem', height: '1rem'},
       textShadowRadius: '1rem',
-      paddingHorizontal:'1rem',
       borderColor: '#7c00ff',
       borderWidth: '0.5rem',
       fontSize: '7.5rem',
       color: 'aliceblue',
-      marginLeft: '4rem',
+      marginRight: '4rem',
       backgroundColor: '#370f61',
     },
     imdbInfoInternalBadge: {
       textShadowColor: 'black',
       textShadowOffset: {width: '1rem', height: '1rem'},
       textShadowRadius: '1rem',
-      paddingHorizontal:'1rem',
       borderColor: '#1e87c6',
       borderWidth: '0.5rem',
       fontSize: '7.5rem',
       color: 'aliceblue',
-      marginLeft: '4rem',
+      marginRight: '4rem',
       backgroundColor: '#093b58',
     },
     imdbInfoDataContainer: {
@@ -3229,7 +3315,6 @@ const HomePage = EStyleSheet.create({
     },
     imdbInfoMainPlotTitle: {
       fontSize: '10rem',
-      textShadowColor: 'black',
       textShadowOffset: {
         width: '1rem',
         height: '1rem',
@@ -3240,13 +3325,11 @@ const HomePage = EStyleSheet.create({
     },
     imdbInfoMainPlotText: {
       fontSize: '9rem',
-      textShadowColor: 'black',
       textShadowOffset: {
         width: '1rem',
         height: '1rem',
       },
       textShadowRadius: '1rem',
-      color: 'white',
       paddingTop: '3%',
     },
     imdbInfoMainSeparator: {
@@ -3260,7 +3343,6 @@ const HomePage = EStyleSheet.create({
     },
     imdbInfoMainETATitle: {
       fontSize: '10rem',
-      textShadowColor: 'black',
       textShadowOffset: {
         width: '1rem',
         height: '1rem',
@@ -3271,14 +3353,11 @@ const HomePage = EStyleSheet.create({
     },
     imdbInfoMainETAText: {
       fontSize: '9rem',
-      textShadowColor: 'black',
       textShadowOffset: {
         width: '1rem',
         height: '1rem',
       },
       textShadowRadius: '1rem',
-      color: 'white',
-      fontWeight: 'bold',
     },
     imdbInfoMainFooter: {
       borderTopWidth: '0.5rem',
@@ -3320,10 +3399,8 @@ const HomePage = EStyleSheet.create({
     },
     imdbInfoMainFooter3rdText: {
       fontSize: '9rem',
-      textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      color: 'white',
     },
     imdbInfoMainFooterTall: {
       width: '100%',
@@ -3344,7 +3421,6 @@ const HomePage = EStyleSheet.create({
       bottom: 0,
       width: '100%',
       height: '25%',
-      backgroundColor: MAIN_LIGHT,
       flexDirection: 'column',
       justifyContent: 'flex-end',
       alignItems: 'center',
@@ -3358,7 +3434,6 @@ const HomePage = EStyleSheet.create({
       flexDirection: 'column',
       justifyContent: 'flex-end',
       alignItems: 'center',
-      backgroundColor: '#202020'
     },
     settingsOverlayClosePressable: {
       position: 'absolute',
@@ -3368,6 +3443,19 @@ const HomePage = EStyleSheet.create({
       bottom: '75%',
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    settingsOverlayThemeContainer: {
+      width: '100%',
+      height: '75%',
+      paddingHorizontal: '10rem',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    settingsOverlayThemeText: {
+      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+      textShadowRadius: '1rem',
+      fontSize: '14rem',
     },
     settingsOverlayLogoutContainer: {
       width: '100%',
@@ -3439,7 +3527,6 @@ const HomePage = EStyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      backgroundColor: MAIN_DARK,
     },
     mainClearSearchBarContainer: {
       height: '40rem',
@@ -3463,16 +3550,11 @@ const HomePage = EStyleSheet.create({
     },
     mainClearSearchBarText: {
       fontWeight: 'normal',
-      color: 'white',
       paddingHorizontal: '22rem',
       width: '94%',
     },
     mainClearSearchBarTextSecond: {
-      color: 'white',
       fontWeight: 'bold',
-    },
-    searchInputStyle: {
-      color: 'white',
     },
     searchInputContainerStyle: {
       zIndex: 8,
@@ -3482,7 +3564,6 @@ const HomePage = EStyleSheet.create({
       paddingTop: '8rem',
       justifyContent: 'flex-start',
       alignItems: 'center',
-      backgroundColor: MAIN_DARK,
     },
     searchInContainerStyle: {
       borderBottomWidth: '0.5rem',
@@ -3524,20 +3605,16 @@ const HomePage = EStyleSheet.create({
       paddingBottom: StatusBar.currentHeight * 2 + '64rem',
     },
     searchNoResultsTextPrimary: {
-      textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      color: 'white',
       textAlign: 'center',
       fontSize: '16rem',
       fontWeight: 'bold',
     },
     searchNoResultsTextSecondary: {
       marginTop: '4rem',
-      textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      color: 'white',
       textAlign: 'center',
     },
     flatListsContentContainer: {
@@ -3547,8 +3624,8 @@ const HomePage = EStyleSheet.create({
     advSearchBtnContainer: {
       width: '45rem',
       height: '45rem',
-      zIndex: 10,
-      elevation: 10,
+      zIndex: 5,
+      elevation: 5,
       overflow: 'hidden',
       bottom: '18rem',
       right: '20rem',
@@ -3581,12 +3658,10 @@ const HomePage = EStyleSheet.create({
     },
     refreshTextPrimary: {
       fontSize: '12rem',
-      color: 'black',
       fontWeight: 'bold',
     },
     refreshTextSecondary: {
       fontSize: '12rem',
-      color: 'black',
       paddingBottom: '4rem',
     },
     clipboardAlertContainer: {
@@ -3596,14 +3671,23 @@ const HomePage = EStyleSheet.create({
       zIndex: 9,
       position: 'absolute',
       top: '50%',
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 34,
     },
     clipboardAlertText: {
       fontSize: '12rem',
-      color: 'black',
       fontWeight: 'bold',
+    },
+    networkAlertContainer: {
+      width: '100%',
+      height: StatusBar.currentHeight * 3,
+      paddingTop: StatusBar.currentHeight,
+      elevation: 9,
+      zIndex: 9,
+      position: 'absolute',
+      top: 0,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
   });
