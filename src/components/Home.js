@@ -7,6 +7,7 @@ import EStyleSheet from 'react-native-extended-stylesheet';
 import FastImage from 'react-native-fast-image';
 import Accordion from 'react-native-collapsible/Accordion';
 import {
+  Dimensions, PixelRatio, Platform,
   View,
   Text,
   Animated,
@@ -665,11 +666,23 @@ export default function Home() {
     dispatch(AppConfigActions.retrieveLatest());
     dispatch(AppConfigActions.latestError());
   };
+
+  const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+  const scale = SCREEN_WIDTH / SCREEN_WIDTH;
+
+  function fontSz(size) {
+    const newSize = size * scale 
+     if (Platform.OS === 'ios') {
+      return Math.round(PixelRatio.roundToNearestPixel(newSize))
+     } else {
+       return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2
+     }
+    }
  
   const _renderHeader = section => {
     return (
       <View style={HomePage.renderHeader}>
-        <Text style={{textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, 
+        <Text style={{fontSize: fontSz(16), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, 
       textShadowOffset: {width: 0.8, height: 0.8},
       textShadowRadius: 1,
       color: ACCENT_COLOR, fontWeight: 'bold'}}>{section.title}</Text>
@@ -680,7 +693,7 @@ export default function Home() {
   const _renderContent = section => {
     return (
       <View style={HomePage.renderContent}>
-        <Text style={{color: lightTheme ? 'black' : 'white'}}>{section.content}</Text>
+        <Text style={{fontSize: fontSz(16), color: lightTheme ? 'black' : 'white'}}>{section.content}</Text>
       </View>
     );
   };
@@ -883,21 +896,21 @@ export default function Home() {
           />
           </View>
           <View style={HomePage.itemPressableNameContainer}>
-            <Text style={[HomePage.itemPressableNameText, {textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+            <Text style={[HomePage.itemPressableNameText, {fontSize: fontSz(12), textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
           color: lightTheme ? MAIN_DARK : 'white'}]}>{item.name}</Text>
-            <Text style={[HomePage.itemPressableUploadText, {textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+            <Text style={[HomePage.itemPressableUploadText, {fontSize: fontSz(11), textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
           color: lightTheme ? 'grey' : 'silver'}]}>
               [ {item.upload_date.substring(0, 16)} ]
             </Text>
             <View style={HomePage.itemPressableUploadContainer}>
             {item.doubleup === 1 ? (
-              <Text style={HomePage.itemPressableDoubleUpText}>2X UPLOAD</Text>
+              <Text style={[HomePage.itemPressableDoubleUpText, {fontSize: fontSz(10)}]}>2X UPLOAD</Text>
             ) : null}
             {item.internal === 1 ? (
-              <Text style={HomePage.itemPressableInternalText}>INTERNAL</Text>
+              <Text style={[HomePage.itemPressableInternalText, {fontSize: fontSz(10)}]}>INTERNAL</Text>
             ) : null}
             {item.freeleech === 1 ? (
-              <Text style={HomePage.itemPressableFreeleechText}>FREELEECH</Text>
+              <Text style={[HomePage.itemPressableFreeleechText, {fontSize: fontSz(10)}]}>FREELEECH</Text>
             ) : null}
           </View>
           </View>
@@ -968,7 +981,7 @@ export default function Home() {
                     <View style={HomePage.catCheckScrollContainer}>
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Anime"
                         checked={animes}
@@ -990,7 +1003,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Audio"
                         checked={audio}
@@ -1012,7 +1025,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Desene"
                         checked={desene}
@@ -1034,7 +1047,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Diverse"
                         checked={diverse}
@@ -1056,7 +1069,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Docs"
                         checked={doc}
@@ -1078,7 +1091,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme 3D"
                         checked={filme3d}
@@ -1100,7 +1113,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme 4K"
                         checked={filme4k}
@@ -1122,7 +1135,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme 4K Blu-Ray"
                         checked={filme4kbd}
@@ -1144,7 +1157,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme Blu-Ray"
                         checked={filmeBD}
@@ -1166,7 +1179,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme DVD"
                         checked={filmeDvd}
@@ -1188,7 +1201,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme DVD-RO"
                         checked={filmeDvdRo}
@@ -1210,7 +1223,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme HD"
                         checked={filmeHd}
@@ -1232,7 +1245,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme HD-RO"
                         checked={filmeHdRo}
@@ -1254,7 +1267,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme SD"
                         checked={filmeSd}
@@ -1276,7 +1289,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="FLAC"
                         checked={flacs}
@@ -1298,7 +1311,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Jocuri Console"
                         checked={jocConsole}
@@ -1320,7 +1333,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Jocuri PC"
                         checked={jocPc}
@@ -1342,7 +1355,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Linux"
                         checked={lin}
@@ -1364,7 +1377,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Mobile"
                         checked={mob}
@@ -1386,7 +1399,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Programe"
                         checked={software}
@@ -1408,7 +1421,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Seriale 4K"
                         checked={seriale4k}
@@ -1430,7 +1443,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Seriale HD"
                         checked={serialeHd}
@@ -1452,7 +1465,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Seriale SD"
                         checked={serialeSd}
@@ -1474,7 +1487,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Sport"
                         checked={sports}
@@ -1496,7 +1509,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Videoclip"
                         checked={videos}
@@ -1518,7 +1531,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBoxLast}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="XXX"
                         checked={porn}
@@ -1603,7 +1616,7 @@ export default function Home() {
                     <View style={HomePage.catCheckScrollContainer}>
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Anime"
                         checked={animes}
@@ -1625,7 +1638,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Audio"
                         checked={audio}
@@ -1647,7 +1660,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Desene"
                         checked={desene}
@@ -1669,7 +1682,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Diverse"
                         checked={diverse}
@@ -1691,7 +1704,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Docs"
                         checked={doc}
@@ -1713,7 +1726,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme 3D"
                         checked={filme3d}
@@ -1735,7 +1748,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme 4K"
                         checked={filme4k}
@@ -1757,7 +1770,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme 4K Blu-Ray"
                         checked={filme4kbd}
@@ -1779,7 +1792,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme Blu-Ray"
                         checked={filmeBD}
@@ -1801,7 +1814,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme DVD"
                         checked={filmeDvd}
@@ -1823,7 +1836,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme DVD-RO"
                         checked={filmeDvdRo}
@@ -1845,7 +1858,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme HD"
                         checked={filmeHd}
@@ -1867,7 +1880,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme HD-RO"
                         checked={filmeHdRo}
@@ -1889,7 +1902,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Filme SD"
                         checked={filmeSd}
@@ -1911,7 +1924,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="FLAC"
                         checked={flacs}
@@ -1933,7 +1946,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Jocuri Console"
                         checked={jocConsole}
@@ -1955,7 +1968,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Jocuri PC"
                         checked={jocPc}
@@ -1977,7 +1990,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Linux"
                         checked={lin}
@@ -1999,7 +2012,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Mobile"
                         checked={mob}
@@ -2021,7 +2034,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Programe"
                         checked={software}
@@ -2043,7 +2056,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Seriale 4K"
                         checked={seriale4k}
@@ -2065,7 +2078,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Seriale HD"
                         checked={serialeHd}
@@ -2087,7 +2100,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Seriale SD"
                         checked={serialeSd}
@@ -2109,7 +2122,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Sport"
                         checked={sports}
@@ -2131,7 +2144,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Videoclip"
                         checked={videos}
@@ -2153,7 +2166,7 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBoxLast}
-                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="XXX"
                         checked={porn}
@@ -2183,7 +2196,7 @@ export default function Home() {
                         borderless: false,
                       }}
                       onPress={() => setCatList(false)}>
-                      <Text style={HomePage.catCheckOverlayText}>OK</Text>
+                      <Text style={[HomePage.catCheckOverlayText, {fontSize: fontSz(16)}]}>OK</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -2192,13 +2205,13 @@ export default function Home() {
                 showsVerticalScrollIndicator={true}
                 contentContainerStyle={HomePage.advSearchScrollView}>
                 <View style={HomePage.advSearchView}>
-                  <Text style={[HomePage.advSearchViewText, {color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                  <Text style={[HomePage.advSearchViewText, {fontSize: fontSz(18) ,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                     Căutare avansată
                   </Text>
                 </View>
                 <Input
                   ref={AdvSearchRef}
-                  style={[HomePage.advSearchInputStyle, {color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}
+                  style={[HomePage.advSearchInputStyle, {fontSize: fontSz(18), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}
                   containerStyle={[HomePage.advSearchContainerStyle, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,}]}
                   inputContainerStyle={[
                     HomePage.advSearchInputContainerStyle,
@@ -2233,7 +2246,7 @@ export default function Home() {
                 />
                 <View style={HomePage.advSearchTypeViewContainer}>
                   <View style={HomePage.advSearchTypeView}>
-                    <Text style={[HomePage.advSearchTypeText, {color: lightTheme ? MAIN_DARK : MAIN_LIGHT,}]}>
+                    <Text style={[HomePage.advSearchTypeText, {fontSize: fontSz(14), color: lightTheme ? MAIN_DARK : MAIN_LIGHT,}]}>
                       Tipul căutării
                     </Text>
                     <Pressable
@@ -2247,7 +2260,7 @@ export default function Home() {
                         Keyboard.dismiss();
                         Alert.alert(
                           'Info',
-                          'Pentru informaţii suplimentare legate de diferenţa dintre cele două tipuri, ţine apăsat 1 secundă pe căsuţa nebifată şi vice-versa.',
+                          'Pentru informaţii suplimentare legate de diferenţa dintre cele două tipuri, ţine apăsat 2 secunde (long press) pe căsuţa nebifată şi vice-versa.',
                           [
                             {
                               text: 'OK',
@@ -2272,7 +2285,7 @@ export default function Home() {
                           HomePage.advSearchTypeCheckBox1,
                           {borderColor: advKeyword ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT},
                         ]}
-                        textStyle={{color: advKeyword ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: advKeyword ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Cuvânt cheie"
                         checked={advKeyword}
@@ -2324,7 +2337,7 @@ export default function Home() {
                           HomePage.advSearchTypeCheckBox2,
                           {borderColor: advIMDb ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT},
                         ]}
-                        textStyle={{color: advIMDb ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{fontSize: fontSz(16), color: advIMDb ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                         center
                         title="Cod IMDb"
                         checked={advIMDb}
@@ -2373,7 +2386,7 @@ export default function Home() {
                 <View style={HomePage.advSearchCatContainer}>
                   <CheckBox
                     containerStyle={[HomePage.advSearchCatCheck, {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}
-                    textStyle={{
+                    textStyle={{fontSize: fontSz(16),
                       color:
                         animes ||
                         audio ||
@@ -2454,7 +2467,7 @@ export default function Home() {
                 <View style={HomePage.advSearchOptions}>
                   <CheckBox
                     containerStyle={[HomePage.advSearchOptionsCheck, {borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
-                    textStyle={{color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
+                    textStyle={{fontSize: fontSz(16),color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
                     center
                     title="2X Upload"
                     checked={doubleUp}
@@ -2494,7 +2507,7 @@ export default function Home() {
                   />
                   <CheckBox
                     containerStyle={[HomePage.advSearchOptionsCheck, {borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
-                    textStyle={{color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
+                    textStyle={{fontSize: fontSz(16),color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
                     center
                     title="Freeleech"
                     checked={freeleech}
@@ -2536,7 +2549,7 @@ export default function Home() {
                 <View style={HomePage.advSearchOptions}>
                   <CheckBox
                     containerStyle={[HomePage.advSearchOptionsCheck,{borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
-                    textStyle={{color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
+                    textStyle={{fontSize: fontSz(16),color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
                     center
                     title="Internal"
                     checked={internal}
@@ -2576,7 +2589,7 @@ export default function Home() {
                   />
                   <CheckBox
                     containerStyle={[HomePage.advSearchOptionsCheck,{borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
-                    textStyle={{color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
+                    textStyle={{fontSize: fontSz(16),color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
                     center
                     title="Moderated"
                     checked={moderated}
@@ -2625,10 +2638,10 @@ export default function Home() {
                     onPress={handleAdvancedSearch}>
                     <FontAwesomeIcon
                       style={HomePage.advSearchPressableIcon}
-                      size={20}
+                      size={fontSz(20)}
                       icon={faSearch}
                     />
-                    <Text style={HomePage.advSearchPressableText}>Caută</Text>
+                    <Text style={[HomePage.advSearchPressableText, {fontSize: fontSz(20)}]}>Caută</Text>
                   </Pressable>
                 </View>
               </ScrollView>
@@ -2718,16 +2731,16 @@ export default function Home() {
                           }
                         />
                         <View style={HomePage.imdbInfoHeaderText}>
-                          <Text selectable style={[HomePage.imdbInfoHeaderCat, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                          <Text selectable style={[HomePage.imdbInfoHeaderCat, {fontSize: fontSz(20),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                             {item.category}
                           </Text>
-                          <Text selectable style={[HomePage.imdbInfoHeaderDesc, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+                          <Text selectable style={[HomePage.imdbInfoHeaderDesc, {fontSize: fontSz(11),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
                             [ {item.small_description} ]
                           </Text>
                         </View>
                       </View>
                       <View style={HomePage.imdbInfoTitleSection}>
-                        <Text selectable style={[HomePage.imdbInfoTitleText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                        <Text selectable style={[HomePage.imdbInfoTitleText, {fontSize: fontSz(14), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                           {item.name}
                         </Text>
                       </View>
@@ -2744,17 +2757,17 @@ export default function Home() {
                           },
                         ]}>
                         {item.doubleup === 1 ? (
-                          <Text style={HomePage.imdbInfoDoubleUpBadge}>
+                          <Text style={[HomePage.imdbInfoDoubleUpBadge, {fontSize: fontSz(10)}]}>
                             2X UPLOAD
                           </Text>
                         ) : null}
                         {item.internal === 1 ? (
-                          <Text style={HomePage.imdbInfoInternalBadge}>
+                          <Text style={[HomePage.imdbInfoInternalBadge, {fontSize: fontSz(10)}]}>
                             INTERNAL
                           </Text>
                         ) : null}
                         {item.freeleech === 1 ? (
-                          <Text style={HomePage.imdbInfoFreeleechBadge}>
+                          <Text style={[HomePage.imdbInfoFreeleechBadge, {fontSize: fontSz(10)}]}>
                             FREELEECH
                           </Text>
                         ) : null}
@@ -2825,7 +2838,7 @@ export default function Home() {
                                                   <Text
                                                     style={[
                                                       HomePage.imdbInfoRatingText
-                                                    , {color: lightTheme ? MAIN_DARK : 'white', textShadowColor: lightTheme ? 'silver' : 'black'}]}>
+                                                    , {fontSize: fontSz(20), color: lightTheme ? MAIN_DARK : 'white', textShadowColor: lightTheme ? 'silver' : 'black'}]}>
                                                     {item.rating === undefined
                                                       ? 'Fără'
                                                       : item.rating}
@@ -2848,14 +2861,14 @@ export default function Home() {
                                           <View
                                             style={HomePage.imdbInfoMainPlot}>
                                             <Text
-                                              style={[HomePage.imdbInfoMainPlotTitle, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+                                              style={[HomePage.imdbInfoMainPlotTitle, {fontSize: fontSz(14), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
                                               Plot
                                             </Text>
                                             <Text
                                                 selectable
                                                 style={[
                                                   HomePage.imdbInfoMainPlotText
-                                                , {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                                                , {fontSize: fontSz(12), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                             {item.plot === undefined ? "Acest material nu conţine plot" : item.plot.split('\n')[0]}
                                             </Text>
                                             {item.duration === '' ? null : (
@@ -2868,7 +2881,7 @@ export default function Home() {
                                                 <Text
                                                   style={[
                                                     HomePage.imdbInfoMainETATitle
-                                                  ,{textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+                                                  ,{fontSize: fontSz(14), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
                                                   Durată:
                                                   <Text
                                                     style={[
@@ -2920,7 +2933,7 @@ export default function Home() {
                                 color={ACCENT_COLOR}
                               />
                               <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText,{textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {formatBytes(item.size)}
                               </Text>
                             </Pressable>
@@ -2951,7 +2964,7 @@ export default function Home() {
                                 color={ACCENT_COLOR}
                               />
                               <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {item.files}
                               </Text>
                             </Pressable>
@@ -2983,7 +2996,7 @@ export default function Home() {
                                 color={'limegreen'}
                               />
                               <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {item.seeders}
                               </Text>
                             </Pressable>
@@ -3017,7 +3030,7 @@ export default function Home() {
                                 color={ACCENT_COLOR}
                               />
                               <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {item.upload_date.substring(0, 10)}
                               </Text>
                             </Pressable>
@@ -3049,7 +3062,7 @@ export default function Home() {
                                 color={ACCENT_COLOR}
                               />
                               <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {item.times_completed}
                               </Text>
                             </Pressable>
@@ -3081,7 +3094,7 @@ export default function Home() {
                                 color={'crimson'}
                               />
                               <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                                 {item.leechers}
                               </Text>
                             </Pressable>
@@ -3119,7 +3132,7 @@ export default function Home() {
                               color={ACCENT_COLOR}
                             />
                             <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {formatBytes(item.size)}
                             </Text>
                           </Pressable>
@@ -3150,7 +3163,7 @@ export default function Home() {
                               color={ACCENT_COLOR}
                             />
                             <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {item.files}
                             </Text>
                           </Pressable>
@@ -3182,7 +3195,7 @@ export default function Home() {
                               color={'limegreen'}
                             />
                             <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {item.seeders}
                             </Text>
                           </Pressable>
@@ -3216,7 +3229,7 @@ export default function Home() {
                               color={ACCENT_COLOR}
                             />
                             <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {item.upload_date.substring(0, 10)}
                             </Text>
                           </Pressable>
@@ -3248,7 +3261,7 @@ export default function Home() {
                               color={ACCENT_COLOR}
                             />
                             <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {item.times_completed}
                             </Text>
                           </Pressable>
@@ -3280,7 +3293,7 @@ export default function Home() {
                               color={'crimson'}
                             />
                             <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                               {item.leechers}
                             </Text>
                           </Pressable>
@@ -3313,7 +3326,7 @@ export default function Home() {
                 textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, textShadowOffset: {width: 0.8, height: 0.8},
                 textShadowRadius: 1,
                 fontWeight: 'bold',
-                fontSize: 20}}>Informaţii folosire</Text>
+                fontSize: fontSz(20)}}>Informaţii folosire</Text>
             </View>
             <Accordion
               sections={INFO}
@@ -3338,9 +3351,9 @@ export default function Home() {
           }}>
           <View style={[HomePage.settingsOverlayCloseContainer, {backgroundColor: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
             <View style={HomePage.settingsOverlayThemeContainer}>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}><Text style={[HomePage.settingsOverlayThemeText, {textShadowColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+              <View style={{flexDirection: 'row', alignItems: 'center'}}><Text style={[HomePage.settingsOverlayThemeText, {fontSize: fontSz(20), textShadowColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
               color: lightTheme ? 'white' : MAIN_DARK}]}>Temă curentă: </Text>
-              {lightTheme ? <FontAwesomeIcon color={MAIN_LIGHT} size={22} icon={faSun}/> : <FontAwesomeIcon color={MAIN_DARK} size={22} icon={faMoon}/>}</View>
+              {lightTheme ? <FontAwesomeIcon color={MAIN_LIGHT} size={fontSz(22)} icon={faSun}/> : <FontAwesomeIcon color={MAIN_DARK} size={22} icon={faMoon}/>}</View>
               <Switch
                 trackColor={{ false: 'grey', true: 'grey' }}
                 thumbColor={lightTheme ? "white" : "black"}
@@ -3359,7 +3372,7 @@ export default function Home() {
                 onPress={() => {
                   setIsInfo(true);
                 }}>
-                <Text style={HomePage.settingsOverlayLogoutText}>Informaţii folosire</Text>
+                <Text style={[HomePage.settingsOverlayLogoutText, {fontSize: fontSz(20)}]}>Informaţii folosire</Text>
               </Pressable>
             </View>
             <View style={HomePage.settingsOverlayLogoutContainer}>
@@ -3373,7 +3386,7 @@ export default function Home() {
                   setIsSettings(false);
                   handleLogout();
                 }}>
-                <Text style={HomePage.settingsOverlayLogoutText}>Logout</Text>
+                <Text style={[HomePage.settingsOverlayLogoutText, {fontSize: fontSz(20)}]}>Logout</Text>
               </Pressable>
             </View>
           </View>
@@ -3389,10 +3402,10 @@ export default function Home() {
                   radius: 16,
                 }}
                 onPress={() => setIsInfo(true)}>
-                <FontAwesomeIcon size={24} color={'white'} icon={faInfoCircle} />
+                <FontAwesomeIcon size={fontSz(26)} color={'white'} icon={faInfoCircle} />
               </Pressable>
             </View>
-            <Text style={HomePage.mainHeaderText}>
+            <Text style={[HomePage.mainHeaderText, {fontSize: fontSz(20)}]}>
               {isSearch ? 'Căutare' : 'Recent adăugate'}
             </Text>
             <View style={HomePage.mainHeaderCogContainer}>
@@ -3404,7 +3417,7 @@ export default function Home() {
                   radius: 16,
                 }}
                 onPress={() => setIsSettings(true)}>
-                <FontAwesomeIcon size={24} color={'white'} icon={faCog} />
+                <FontAwesomeIcon size={fontSz(26)} color={'white'} icon={faCog} />
               </Pressable>
             </View>
           </View>
@@ -3424,7 +3437,7 @@ export default function Home() {
               <FontAwesomeIcon size={20} color={'white'} icon={faArrowLeft} />
             </Pressable>
           </View>
-          <Text selectable style={[HomePage.mainClearSearchBarText, {color: lightTheme ? MAIN_DARK : 'white'}]}>
+          <Text selectable style={[HomePage.mainClearSearchBarText, {fontSize: fontSz(15), color: lightTheme ? MAIN_DARK : 'white'}]}>
             Rezultatele căutării după "
             <Text style={[HomePage.mainClearSearchBarTextSecond, {color: lightTheme ? MAIN_DARK : 'white'}]}>
               {search !== ''
@@ -3437,7 +3450,7 @@ export default function Home() {
           </Text>
         </View> : <Input
           ref={SearchBarRef}
-          style={{color: lightTheme ? MAIN_DARK : 'white'}}
+          style={{fontSize: fontSz(18), color: lightTheme ? MAIN_DARK : 'white'}}
           containerStyle={[HomePage.searchInputContainerStyle, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}
           inputContainerStyle={[
             HomePage.searchInContainerStyle,
@@ -3487,10 +3500,10 @@ export default function Home() {
           </View>
         ) : noResults ? (
           <View style={HomePage.searchNoResults}>
-            <Text style={[HomePage.searchNoResultsTextPrimary, {textShadowColor: lightTheme ? MAIN_LIGHT : 'black', color: lightTheme ? MAIN_DARK:'white'}]}>
+            <Text style={[HomePage.searchNoResultsTextPrimary, {fontSize: fontSz(20), textShadowColor: lightTheme ? MAIN_LIGHT : 'black', color: lightTheme ? MAIN_DARK:'white'}]}>
               Nu s-a găsit nimic
             </Text>
-            <Text style={[HomePage.searchNoResultsTextSecondary, {textShadowColor: lightTheme ? MAIN_LIGHT : 'black', color: lightTheme ? MAIN_DARK:'white'}]}>
+            <Text style={[HomePage.searchNoResultsTextSecondary, {fontSize: fontSz(16), textShadowColor: lightTheme ? MAIN_LIGHT : 'black', color: lightTheme ? MAIN_DARK:'white'}]}>
               Încearcă din nou cu alt șir de căutare
             </Text>
           </View>
@@ -3568,11 +3581,11 @@ export default function Home() {
             },
           ]}>
           <Animated.Text
-            style={[HomePage.refreshTextPrimary, {opacity: textOpacity,color: lightTheme ? 'white' : 'black'}]}>
+            style={[HomePage.refreshTextPrimary, {fontSize: fontSz(16), opacity: textOpacity,color: lightTheme ? 'white' : 'black'}]}>
             Actualizare completă
           </Animated.Text>
           <Animated.Text
-            style={[HomePage.refreshTextSecondary, {opacity: textOpacity,color: lightTheme ? 'white' : 'black'}]}>
+            style={[HomePage.refreshTextSecondary, {fontSize: fontSz(16), opacity: textOpacity,color: lightTheme ? 'white' : 'black'}]}>
             (nu există torrente noi)
           </Animated.Text>
         </Animated.View>
@@ -3591,7 +3604,7 @@ export default function Home() {
           <Animated.Text
             style={[
               HomePage.clipboardAlertText,
-              {opacity: textClipboardOpacity, color: lightTheme ? 'white' : 'black'},
+              {fontSize: fontSz(16), opacity: textClipboardOpacity, color: lightTheme ? 'white' : 'black'},
             ]}>
             Link descărcare copiat în Clipboard
           </Animated.Text>
@@ -3609,8 +3622,8 @@ export default function Home() {
             },
           ]}>
           <Animated.Text
-            style={{fontSize: 13,
-            fontWeight: 'bold', opacity: showNetworkAlertText,color: 'white'}
+            style={{fontSize: fontSz(18),
+            fontWeight: 'bold', opacity: showNetworkAlertText, color: 'white'}
             }>
             {isNetReachable ? 'Online' : 'Offline'}
           </Animated.Text>
@@ -3661,10 +3674,8 @@ const HomePage = EStyleSheet.create({
     itemPressableNameText: {
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      fontSize: '10rem',
     },
     itemPressableUploadText: {
-      fontSize: '8rem',
       color: 'silver',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
@@ -3686,7 +3697,6 @@ const HomePage = EStyleSheet.create({
       paddingHorizontal: '1rem',
       borderColor: '#1ec621',
       borderWidth: '0.5rem',
-      fontSize: '7.5rem',
       color: 'aliceblue',
       marginLeft: '5rem',
       backgroundColor: '#09580a',
@@ -3698,7 +3708,6 @@ const HomePage = EStyleSheet.create({
       paddingHorizontal: '1rem',
       borderColor: '#7c00ff',
       borderWidth: '0.5rem',
-      fontSize: '7.5rem',
       color: 'aliceblue',
       marginLeft: '5rem',
       backgroundColor: '#370f61',
@@ -3710,7 +3719,6 @@ const HomePage = EStyleSheet.create({
       paddingHorizontal: '1rem',
       borderColor: '#1e87c6',
       borderWidth: '0.5rem',
-      fontSize: '7.5rem',
       color: 'aliceblue',
       marginLeft: '5rem',
       backgroundColor: '#093b58',
@@ -3810,7 +3818,6 @@ const HomePage = EStyleSheet.create({
       color: 'white',
       textAlign: 'center',
       fontWeight: 'bold',
-      fontSize: '12rem',
     },
     advSearchScrollView: {
       width: '100%',
@@ -3825,10 +3832,8 @@ const HomePage = EStyleSheet.create({
     advSearchViewText: {
       textAlign: 'center',
       fontWeight: 'bold',
-      fontSize: '14rem',
     },
     advSearchInputStyle: {
-      fontSize: '14rem',
       fontWeight: 'normal',
     },
     advSearchContainerStyle: {
@@ -3864,7 +3869,6 @@ const HomePage = EStyleSheet.create({
     advSearchTypeText: {
       textAlign: 'center',
       fontWeight: 'bold',
-      fontSize: '10rem',
     },
     advSearchTypePressable: {
       height: '100%',
@@ -3983,7 +3987,6 @@ const HomePage = EStyleSheet.create({
       textShadowColor: 'black',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      fontSize: '16rem',
       textAlign: 'center',
       fontWeight: 'bold',
       color: 'white',
@@ -4036,13 +4039,11 @@ const HomePage = EStyleSheet.create({
     imdbInfoHeaderCat: {
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      fontSize: '16rem',
     },
     imdbInfoHeaderDesc: {
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
       color: 'grey',
-      fontSize: '7.5rem',
       fontWeight: 'bold',
       textAlign: 'center',
     },
@@ -4059,7 +4060,6 @@ const HomePage = EStyleSheet.create({
     imdbInfoTitleText: {
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      fontSize: '10rem',
       fontWeight: 'bold',
     },
     imdbInfoTitleBadges: {
@@ -4075,7 +4075,6 @@ const HomePage = EStyleSheet.create({
       textShadowRadius: '1rem',
       borderColor: '#1ec621',
       borderWidth: '0.5rem',
-      fontSize: '7.5rem',
       color: 'aliceblue',
       marginRight: '4rem',
       backgroundColor: '#09580a',
@@ -4086,7 +4085,6 @@ const HomePage = EStyleSheet.create({
       textShadowRadius: '1rem',
       borderColor: '#7c00ff',
       borderWidth: '0.5rem',
-      fontSize: '7.5rem',
       color: 'aliceblue',
       marginRight: '4rem',
       backgroundColor: '#370f61',
@@ -4097,7 +4095,6 @@ const HomePage = EStyleSheet.create({
       textShadowRadius: '1rem',
       borderColor: '#1e87c6',
       borderWidth: '0.5rem',
-      fontSize: '7.5rem',
       color: 'aliceblue',
       marginRight: '4rem',
       backgroundColor: '#093b58',
@@ -4154,13 +4151,11 @@ const HomePage = EStyleSheet.create({
       height: '21%',
     },
     imdbInfoRatingText: {
-      fontSize: '8rem',
       textShadowOffset: {
         width: '1rem',
         height: '1rem',
       },
       textShadowRadius: '1rem',
-      fontSize: '16rem',
       fontWeight: 'bold',
     },
     imdbInfoRatingIcon: {marginLeft: '8rem'},
@@ -4180,7 +4175,6 @@ const HomePage = EStyleSheet.create({
       alignItems: 'flex-start',
     },
     imdbInfoMainPlotTitle: {
-      fontSize: '10rem',
       textShadowOffset: {
         width: '1rem',
         height: '1rem',
@@ -4190,7 +4184,6 @@ const HomePage = EStyleSheet.create({
       fontWeight: 'bold',
     },
     imdbInfoMainPlotText: {
-      fontSize: '9rem',
       textShadowOffset: {
         width: '1rem',
         height: '1rem',
@@ -4208,7 +4201,6 @@ const HomePage = EStyleSheet.create({
       backgroundColor: '#303030',
     },
     imdbInfoMainETATitle: {
-      fontSize: '10rem',
       textShadowOffset: {
         width: '1rem',
         height: '1rem',
@@ -4218,7 +4210,6 @@ const HomePage = EStyleSheet.create({
       fontWeight: 'bold',
     },
     imdbInfoMainETAText: {
-      fontSize: '9rem',
       textShadowOffset: {
         width: '1rem',
         height: '1rem',
@@ -4264,7 +4255,6 @@ const HomePage = EStyleSheet.create({
       alignItems: 'center',
     },
     imdbInfoMainFooter3rdText: {
-      fontSize: '9rem',
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
     },
@@ -4365,7 +4355,6 @@ const HomePage = EStyleSheet.create({
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
       fontWeight: 'bold',
-      fontSize: '16rem',
     },
     settingsOverlayUseContainer: {
       width: '100%',
@@ -4400,8 +4389,7 @@ const HomePage = EStyleSheet.create({
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
       color: 'white',
-      fontWeight: 'bold',
-      fontSize: '16rem',
+      fontWeight: 'bold'
     },
     mainHeader: {
       height: StatusBar.currentHeight * 3,
@@ -4439,7 +4427,6 @@ const HomePage = EStyleSheet.create({
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
       color: 'white',
-      fontSize: 18,
       fontWeight: 'bold',
     },
     mainHeaderCogContainer: {
@@ -4507,7 +4494,7 @@ const HomePage = EStyleSheet.create({
       borderBottomWidth: '0.5rem',
       height: '80%',
       width: '100%',
-      paddingLeft: '4rem',
+      paddingLeft: '6rem',
       paddingRight: '1.5rem',
     },
     searchInputRIContainer: {
@@ -4546,7 +4533,6 @@ const HomePage = EStyleSheet.create({
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
       textAlign: 'center',
-      fontSize: '16rem',
       fontWeight: 'bold',
     },
     searchNoResultsTextSecondary: {
@@ -4595,11 +4581,9 @@ const HomePage = EStyleSheet.create({
       borderRadius: 34,
     },
     refreshTextPrimary: {
-      fontSize: '12rem',
       fontWeight: 'bold',
     },
     refreshTextSecondary: {
-      fontSize: '12rem',
       paddingBottom: '4rem',
     },
     clipboardAlertContainer: {
@@ -4614,13 +4598,12 @@ const HomePage = EStyleSheet.create({
       borderRadius: 34,
     },
     clipboardAlertText: {
-      fontSize: '12rem',
       fontWeight: 'bold',
     },
     networkAlertContainer: {
       width: '100%',
       height: StatusBar.currentHeight * 3,
-      paddingTop: StatusBar.currentHeight,
+      paddingTop: StatusBar.currentHeight * 1.5,
       elevation: 9,
       zIndex: 9,
       position: 'absolute',

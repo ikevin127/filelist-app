@@ -3,6 +3,7 @@ import EStyleSheet from 'react-native-extended-stylesheet';
 import FastImage from 'react-native-fast-image';
 import AsyncStorage from '@react-native-community/async-storage';
 import {
+  Dimensions, PixelRatio,
   View,
   Text,
   Pressable,
@@ -36,12 +37,13 @@ export default function Login() {
   const [userModal, setUserModal] = useState(false);
   const [passModal, setPassModal] = useState(false);
   const [aboutModal, setAboutModal] = useState(false);
-  const [user, setUser] = useState(USERNAME);
-  const [pass, setPass] = useState(PASSKEY);
+  const [user, setUser] = useState('');
+  const [pass, setPass] = useState('');
   const [invalid, setInvalid] = useState(false);
   const [invalidUser, setInvalidUser] = useState(false);
   const [invalidPass, setInvalidPass] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [isKeyboard, setIsKeyboard] = useState(false);
   const err1 = useRef();
   const err2 = useRef();
   const err3 = useRef();
@@ -51,12 +53,39 @@ export default function Login() {
       setLoginLoading(false);
     }
 
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setIsKeyboard(true);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setIsKeyboard(false);
+      }
+    );
+
     return () => {
       clearInterval(err1.current);
       clearInterval(err2.current);
       clearInterval(err3.current);
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
     };
   }, [listLatest, latestError]);
+
+  const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+  const scale = SCREEN_WIDTH / SCREEN_WIDTH;
+
+  function fontSz(size) {
+    const newSize = size * scale 
+     if (Platform.OS === 'ios') {
+      return Math.round(PixelRatio.roundToNearestPixel(newSize))
+     } else {
+       return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2
+     }
+    }
 
   const storeData = async (value0, value1) => {
     try {
@@ -115,15 +144,11 @@ export default function Login() {
         }}>
         <View style={LoginPage.dataContainer}>
           <View style={LoginPage.openFilelist}>
-            <Text style={{color: lightTheme ? MAIN_DARK : 'white', fontWeight: 'bold'}}>Deschide</Text>
             <Pressable
               style={LoginPage.filelistPressable}
-              android_ripple={{
-                color: 'white',
-                borderless: false,
-              }}
               onPress={() => Linking.openURL('https://filelist.io')}>
-              <Text style={LoginPage.filelistText}>Filelist.io</Text>
+              <Text style={{fontSize: fontSz(16),color: lightTheme ? MAIN_DARK : 'white', fontWeight: 'bold'}}>Deschide{" "}{" "}</Text>
+              <Text style={[LoginPage.filelistText, {fontSize: fontSz(16),}]}>Filelist.io</Text>
             </Pressable>
           </View>
           <View style={LoginPage.imageContainer}>
@@ -149,15 +174,11 @@ export default function Login() {
         }}>
         <View style={LoginPage.dataContainer}>
           <View style={LoginPage.openFilelist}>
-            <Text style={{color: lightTheme ? MAIN_DARK : 'white', fontWeight: 'bold'}}>Deschide</Text>
             <Pressable
               style={LoginPage.filelistPressable}
-              android_ripple={{
-                color: 'grey',
-                borderless: false,
-              }}
               onPress={() => Linking.openURL('https://filelist.io')}>
-              <Text style={LoginPage.filelistText}>Filelist.io</Text>
+              <Text style={{fontSize: fontSz(16),color: lightTheme ? MAIN_DARK : 'white', fontWeight: 'bold'}}>Deschide{" "}{" "}</Text>
+              <Text style={[LoginPage.filelistText, {fontSize: fontSz(16),}]}>Filelist.io</Text>
             </Pressable>
           </View>
           <View style={LoginPage.imageContainer}>
@@ -187,32 +208,32 @@ export default function Login() {
             contentContainerStyle={[LoginPage.aboutScrollView, {backgroundColor: lightTheme ? MAIN_LIGHT:MAIN_DARK}]}>
             <View style={LoginPage.aboutFirst}>
               <View style={LoginPage.aboutLeftHalf}>
-                <Text style={{fontWeight: 'bold',
+                <Text style={{fontSize: fontSz(16), fontWeight: 'bold',
     textShadowOffset: {width: 1, height: 1},
     textShadowRadius: 1,color: lightTheme ? MAIN_DARK:MAIN_LIGHT, textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>About</Text>
               </View>
               <View style={LoginPage.aboutRightHalf}>
-                <Text style={{color: ACCENT_COLOR,
+                <Text style={{fontSize: fontSz(16), color: ACCENT_COLOR,
     textShadowOffset: {width: 1, height: 1},
     textShadowRadius: 1,textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>Filelist App</Text>
               </View>
             </View>
             <View style={LoginPage.aboutSecond}>
               <View style={LoginPage.aboutLeftHalf}>
-                <Text style={{fontWeight: 'bold',
+                <Text style={{fontSize: fontSz(16), fontWeight: 'bold',
     textShadowOffset: {width: 1, height: 1},
     textShadowRadius: 1,color: lightTheme ? MAIN_DARK:MAIN_LIGHT, textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>Version</Text>
                 <View style={LoginPage.aboutSeparator} />
-                <Text style={{fontWeight: 'bold',
+                <Text style={{fontSize: fontSz(16), fontWeight: 'bold',
     textShadowOffset: {width: 1, height: 1},
     textShadowRadius: 1,color: lightTheme ? MAIN_DARK:MAIN_LIGHT, textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>Publisher</Text>
                 <View style={LoginPage.aboutSeparator} />
-                <Text style={{fontWeight: 'bold',
+                <Text style={{fontSize: fontSz(16), fontWeight: 'bold',
     textShadowOffset: {width: 1, height: 1},
     textShadowRadius: 1,color: lightTheme ? MAIN_DARK:MAIN_LIGHT, textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>Developed with</Text>
               </View>
               <View style={LoginPage.aboutRightHalf}>
-                <Text style={{color: ACCENT_COLOR,
+                <Text style={{fontSize: fontSz(16), color: ACCENT_COLOR,
     textShadowOffset: {width: 1, height: 1},
     textShadowRadius: 1,textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>v1.0.0</Text>
                 <View style={LoginPage.aboutSeparator} />
@@ -225,7 +246,7 @@ export default function Login() {
                     onPress={() =>
                       Linking.openURL('https://github.com/baderproductions')
                     }>
-                    <Text style={{color: ACCENT_COLOR,
+                    <Text style={{fontSize: fontSz(16), color: ACCENT_COLOR,
     textDecorationLine: 'underline',
     textShadowOffset: {width: 1, height: 1},
     textShadowRadius: 1,textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>
@@ -245,7 +266,7 @@ export default function Login() {
                         'https://www.npmjs.com/package/react-native',
                       )
                     }>
-                    <Text style={{color: ACCENT_COLOR,
+                    <Text style={{fontSize: fontSz(16), color: ACCENT_COLOR,
     textDecorationLine: 'underline',
     textShadowOffset: {width: 1, height: 1},
     textShadowRadius: 1,textShadowColor: lightTheme ? MAIN_LIGHT:'black'}}>
@@ -279,7 +300,7 @@ export default function Login() {
             <View style={LoginPage.form}>
               <Input
                 style={{height: 45,
-                fontSize: 13,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                fontSize: fontSz(16),color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                 containerStyle={LoginPage.inputContainer}
                 inputContainerStyle={LoginPage.inputContainerInner}
                 keyboardType="default"
@@ -315,7 +336,7 @@ export default function Login() {
               />
               <Input
                 style={{height: 45,
-                fontSize: 13,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                fontSize: fontSz(16),color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                 containerStyle={LoginPage.inputContainer}
                 inputContainerStyle={LoginPage.inputContainerInner}
                 leftIcon={
@@ -374,12 +395,12 @@ export default function Login() {
                   {loginLoading ? (
                     <ActivityIndicator size="small" color={'white'} />
                   ) : (
-                    <Text style={LoginPage.btnText}>Login</Text>
+                    <Text style={[LoginPage.btnText, {fontSize: fontSz(18)}]}>Login</Text>
                   )}
                 </Pressable>
               </View>
             </View>
-            <View style={LoginPage.aboutBtnContainer}>
+            {isKeyboard ? null : <View style={LoginPage.aboutBtnContainer}>
               <Pressable
                 style={LoginPage.aboutPressable}
                 android_ripple={{
@@ -387,9 +408,9 @@ export default function Login() {
                   borderless: false,
                 }}
                 onPress={() => setAboutModal(true)}>
-                <Text style={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>About</Text>
+                <Text style={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>About</Text>
               </Pressable>
-            </View>
+            </View>}
           </View>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
@@ -409,16 +430,17 @@ const LoginPage = EStyleSheet.create({
   openFilelist: {
     width: '100%',
     height: '20%',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: '10rem',
   },
   filelistPressable: {
-    width: '20%',
+    width: '100%',
     height: '100%',
+    flexWrap: 'wrap',
+    flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   filelistText: {
     color: ACCENT_COLOR,
@@ -488,7 +510,7 @@ const LoginPage = EStyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingTop: StatusBar.currentHeight,
+    paddingTop: StatusBar.currentHeight * 3,
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
@@ -548,10 +570,9 @@ const LoginPage = EStyleSheet.create({
   btnText: {
     color: 'white',
     textShadowColor: 'black',
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
     fontWeight: 'bold',
-    fontSize: '13rem',
   },
   checkBox: {
     width: '85%',
