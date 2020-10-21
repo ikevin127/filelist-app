@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Linking,
+  Platform,
 } from 'react-native';
 import {Input, Overlay} from 'react-native-elements';
 import {useDispatch, useSelector} from 'react-redux';
@@ -259,8 +260,8 @@ export default function Login() {
       </Overlay>
       <StatusBar
         barStyle={lightTheme ? 'dark-content':'light-content'}
-        backgroundColor={'transparent'}
-        translucent={true}
+        backgroundColor={lightTheme ? Platform.Version < 23 ? MAIN_DARK : 'transparent' : 'transparent'}
+        translucent={Platform.Version < 23 ? false:true}
       />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
@@ -278,7 +279,7 @@ export default function Login() {
             <View style={LoginPage.form}>
               <Input
                 style={{height: 45,
-                fontSize: 13,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                fontSize: 12,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                 containerStyle={LoginPage.inputContainer}
                 inputContainerStyle={LoginPage.inputContainerInner}
                 keyboardType="default"
@@ -314,7 +315,7 @@ export default function Login() {
               />
               <Input
                 style={{height: 45,
-                fontSize: 13,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                fontSize: 12,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                 containerStyle={LoginPage.inputContainer}
                 inputContainerStyle={LoginPage.inputContainerInner}
                 leftIcon={
@@ -507,8 +508,8 @@ const LoginPage = EStyleSheet.create({
     alignItems: 'center',
   },
   picture: {
-    width: '240rem',
-    height: '240rem',
+    width: Platform.Version < 23 ?'200rem':'240rem',
+    height: Platform.Version < 23 ?'200rem':'240rem',
     justifyContent: 'center',
   },
   inputContainer: {

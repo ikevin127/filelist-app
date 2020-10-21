@@ -134,7 +134,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.baderproductions.filelist"
+        applicationId "com.baderproductions.fl"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

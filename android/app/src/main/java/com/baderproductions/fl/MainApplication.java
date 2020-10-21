@@ -1,4 +1,4 @@
-package com.baderproductions.filelist;
+package com.baderproductions.fl;
 
 import android.app.Application;
 import android.content.Context;
@@ -64,7 +64,7 @@ public class MainApplication extends Application implements ReactApplication {
          We use reflection here to pick up the class that initializes Flipper,
         since Flipper library is not available in release mode
         */
-        Class<?> aClass = Class.forName("com.baderproductions.filelist.ReactNativeFlipper");
+        Class<?> aClass = Class.forName("com.baderproductions.fl.ReactNativeFlipper");
         aClass
             .getMethod("initializeFlipper", Context.class, ReactInstanceManager.class)
             .invoke(null, context, reactInstanceManager);

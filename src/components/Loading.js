@@ -1,6 +1,6 @@
 import React from 'react';
 import EStyleSheet from 'react-native-extended-stylesheet';
-import {View, StatusBar, ActivityIndicator} from 'react-native';
+import {View, StatusBar, ActivityIndicator, Platform} from 'react-native';
 import {useSelector} from 'react-redux';
 
 const MAIN_LIGHT = '#E8E6E6';
@@ -15,7 +15,7 @@ export default function Loading() {
     <>
       <StatusBar
         barStyle={lightTheme ? 'dark-content':'light-content'}
-        backgroundColor={'transparent'}
+        backgroundColor={lightTheme ? Platform.Version < 23 ? MAIN_DARK : 'transparent' : 'transparent'}
         translucent={true}
       />
       <View style={[LoadingPage.container, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>

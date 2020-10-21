@@ -5,6 +5,7 @@ import Clipboard from '@react-native-community/clipboard';
 import NetInfo from "@react-native-community/netinfo";
 import EStyleSheet from 'react-native-extended-stylesheet';
 import FastImage from 'react-native-fast-image';
+import Accordion from 'react-native-collapsible/Accordion';
 import {
   View,
   Text,
@@ -40,6 +41,9 @@ import {
   faTasks,
   faAngleDoubleUp,
   faCheckSquare,
+  faInfoCircle,
+  faSun,
+  faMoon,
   faCog,
   faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
@@ -97,6 +101,7 @@ export default function Home() {
   const [advSearchText, setAdvSearchText] = useState('');
   const [catNames, setCatNames] = useState('');
   const [catIndex, setCatIndex] = useState('');
+  const [activeSections, setActiveSections] = useState([]);
   const [modalData, setModalData] = useState(null);
   const [IMDbID, setIMDbID] = useState(null);
   const [IMDbData, setIMDbData] = useState(null);
@@ -113,9 +118,11 @@ export default function Home() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
   const [catList, setCatList] = useState(false);
+  const [catListLatest, setCatListLatest] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
   const [isSearchBar, setIsSearchBar] = useState(false);
   const [isSettings, setIsSettings] = useState(false);
+  const [isInfo, setIsInfo] = useState(false);
   const [animes, setAnimes] = useState(false);
   const [audio, setAudio] = useState(false);
   const [desene, setDesene] = useState(false);
@@ -184,6 +191,29 @@ export default function Home() {
     (out, bool, index) => (bool ? out.concat(index) : out),
     [],
   );
+
+  const INFO = [
+    {
+      title: '1.Cum copiez linkul de descărcare al unui torrent ?',
+      content: 'Ţine apăsat 2 secunde (long press) pe torrentul respectiv.',
+    },
+    {
+      title: '2.Redirecţionare spre pagina IMDb a unui torrent.',
+      content: 'Se aplică doar în cazul torrentelor care conţin cod IMDb şi se efectuează prin touch pe posterul acestuia pentru redirecţionare spre pagina IMDb.',
+    },
+    {
+      title: '3.Căutare torrente Recent adăugate în funcţie de categorie.',
+      content: 'Ţine apăsat 2 secunde (long press) pe iconiţa de Căutare albastră şi alege Categoria.',
+    },
+    {
+      title: '4.Reactualizarea listei cu torrentele recent adăugate.',
+      content: 'Se efectuează prin tragerea în jos (pull down) de la începutul listei.',
+    },
+    {
+      title: '5.Cum schimb tema de culori a aplicaţiei ?',
+      content: 'Se poate schimba din meniul de Setări.',
+    },
+  ];
 
   useEffect(() => {
     if (IMDbID !== null) {
@@ -343,8 +373,135 @@ export default function Home() {
       }
     } else {
       Alert.alert(
-        'Alertă',
-        'Conexiune internet indisponibilă. Reconectează-te pentru a putea folosi funcţia de Căutare.',
+        'Info',
+        'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {},
+          },
+        ],
+        {cancelable: true},
+      );
+    }
+  };
+
+  const handleLatestSearch = async () => {
+    if (isNetReachable) {
+      if (animes || 
+        audio || 
+        desene || 
+        diverse || 
+        doc || 
+        filme3d || 
+        filme4k || 
+        filme4kbd || 
+        filmeBD || 
+        filmeDvd || 
+        filmeDvdRo || 
+        filmeHd || 
+        filmeHdRo || 
+        filmeSd || 
+        flacs || 
+        jocConsole || 
+        jocPc || 
+        lin || 
+        mob || 
+        software || 
+        seriale4k || 
+        serialeHd || 
+        serialeSd || 
+        sports || 
+        videos || 
+        porn !== false ) {
+            if (catNames.length <= 8) {
+              setCatListLatest(false);
+              setIsSearchBar(true);
+        setIsSearch(true);
+        setAdvSearchText(
+          animes ||
+          audio ||
+          desene ||
+          diverse ||
+          doc ||
+          filme3d ||
+          filme4k ||
+          filme4kbd ||
+          filmeBD ||
+          filmeDvd ||
+          filmeDvdRo ||
+          filmeHd ||
+          filmeHdRo ||
+          filmeSd ||
+          flacs ||
+          jocConsole ||
+          jocPc ||
+          lin ||
+          mob ||
+          software ||
+          seriale4k ||
+          serialeHd ||
+          serialeSd ||
+          sports ||
+          videos ||
+          porn === true
+            ? catNames !== ''
+              ? catNames.toString().split(',').join(', ')
+              : 'Categorii'
+            : 'Categorii');
+              try {
+                const value0 = await AsyncStorage.getItem('username');
+                const value1 = await AsyncStorage.getItem('passkey');
+                if (value0 !== null && value1 !== null) {
+                  setSearchLoading(true);
+                  dispatch(
+                    AppConfigActions.getAdvSearch(
+                      value0,
+                      value1,
+                      'latest-torrents',
+                      '',
+                      '',
+                      catIndex !== null ? `&category=${catIndex}` : '',
+                      '',
+                      '',
+                      '',
+                      '',
+                    ),
+                  );
+                }
+              } catch (e) {
+                alert(e);
+              }
+            } else {
+              Alert.alert(
+                'Info',
+                'Nu pot fi selectate mai mult de 8 categorii per căutare.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {},
+                  },
+                ],
+                {cancelable: true},
+              );
+            }
+      } else {
+        Alert.alert(
+          'Info',
+          'Selectează cel puţin o categorie pentru a putea continua căutarea.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {},
+            },
+          ],
+          {cancelable: true},
+        );
+      }
+    } else {
+      Alert.alert(
+        'Info',
+        'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare pe categorii.',
         [
           {
             text: 'OK',
@@ -405,7 +562,7 @@ export default function Home() {
             );
           } else {
             Alert.alert(
-              'Alertă',
+              'Info',
               'Selectează categoria căutării de la săgeata din dreapta câmpului de căutare.',
               [
                 {
@@ -418,7 +575,7 @@ export default function Home() {
           }
         } else {
           Alert.alert(
-            'Alertă',
+            'Info',
             'Căutarea nu poate continua deoarece Numele de utilizator si Passkey-ul nu a fost salvat. Este necesară o relogare pentru a înregistra din nou datele.',
             [
               {
@@ -433,8 +590,8 @@ export default function Home() {
         alert(e);
       }
     }} else {Alert.alert(
-      'Alertă',
-      'Conexiune internet indisponibilă. Reconectează-te pentru a putea folosi funcţia de Căutare avansată.',
+      'Info',
+      'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare avansată.',
       [
         {
           text: 'OK',
@@ -507,6 +664,29 @@ export default function Home() {
     }
     dispatch(AppConfigActions.retrieveLatest());
     dispatch(AppConfigActions.latestError());
+  };
+ 
+  const _renderHeader = section => {
+    return (
+      <View style={HomePage.renderHeader}>
+        <Text style={{textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, 
+      textShadowOffset: {width: 0.8, height: 0.8},
+      textShadowRadius: 1,
+      color: ACCENT_COLOR, fontWeight: 'bold'}}>{section.title}</Text>
+      </View>
+    );
+  };
+ 
+  const _renderContent = section => {
+    return (
+      <View style={HomePage.renderContent}>
+        <Text style={{color: lightTheme ? 'black' : 'white'}}>{section.content}</Text>
+      </View>
+    );
+  };
+ 
+  const _updateSections = activeSections => {
+    setActiveSections(activeSections);
   };
 
   const switchTheme = async () => {
@@ -750,6 +930,630 @@ export default function Home() {
       <SafeAreaView style={[HomePage.mainSafeAreaView, {
       backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
         <Overlay
+                statusBarTranslucent
+                animationType="fade"
+                overlayStyle={[HomePage.catCheckOverlay, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}
+                isVisible={catListLatest}
+                onBackdropPress={() => {setCatListLatest(false);
+                  setAnimes(false);
+                  setAudio(false);
+                  setDesene(false);
+                  setDiverse(false);
+                  setDoc(false);
+                  setFilme3d(false);
+                  setFilme4k(false);
+                  setFilme4kBD(false);
+                  setFilmeBD(false);
+                  setFilmeDvd(false);
+                  setFilmeDvdRo(false);
+                  setFilmeHd(false);
+                  setFilmeHdRo(false);
+                  setFilmeSd(false);
+                  setFlacs(false);
+                  setJocConsole(false);
+                  setJocPc(false);
+                  setLin(false);
+                  setMob(false);
+                  setSoftware(false);
+                  setSeriale4k(false);
+                  setSerialeHd(false);
+                  setSerialeSd(false);
+                  setSports(false);
+                  setVideos(false);
+                  setPorn(false);}}>
+                <View style={HomePage.catCheckContainer}>
+                  <ScrollView
+                    showsVerticalScrollIndicator={true}
+                    style={[HomePage.catCheckScrollView,{backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+                    <View style={HomePage.catCheckScrollContainer}>
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Anime"
+                        checked={animes}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setAnimes(!animes)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Audio"
+                        checked={audio}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setAudio(!audio)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Desene"
+                        checked={desene}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setDesene(!desene)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Diverse"
+                        checked={diverse}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setDiverse(!diverse)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Docs"
+                        checked={doc}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setDoc(!doc)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Filme 3D"
+                        checked={filme3d}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilme3d(!filme3d)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Filme 4K"
+                        checked={filme4k}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilme4k(!filme4k)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Filme 4K Blu-Ray"
+                        checked={filme4kbd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilme4kBD(!filme4kbd)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Filme Blu-Ray"
+                        checked={filmeBD}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeBD(!filmeBD)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Filme DVD"
+                        checked={filmeDvd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeDvd(!filmeDvd)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Filme DVD-RO"
+                        checked={filmeDvdRo}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeDvdRo(!filmeDvdRo)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Filme HD"
+                        checked={filmeHd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeHd(!filmeHd)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Filme HD-RO"
+                        checked={filmeHdRo}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeHdRo(!filmeHdRo)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Filme SD"
+                        checked={filmeSd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFilmeSd(!filmeSd)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="FLAC"
+                        checked={flacs}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setFlacs(!flacs)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Jocuri Console"
+                        checked={jocConsole}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setJocConsole(!jocConsole)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Jocuri PC"
+                        checked={jocPc}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setJocPc(!jocPc)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Linux"
+                        checked={lin}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setLin(!lin)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Mobile"
+                        checked={mob}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setMob(!mob)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Programe"
+                        checked={software}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setSoftware(!software)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Seriale 4K"
+                        checked={seriale4k}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setSeriale4k(!seriale4k)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Seriale HD"
+                        checked={serialeHd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setSerialeHd(!serialeHd)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Seriale SD"
+                        checked={serialeSd}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setSerialeSd(!serialeSd)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Sport"
+                        checked={sports}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setSports(!sports)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBox}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="Videoclip"
+                        checked={videos}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setVideos(!videos)}
+                      />
+                      <CheckBox
+                        containerStyle={HomePage.catCheckBoxLast}
+                        textStyle={{color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        center
+                        title="XXX"
+                        checked={porn}
+                        checkedIcon={
+                          <FontAwesomeIcon
+                            style={HomePage.catCheckedIcon}
+                            size={20}
+                            icon={faCheckSquare}
+                          />
+                        }
+                        uncheckedIcon={
+                          <FontAwesomeIcon
+                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            size={20}
+                            icon={faAngleDoubleUp}
+                          />
+                        }
+                        onPress={() => setPorn(!porn)}
+                      />
+                    </View>
+                  </ScrollView>
+                  <View style={HomePage.catCheckOverlayFooter}>
+                    <Pressable
+                      style={HomePage.catCheckOverlayPressable}
+                      android_ripple={{
+                        color: 'white',
+                        borderless: false,
+                      }}
+                      onPress={handleLatestSearch}>
+                      <Text style={HomePage.catCheckOverlayText}>Caută</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </Overlay>
+        <Overlay
           statusBarTranslucent
           animationType="slide"
           overlayStyle={[HomePage.advSearchOverlay, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,}]}
@@ -786,7 +1590,7 @@ export default function Home() {
           }}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={HomePage.advSearchContainer}>
-              <Overlay
+            <Overlay
                 statusBarTranslucent
                 animationType="fade"
                 overlayStyle={[HomePage.catCheckOverlay, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}
@@ -1442,7 +2246,7 @@ export default function Home() {
                       onPress={() => {
                         Keyboard.dismiss();
                         Alert.alert(
-                          'Alertă',
+                          'Info',
                           'Pentru informaţii suplimentare legate de diferenţa dintre cele două tipuri, ţine apăsat 1 secundă pe căsuţa nebifată şi vice-versa.',
                           [
                             {
@@ -1494,7 +2298,7 @@ export default function Home() {
                         }
                         onLongPress={() =>
                           Alert.alert(
-                            'Alertă',
+                            'Info',
                             'Această opţiune permite căutarea după Cuvinte Cheie pe modelul: titanic.1997 ori titanic 1997.',
                             [
                               {
@@ -1546,7 +2350,7 @@ export default function Home() {
                         }
                         onLongPress={() =>
                           Alert.alert(
-                            'Alertă',
+                            'Info',
                             'Această opţiune permite căutarea după Codul IMDb pe modelul modelul: tt4719744 ori 4719744.',
                             [
                               {
@@ -1672,7 +2476,7 @@ export default function Home() {
                     }
                     onLongPress={() =>
                       Alert.alert(
-                        'Alertă',
+                        'Info',
                         'Această opţiune filtrează torrentele care îţi oferă de 2 ori mai mult Upload, atât pe perioada descărcării şi după finalizaree, când sunt ţinute la Seed.',
                         [
                           {
@@ -1712,7 +2516,7 @@ export default function Home() {
                     }
                     onLongPress={() =>
                       Alert.alert(
-                        'Alertă',
+                        'Info',
                         'Această opţiune filtrează torrentele a căror descărcare îţi oferă decât Upload, nu se contorizează la Download, fapt care face ca Raţia să nu-ţi fie afectată în nici un fel.',
                         [
                           {
@@ -1754,7 +2558,7 @@ export default function Home() {
                     }
                     onLongPress={() =>
                       Alert.alert(
-                        'Alertă',
+                        'Info',
                         'Această opţiune filtrează torrentele care aparţin grupurilor Play(HD|BD|SD|XD) care sunt grupuri Interne ale trackerului.',
                         [
                           {
@@ -1794,7 +2598,7 @@ export default function Home() {
                     }
                     onLongPress={() =>
                       Alert.alert(
-                        'Alertă',
+                        'Info',
                         'Această opţiune filtrează torrentele care sunt verificate pentru a corespunde regulilor (titlu, descriere, gen, screens, subtitrare nedecalată, etc), verificate de către staff-ul Filelist.',
                         [
                           {
@@ -1982,7 +2786,7 @@ export default function Home() {
                                               typeof item.link === 'function'
                                                 ? {}
                                                 : Alert.alert(
-                                                    'Alertă',
+                                                    'Info',
                                                     'Doreşti să vizitezi pagina IMDb asociată filmului ?',
                                                     [
                                                       {
@@ -2019,9 +2823,9 @@ export default function Home() {
                                                     HomePage.imdbInfoRatingView
                                                   }>
                                                   <Text
-                                                    style={
+                                                    style={[
                                                       HomePage.imdbInfoRatingText
-                                                    }>
+                                                    , {color: lightTheme ? MAIN_DARK : 'white', textShadowColor: lightTheme ? 'silver' : 'black'}]}>
                                                     {item.rating === undefined
                                                       ? 'Fără'
                                                       : item.rating}
@@ -2082,7 +2886,7 @@ export default function Home() {
                                       </View>
                                     );
                                   })
-                                : <View style={{width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center'}}><Text style={{textAlign: 'center', color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>Conexiune internet indisponibilă.</Text><Text style={{textAlign: 'center', color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>Reconectează-te pentru a vedea mai multe informaţii despre acest material.</Text></View>}
+                                : <View style={{width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center'}}><Text style={{textAlign: 'center', color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>Conexiune offline.</Text><Text style={{textAlign: 'center', color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>Reconectează-te pentru a putea vedea informaţii despre acest material.</Text></View>}
                             </>
                           )}
                         </View>
@@ -2098,7 +2902,7 @@ export default function Home() {
                               }}
                               onPress={() =>
                                 Alert.alert(
-                                  'Alertă',
+                                  'Info',
                                   'Mărimea totală a torrentului.',
                                   [
                                     {
@@ -2130,7 +2934,7 @@ export default function Home() {
                               }}
                               onPress={() =>
                                 Alert.alert(
-                                  'Alertă',
+                                  'Info',
                                   'Numărul de fişiere din torrent.',
                                   [
                                     {
@@ -2161,7 +2965,7 @@ export default function Home() {
                               }}
                               onPress={() =>
                                 Alert.alert(
-                                  'Alertă',
+                                  'Info',
                                   'Numărul de persoane care ţin torrentul la seed în acest moment.',
                                   [
                                     {
@@ -2195,7 +2999,7 @@ export default function Home() {
                               }}
                               onPress={() =>
                                 Alert.alert(
-                                  'Alertă',
+                                  'Info',
                                   'Data la care torrentul a apărut pe Filelist.',
                                   [
                                     {
@@ -2227,7 +3031,7 @@ export default function Home() {
                               }}
                               onPress={() =>
                                 Alert.alert(
-                                  'Alertă',
+                                  'Info',
                                   'De câte ori a fost descărcat torrentul.',
                                   [
                                     {
@@ -2259,7 +3063,7 @@ export default function Home() {
                               }}
                               onPress={() =>
                                 Alert.alert(
-                                  'Alertă',
+                                  'Info',
                                   'Numărul de persoane care descarcă torrentul în acest moment.',
                                   [
                                     {
@@ -2297,7 +3101,7 @@ export default function Home() {
                             }}
                             onPress={() =>
                               Alert.alert(
-                                'Alertă',
+                                'Info',
                                 'Mărimea totală a torrentului.',
                                 [
                                   {
@@ -2329,7 +3133,7 @@ export default function Home() {
                             }}
                             onPress={() =>
                               Alert.alert(
-                                'Alertă',
+                                'Info',
                                 'Numărul de fişiere din torrent.',
                                 [
                                   {
@@ -2360,7 +3164,7 @@ export default function Home() {
                             }}
                             onPress={() =>
                               Alert.alert(
-                                'Alertă',
+                                'Info',
                                 'Numărul de persoane care ţin torrentul la seed în acest moment.',
                                 [
                                   {
@@ -2394,7 +3198,7 @@ export default function Home() {
                             }}
                             onPress={() =>
                               Alert.alert(
-                                'Alertă',
+                                'Info',
                                 'Data la care torrentul a apărut pe Filelist.',
                                 [
                                   {
@@ -2426,7 +3230,7 @@ export default function Home() {
                             }}
                             onPress={() =>
                               Alert.alert(
-                                'Alertă',
+                                'Info',
                                 'De câte ori a fost descărcat torrentul.',
                                 [
                                   {
@@ -2458,7 +3262,7 @@ export default function Home() {
                             }}
                             onPress={() =>
                               Alert.alert(
-                                'Alertă',
+                                'Info',
                                 'Numărul de persoane care descarcă torrentul în acest moment.',
                                 [
                                   {
@@ -2492,22 +3296,70 @@ export default function Home() {
         <Overlay
           statusBarTranslucent
           animationType="slide"
+          overlayStyle={HomePage.infoOverlay}
+          isVisible={isInfo}
+          onBackdropPress={() => {
+            setIsInfo(false);
+            setActiveSections([]);
+          }}>
+          <View style={[HomePage.infoOverlayCloseContainer, {backgroundColor: lightTheme ? 'white' : MAIN_DARK}]}>
+          <ScrollView
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={[HomePage.infoOverlayScrollView, {backgroundColor: lightTheme ? 'white':MAIN_DARK}]}>
+            <View style={HomePage.infoTitleContainer}>
+              <Text style={{
+                color: lightTheme ? MAIN_DARK:'white',
+                textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, textShadowOffset: {width: 0.8, height: 0.8},
+                textShadowRadius: 1,
+                fontWeight: 'bold',
+                fontSize: 20}}>Informaţii folosire</Text>
+            </View>
+            <Accordion
+              sections={INFO}
+              containerStyle={HomePage.accordionContainer}
+              expandMultiple
+              underlayColor={lightTheme ? MAIN_LIGHT : '#303030'}
+              activeSections={activeSections}
+              renderHeader={_renderHeader}
+              renderContent={_renderContent}
+              onChange={_updateSections}
+            />
+            </ScrollView>
+          </View>
+        </Overlay>
+        <Overlay
+          statusBarTranslucent
+          animationType="slide"
           overlayStyle={HomePage.settingsOverlay}
           isVisible={isSettings}
           onBackdropPress={() => {
             setIsSettings(false);
           }}>
-          <View style={[HomePage.settingsOverlayCloseContainer, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+          <View style={[HomePage.settingsOverlayCloseContainer, {backgroundColor: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
             <View style={HomePage.settingsOverlayThemeContainer}>
-              <Text style={[HomePage.settingsOverlayThemeText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
-              color: lightTheme ? MAIN_DARK : 'white'}]}>Temă curentă: {lightTheme ? " Light" : " Dark"}</Text>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}><Text style={[HomePage.settingsOverlayThemeText, {textShadowColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+              color: lightTheme ? 'white' : MAIN_DARK}]}>Temă curentă: </Text>
+              {lightTheme ? <FontAwesomeIcon color={MAIN_LIGHT} size={22} icon={faSun}/> : <FontAwesomeIcon color={MAIN_DARK} size={22} icon={faMoon}/>}</View>
               <Switch
                 trackColor={{ false: 'grey', true: 'grey' }}
-                thumbColor={lightTheme ? "black" : "white"}
+                thumbColor={lightTheme ? "white" : "black"}
                 ios_backgroundColor="#3e3e3e"
                 onValueChange={switchTheme}
                 value={lightTheme}
               />
+            </View>
+            <View style={HomePage.settingsOverlayUseContainer}>
+              <Pressable
+                style={HomePage.settingsOverlayUsePressable}
+                android_ripple={{
+                  color: 'white',
+                  borderless: false,
+                }}
+                onPress={() => {
+                  setIsInfo(true);
+                }}>
+                <Text style={HomePage.settingsOverlayLogoutText}>Informaţii folosire</Text>
+              </Pressable>
             </View>
             <View style={HomePage.settingsOverlayLogoutContainer}>
               <Pressable
@@ -2527,6 +3379,18 @@ export default function Home() {
         </Overlay>
         <View style={HomePage.mainHeader}>
           <View style={HomePage.mainHeaderContainer}>
+          <View style={HomePage.mainHeaderInfoContainer}>
+              <Pressable
+                style={HomePage.mainHeaderInfoPressable}
+                android_ripple={{
+                  color: 'white',
+                  borderless: true,
+                  radius: 16,
+                }}
+                onPress={() => setIsInfo(true)}>
+                <FontAwesomeIcon size={24} color={'white'} icon={faInfoCircle} />
+              </Pressable>
+            </View>
             <Text style={HomePage.mainHeaderText}>
               {isSearch ? 'Căutare' : 'Recent adăugate'}
             </Text>
@@ -2599,7 +3463,8 @@ export default function Home() {
                 }}
                 onPress={() => {
                   handleSearch();
-                }}>
+                }}
+                onLongPress={() => setCatListLatest(true)}>
                 <FontAwesomeIcon
                   size={22}
                   color={ACCENT_COLOR}
@@ -2680,6 +3545,7 @@ export default function Home() {
             }}
             style={HomePage.advSearchBtnPressable}
             onPress={() => {
+              clearSearch();
               setAdvSearch(!advSearch);
               setAdvKeyword(true);
               setAdvIMDb(false);
@@ -2745,7 +3611,7 @@ export default function Home() {
             style={{fontSize: 13,
             fontWeight: 'bold', opacity: showNetworkAlertText,color: 'white'}
             }>
-            {isNetReachable ? 'Conexiune stabilită cu succes' : 'Reconectează-te pentru a putea continua'}
+            {isNetReachable ? 'Online' : 'Offline'}
           </Animated.Text>
         </Animated.View>
       </SafeAreaView>
@@ -3287,13 +4153,11 @@ const HomePage = EStyleSheet.create({
     },
     imdbInfoRatingText: {
       fontSize: '8rem',
-      textShadowColor: 'black',
       textShadowOffset: {
         width: '1rem',
         height: '1rem',
       },
       textShadowRadius: '1rem',
-      color: 'white',
       fontSize: '16rem',
       fontWeight: 'bold',
     },
@@ -3416,11 +4280,54 @@ const HomePage = EStyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
     },
+    infoOverlay: {
+      width: '90%',
+      height: '50%',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 0,
+      padding: 0
+    },
+    infoOverlayCloseContainer: {
+      width: '100%',
+      height: '100%',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    infoOverlayScrollView: {
+      width: '100%',
+      paddingBottom: StatusBar.currentHeight,
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+    },
+    infoTitleContainer: {
+      width: '100%',
+      height: '50rem',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'absolute',
+      top: 0,
+    },
+    accordionContainer: {width: '100%', paddingHorizontal: '18rem', marginTop: '50rem'},
+    renderHeader: {marginVertical: '6rem'},
+    renderContent: {flexDirection: 'row', justifyContent: 'flex-start', paddingHorizontal: '13rem'},
+    infoOverlayClosePressable: {
+      position: 'absolute',
+      right: 0,
+      width: '15%',
+      height: '25%',
+      bottom: '75%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
     settingsOverlay: {
       position: 'absolute',
       bottom: 0,
       width: '100%',
-      height: '25%',
+      height: '20%',
       flexDirection: 'column',
       justifyContent: 'flex-end',
       alignItems: 'center',
@@ -3446,7 +4353,7 @@ const HomePage = EStyleSheet.create({
     },
     settingsOverlayThemeContainer: {
       width: '100%',
-      height: '75%',
+      height: '33.33%',
       paddingHorizontal: '10rem',
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -3455,11 +4362,26 @@ const HomePage = EStyleSheet.create({
     settingsOverlayThemeText: {
       textShadowOffset: {width: '0.5rem', height: '0.5rem'},
       textShadowRadius: '1rem',
-      fontSize: '14rem',
+      fontWeight: 'bold',
+      fontSize: '16rem',
+    },
+    settingsOverlayUseContainer: {
+      width: '100%',
+      height: '33.33%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: ACCENT_COLOR,
+    },
+    settingsOverlayUsePressable: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: ACCENT_COLOR,
     },
     settingsOverlayLogoutContainer: {
       width: '100%',
-      height: '25%',
+      height: '33.33%',
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: 'crimson',
@@ -3493,6 +4415,20 @@ const HomePage = EStyleSheet.create({
       flex: 1,
       display: 'flex',
       flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    mainHeaderInfoContainer: {
+      position: 'absolute',
+      left: 18,
+      width: '10%',
+      height: '40%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    mainHeaderInfoPressable: {
+      width: '100%',
+      height: '100%',
       justifyContent: 'center',
       alignItems: 'center',
     },

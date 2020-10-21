@@ -1,4 +1,4 @@
-package com.baderproductions.filelist;
+package com.baderproductions.fl;
 
 import android.os.Bundle;
 import com.facebook.react.ReactActivity;
