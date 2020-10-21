@@ -2718,16 +2718,16 @@ export default function Home() {
                           }
                         />
                         <View style={HomePage.imdbInfoHeaderText}>
-                          <Text style={[HomePage.imdbInfoHeaderCat, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                          <Text selectable style={[HomePage.imdbInfoHeaderCat, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                             {item.category}
                           </Text>
-                          <Text style={[HomePage.imdbInfoHeaderDesc, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+                          <Text selectable style={[HomePage.imdbInfoHeaderDesc, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
                             [ {item.small_description} ]
                           </Text>
                         </View>
                       </View>
                       <View style={HomePage.imdbInfoTitleSection}>
-                        <Text style={[HomePage.imdbInfoTitleText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                        <Text selectable style={[HomePage.imdbInfoTitleText, {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
                           {item.name}
                         </Text>
                       </View>
@@ -2852,6 +2852,7 @@ export default function Home() {
                                               Plot
                                             </Text>
                                             <Text
+                                                selectable
                                                 style={[
                                                   HomePage.imdbInfoMainPlotText
                                                 , {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
@@ -3423,7 +3424,7 @@ export default function Home() {
               <FontAwesomeIcon size={20} color={'white'} icon={faArrowLeft} />
             </Pressable>
           </View>
-          <Text style={[HomePage.mainClearSearchBarText, {color: lightTheme ? MAIN_DARK : 'white'}]}>
+          <Text selectable style={[HomePage.mainClearSearchBarText, {color: lightTheme ? MAIN_DARK : 'white'}]}>
             Rezultatele căutării după "
             <Text style={[HomePage.mainClearSearchBarTextSecond, {color: lightTheme ? MAIN_DARK : 'white'}]}>
               {search !== ''
@@ -3991,6 +3992,7 @@ const HomePage = EStyleSheet.create({
       width: '87%',
       justifyContent: 'center',
       alignItems: 'center',
+      borderRadius: 0
     },
     imdbInfoContainer: {
       width: '100%',

@@ -279,7 +279,7 @@ export default function Login() {
             <View style={LoginPage.form}>
               <Input
                 style={{height: 45,
-                fontSize: 12,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                fontSize: 13,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                 containerStyle={LoginPage.inputContainer}
                 inputContainerStyle={LoginPage.inputContainerInner}
                 keyboardType="default"
@@ -315,7 +315,7 @@ export default function Login() {
               />
               <Input
                 style={{height: 45,
-                fontSize: 12,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                fontSize: 13,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
                 containerStyle={LoginPage.inputContainer}
                 inputContainerStyle={LoginPage.inputContainerInner}
                 leftIcon={
