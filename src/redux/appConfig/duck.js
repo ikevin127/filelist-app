@@ -4,6 +4,7 @@ import {types} from '../types';
 
 const initState = {
   lightTheme: false,
+  appInfo: false,
   listLatest: null,
   listSearch: null,
   listImdb: null,
@@ -17,6 +18,9 @@ const initState = {
 export const actions = {
   toggleLightTheme: () => ({
     type: types.APP_CONFIG.LIGHT_THEME,
+  }),
+  toggleAppInfo: () => ({
+    type: types.APP_CONFIG.APP_INFO,
   }),
   getLatest: (user, pass) => async (dispatch) => {
     await Axios.get(
@@ -199,6 +203,8 @@ export function reducer(state = initState, action) {
   switch (action.type) {
     case types.APP_CONFIG.LIGHT_THEME:
       return {...state, lightTheme: !state.lightTheme};
+    case types.APP_CONFIG.APP_INFO:
+      return {...state, appInfo: !state.appInfo};
     case types.APP_CONFIG.GET_LATEST:
       return {...state, listLatest: action.payload};
     case types.APP_CONFIG.GET_SEARCH:

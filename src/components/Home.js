@@ -1,13 +1,17 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import AsyncStorage from '@react-native-community/async-storage';
 import Axios from 'axios';
+import RText from './Text';
+import Adjust from './AdjustText';
 import Clipboard from '@react-native-community/clipboard';
-import NetInfo from "@react-native-community/netinfo";
+import NetInfo from '@react-native-community/netinfo';
 import EStyleSheet from 'react-native-extended-stylesheet';
 import FastImage from 'react-native-fast-image';
 import Accordion from 'react-native-collapsible/Accordion';
 import {
-  Dimensions, PixelRatio, Platform,
+  Dimensions,
+  PixelRatio,
+  Platform,
   View,
   Text,
   Animated,
@@ -20,7 +24,6 @@ import {
   Keyboard,
   ScrollView,
   StatusBar,
-  Switch,
   ActivityIndicator,
   Linking,
 } from 'react-native';
@@ -43,8 +46,6 @@ import {
   faAngleDoubleUp,
   faCheckSquare,
   faInfoCircle,
-  faSun,
-  faMoon,
   faCog,
   faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
@@ -80,9 +81,10 @@ const MAIN_LIGHT = '#E8E6E6';
 const MAIN_DARK = '#202020';
 const ACCENT_COLOR = '#15ABF4';
 
-export default function Home() {
+export default function Home({navigation}) {
   const dispatch = useDispatch();
   const {
+    appInfo,
     lightTheme,
     listLatest,
     listSearch,
@@ -96,7 +98,9 @@ export default function Home() {
   const [textOpacity] = useState(new Animated.Value(0));
   const [showClipboardStatus] = useState(new Animated.Value(0));
   const [textClipboardOpacity] = useState(new Animated.Value(0));
-  const [showNetworkAlert] = useState(new Animated.Value(-StatusBar.currentHeight * 4));
+  const [showNetworkAlert] = useState(
+    new Animated.Value(-StatusBar.currentHeight * 4),
+  );
   const [showNetworkAlertText] = useState(new Animated.Value(0));
   const [search, setSearch] = useState('');
   const [advSearchText, setAdvSearchText] = useState('');
@@ -122,8 +126,6 @@ export default function Home() {
   const [catListLatest, setCatListLatest] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
   const [isSearchBar, setIsSearchBar] = useState(false);
-  const [isSettings, setIsSettings] = useState(false);
-  const [isInfo, setIsInfo] = useState(false);
   const [animes, setAnimes] = useState(false);
   const [audio, setAudio] = useState(false);
   const [desene, setDesene] = useState(false);
@@ -200,15 +202,18 @@ export default function Home() {
     },
     {
       title: '2.Redirecţionare spre pagina IMDb a unui torrent.',
-      content: 'Se aplică doar în cazul torrentelor care conţin cod IMDb şi se efectuează prin touch pe posterul acestuia pentru redirecţionare spre pagina IMDb.',
+      content:
+        'Se aplică doar în cazul torrentelor care conţin cod IMDb şi se efectuează prin touch pe posterul acestuia pentru redirecţionare spre pagina IMDb.',
     },
     {
       title: '3.Căutare torrente Recent adăugate în funcţie de categorie.',
-      content: 'Ţine apăsat 2 secunde (long press) pe iconiţa de Căutare albastră şi alege Categoria.',
+      content:
+        'Ţine apăsat 2 secunde (long press) pe iconiţa de Căutare albastră şi alege Categoria.',
     },
     {
       title: '4.Reactualizarea listei cu torrentele recent adăugate.',
-      content: 'Se efectuează prin tragerea în jos (pull down) de la începutul listei.',
+      content:
+        'Se efectuează prin tragerea în jos (pull down) de la începutul listei.',
     },
     {
       title: '5.Cum schimb tema de culori a aplicaţiei ?',
@@ -222,7 +227,7 @@ export default function Home() {
     }
     setCatNames(arrIndex.map((index) => catStrings[index]));
     setCatIndex(arrIndex.map((index) => catValues[index]));
-    const unsubscribe = NetInfo.addEventListener(state => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isInternetReachable === true) {
         setIsNetReachable(true);
       } else {
@@ -389,103 +394,106 @@ export default function Home() {
 
   const handleLatestSearch = async () => {
     if (isNetReachable) {
-      if (animes || 
-        audio || 
-        desene || 
-        diverse || 
-        doc || 
-        filme3d || 
-        filme4k || 
-        filme4kbd || 
-        filmeBD || 
-        filmeDvd || 
-        filmeDvdRo || 
-        filmeHd || 
-        filmeHdRo || 
-        filmeSd || 
-        flacs || 
-        jocConsole || 
-        jocPc || 
-        lin || 
-        mob || 
-        software || 
-        seriale4k || 
-        serialeHd || 
-        serialeSd || 
-        sports || 
-        videos || 
-        porn !== false ) {
-            if (catNames.length <= 8) {
-              setCatListLatest(false);
-              setIsSearchBar(true);
-        setIsSearch(true);
-        setAdvSearchText(
-          animes ||
-          audio ||
-          desene ||
-          diverse ||
-          doc ||
-          filme3d ||
-          filme4k ||
-          filme4kbd ||
-          filmeBD ||
-          filmeDvd ||
-          filmeDvdRo ||
-          filmeHd ||
-          filmeHdRo ||
-          filmeSd ||
-          flacs ||
-          jocConsole ||
-          jocPc ||
-          lin ||
-          mob ||
-          software ||
-          seriale4k ||
-          serialeHd ||
-          serialeSd ||
-          sports ||
-          videos ||
-          porn === true
-            ? catNames !== ''
-              ? catNames.toString().split(',').join(', ')
-              : 'Categorii'
-            : 'Categorii');
-              try {
-                const value0 = await AsyncStorage.getItem('username');
-                const value1 = await AsyncStorage.getItem('passkey');
-                if (value0 !== null && value1 !== null) {
-                  setSearchLoading(true);
-                  dispatch(
-                    AppConfigActions.getAdvSearch(
-                      value0,
-                      value1,
-                      'latest-torrents',
-                      '',
-                      '',
-                      catIndex !== null ? `&category=${catIndex}` : '',
-                      '',
-                      '',
-                      '',
-                      '',
-                    ),
-                  );
-                }
-              } catch (e) {
-                alert(e);
-              }
-            } else {
-              Alert.alert(
-                'Info',
-                'Nu pot fi selectate mai mult de 8 categorii per căutare.',
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => {},
-                  },
-                ],
-                {cancelable: true},
+      if (
+        animes ||
+        audio ||
+        desene ||
+        diverse ||
+        doc ||
+        filme3d ||
+        filme4k ||
+        filme4kbd ||
+        filmeBD ||
+        filmeDvd ||
+        filmeDvdRo ||
+        filmeHd ||
+        filmeHdRo ||
+        filmeSd ||
+        flacs ||
+        jocConsole ||
+        jocPc ||
+        lin ||
+        mob ||
+        software ||
+        seriale4k ||
+        serialeHd ||
+        serialeSd ||
+        sports ||
+        videos ||
+        porn !== false
+      ) {
+        if (catNames.length <= 8) {
+          setCatListLatest(false);
+          setIsSearchBar(true);
+          setIsSearch(true);
+          setAdvSearchText(
+            animes ||
+              audio ||
+              desene ||
+              diverse ||
+              doc ||
+              filme3d ||
+              filme4k ||
+              filme4kbd ||
+              filmeBD ||
+              filmeDvd ||
+              filmeDvdRo ||
+              filmeHd ||
+              filmeHdRo ||
+              filmeSd ||
+              flacs ||
+              jocConsole ||
+              jocPc ||
+              lin ||
+              mob ||
+              software ||
+              seriale4k ||
+              serialeHd ||
+              serialeSd ||
+              sports ||
+              videos ||
+              porn === true
+              ? catNames !== ''
+                ? catNames.toString().split(',').join(', ')
+                : 'Categorii'
+              : 'Categorii',
+          );
+          try {
+            const value0 = await AsyncStorage.getItem('username');
+            const value1 = await AsyncStorage.getItem('passkey');
+            if (value0 !== null && value1 !== null) {
+              setSearchLoading(true);
+              dispatch(
+                AppConfigActions.getAdvSearch(
+                  value0,
+                  value1,
+                  'latest-torrents',
+                  '',
+                  '',
+                  catIndex !== null ? `&category=${catIndex}` : '',
+                  '',
+                  '',
+                  '',
+                  '',
+                ),
               );
             }
+          } catch (e) {
+            alert(e);
+          }
+        } else {
+          Alert.alert(
+            'Info',
+            'Nu pot fi selectate mai mult de 8 categorii per căutare.',
+            [
+              {
+                text: 'OK',
+                onPress: () => {},
+              },
+            ],
+            {cancelable: true},
+          );
+        }
       } else {
         Alert.alert(
           'Info',
@@ -515,56 +523,70 @@ export default function Home() {
   };
 
   const handleAdvancedSearch = async () => {
-    if (isNetReachable) {if (advSearchText.length === 0) {
-      setAdvSearchValidation(true);
-      searchValidationTimeout.current = setTimeout(() => {
-        setAdvSearchValidation(false);
-      }, 3000);
-    } else {
-      Keyboard.dismiss();
-      setAdvSearch(false);
-      setIsSearchBar(true);
-      setIsSearch(true);
-      try {
-        const value0 = await AsyncStorage.getItem('username');
-        const value1 = await AsyncStorage.getItem('passkey');
-        if (value0 !== null && value1 !== null) {
-          if (advKeyword) {
-            setSearchLoading(true);
-            dispatch(
-              AppConfigActions.getAdvSearch(
-                value0,
-                value1,
-                'search-torrents',
-                '&type=name',
-                `&query=${advSearchText}`,
-                catIndex !== null ? `&category=${catIndex}` : '',
-                moderated ? '&moderated=1' : '',
-                doubleUp ? '&doubleup=1' : '',
-                internal ? '&internal=1' : '',
-                freeleech ? '&freeleech=1' : '',
-              ),
-            );
-          } else if (advIMDb) {
-            setSearchLoading(true);
-            dispatch(
-              AppConfigActions.getAdvSearch(
-                value0,
-                value1,
-                'search-torrents',
-                '&type=imdb',
-                `&query=${advSearchText}`,
-                catIndex !== null ? `&category=${catIndex}` : '',
-                moderated ? '&moderated=1' : '',
-                doubleUp ? '&doubleup=1' : '',
-                internal ? '&internal=1' : '',
-                freeleech ? '&freeleech=1' : '',
-              ),
-            );
+    if (isNetReachable) {
+      if (advSearchText.length === 0) {
+        setAdvSearchValidation(true);
+        searchValidationTimeout.current = setTimeout(() => {
+          setAdvSearchValidation(false);
+        }, 3000);
+      } else {
+        Keyboard.dismiss();
+        setAdvSearch(false);
+        setIsSearchBar(true);
+        setIsSearch(true);
+        try {
+          const value0 = await AsyncStorage.getItem('username');
+          const value1 = await AsyncStorage.getItem('passkey');
+          if (value0 !== null && value1 !== null) {
+            if (advKeyword) {
+              setSearchLoading(true);
+              dispatch(
+                AppConfigActions.getAdvSearch(
+                  value0,
+                  value1,
+                  'search-torrents',
+                  '&type=name',
+                  `&query=${advSearchText}`,
+                  catIndex !== null ? `&category=${catIndex}` : '',
+                  moderated ? '&moderated=1' : '',
+                  doubleUp ? '&doubleup=1' : '',
+                  internal ? '&internal=1' : '',
+                  freeleech ? '&freeleech=1' : '',
+                ),
+              );
+            } else if (advIMDb) {
+              setSearchLoading(true);
+              dispatch(
+                AppConfigActions.getAdvSearch(
+                  value0,
+                  value1,
+                  'search-torrents',
+                  '&type=imdb',
+                  `&query=${advSearchText}`,
+                  catIndex !== null ? `&category=${catIndex}` : '',
+                  moderated ? '&moderated=1' : '',
+                  doubleUp ? '&doubleup=1' : '',
+                  internal ? '&internal=1' : '',
+                  freeleech ? '&freeleech=1' : '',
+                ),
+              );
+            } else {
+              Alert.alert(
+                'Info',
+                'Selectează categoria căutării de la săgeata din dreapta câmpului de căutare.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {},
+                  },
+                ],
+                {cancelable: true},
+              );
+            }
           } else {
             Alert.alert(
               'Info',
-              'Selectează categoria căutării de la săgeata din dreapta câmpului de căutare.',
+              'Căutarea nu poate continua deoarece Numele de utilizator si Passkey-ul nu a fost salvat. Este necesară o relogare pentru a înregistra din nou datele.',
               [
                 {
                   text: 'OK',
@@ -574,33 +596,23 @@ export default function Home() {
               {cancelable: true},
             );
           }
-        } else {
-          Alert.alert(
-            'Info',
-            'Căutarea nu poate continua deoarece Numele de utilizator si Passkey-ul nu a fost salvat. Este necesară o relogare pentru a înregistra din nou datele.',
-            [
-              {
-                text: 'OK',
-                onPress: () => {},
-              },
-            ],
-            {cancelable: true},
-          );
+        } catch (e) {
+          alert(e);
         }
-      } catch (e) {
-        alert(e);
       }
-    }} else {Alert.alert(
-      'Info',
-      'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare avansată.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );}
+    } else {
+      Alert.alert(
+        'Info',
+        'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare avansată.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {},
+          },
+        ],
+        {cancelable: true},
+      );
+    }
   };
 
   const clearSearch = async () => {
@@ -656,70 +668,51 @@ export default function Home() {
     setSearchLoading(false);
   };
 
-  const handleLogout = async () => {
-    const keys = ['username', 'passkey', 'latest'];
-    try {
-      await AsyncStorage.multiRemove(keys);
-    } catch (e) {
-      alert(e);
-    }
-    dispatch(AppConfigActions.retrieveLatest());
-    dispatch(AppConfigActions.latestError());
-  };
-
   const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
   const scale = SCREEN_WIDTH / SCREEN_WIDTH;
 
   function fontSz(size) {
-    const newSize = size * scale 
-     if (Platform.OS === 'ios') {
-      return Math.round(PixelRatio.roundToNearestPixel(newSize))
-     } else {
-       return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2
-     }
-    }
- 
-  const _renderHeader = section => {
-    return (
-      <View style={HomePage.renderHeader}>
-        <Text style={{fontSize: fontSz(16), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, 
-      textShadowOffset: {width: 0.8, height: 0.8},
-      textShadowRadius: 1,
-      color: ACCENT_COLOR, fontWeight: 'bold'}}>{section.title}</Text>
-      </View>
-    );
-  };
- 
-  const _renderContent = section => {
-    return (
-      <View style={HomePage.renderContent}>
-        <Text style={{fontSize: fontSz(16), color: lightTheme ? 'black' : 'white'}}>{section.content}</Text>
-      </View>
-    );
-  };
- 
-  const _updateSections = activeSections => {
-    setActiveSections(activeSections);
-  };
-
-  const switchTheme = async () => {
-    try {
-      const currentTheme = await AsyncStorage.getItem('theme');
-      if (currentTheme !== null) {
-        if (currentTheme === 'dark') {
-          await AsyncStorage.setItem('theme', 'light');
-          dispatch(AppConfigActions.toggleLightTheme())
-        } else {
-          await AsyncStorage.setItem('theme', 'dark');
-          dispatch(AppConfigActions.toggleLightTheme())
-        }
-      } else {
-        await AsyncStorage.setItem('theme', 'dark');
-      }
-    } catch (e) {
-      alert(e);
+    const newSize = size * scale;
+    if (Platform.OS === 'ios') {
+      return Math.round(PixelRatio.roundToNearestPixel(newSize));
+    } else {
+      return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
     }
   }
+
+  const _renderHeader = (section) => {
+    return (
+      <View style={HomePage.renderHeader}>
+        <RText
+          title={section.title}
+          t12
+          style={{
+            textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+            textShadowOffset: {width: 0.8, height: 0.8},
+            textShadowRadius: 1,
+            color: ACCENT_COLOR,
+            fontWeight: 'bold',
+          }}
+        />
+      </View>
+    );
+  };
+
+  const _renderContent = (section) => {
+    return (
+      <View style={HomePage.renderContent}>
+        <RText
+          title={section.content}
+          t12
+          style={{color: lightTheme ? 'black' : 'white'}}
+        />
+      </View>
+    );
+  };
+
+  const _updateSections = (activeSections) => {
+    setActiveSections(activeSections);
+  };
 
   const fetchIMDbInfo = async (id) => {
     if (isNetReachable) {
@@ -835,84 +828,118 @@ export default function Home() {
       <View style={HomePage.itemPressableContainer}>
         <View style={HomePage.itemPressableFirst}>
           <View style={HomePage.itemPresssablePic}>
-          <FastImage
-            style={HomePage.itemPresssableFastImage}
-            resizeMode={FastImage.resizeMode.contain}
-            source={
-              item.category === 'Audio'
-                ? music
-                : item.category === 'Jocuri PC'
-                ? games
-                : item.category === 'Filme HD'
-                ? hd
-                : item.category === 'Filme HD-RO'
-                ? hdro
-                : item.category === 'Filme Blu-Ray'
-                ? bluray
-                : item.category === 'Docs'
-                ? docs
-                : item.category === 'Anime'
-                ? anime
-                : item.category === 'Jocuri Console'
-                ? console
-                : item.category === 'XXX'
-                ? xxx
-                : item.category === 'Seriale HD'
-                ? hdtv
-                : item.category === 'Filme SD'
-                ? sd
-                : item.category === 'Filme DVD'
-                ? dvd
-                : item.category === 'Filme DVD-RO'
-                ? dvdro
-                : item.category === 'FLAC'
-                ? flac
-                : item.category === 'Filme 4K'
-                ? a4k
-                : item.category === 'Programe'
-                ? apps
-                : item.category === 'Videoclip'
-                ? vids
-                : item.category === 'Sport'
-                ? sport
-                : item.category === 'Desene'
-                ? cartoons
-                : item.category === 'Linux'
-                ? linux
-                : item.category === 'Diverse'
-                ? misc
-                : item.category === 'Mobile'
-                ? mobile
-                : item.category === 'Seriale SD'
-                ? sdtv
-                : item.category === 'Filme 3D'
-                ? a3d
-                : item.category === 'Filme 4K Blu-Ray'
-                ? a4kbd
-                : item.category === 'Seriale 4K'
-                ? a4ktv
-                : null
-            }
-          />
+            <FastImage
+              style={HomePage.itemPresssableFastImage}
+              resizeMode={FastImage.resizeMode.contain}
+              source={
+                item.category === 'Audio'
+                  ? music
+                  : item.category === 'Jocuri PC'
+                  ? games
+                  : item.category === 'Filme HD'
+                  ? hd
+                  : item.category === 'Filme HD-RO'
+                  ? hdro
+                  : item.category === 'Filme Blu-Ray'
+                  ? bluray
+                  : item.category === 'Docs'
+                  ? docs
+                  : item.category === 'Anime'
+                  ? anime
+                  : item.category === 'Jocuri Console'
+                  ? console
+                  : item.category === 'XXX'
+                  ? xxx
+                  : item.category === 'Seriale HD'
+                  ? hdtv
+                  : item.category === 'Filme SD'
+                  ? sd
+                  : item.category === 'Filme DVD'
+                  ? dvd
+                  : item.category === 'Filme DVD-RO'
+                  ? dvdro
+                  : item.category === 'FLAC'
+                  ? flac
+                  : item.category === 'Filme 4K'
+                  ? a4k
+                  : item.category === 'Programe'
+                  ? apps
+                  : item.category === 'Videoclip'
+                  ? vids
+                  : item.category === 'Sport'
+                  ? sport
+                  : item.category === 'Desene'
+                  ? cartoons
+                  : item.category === 'Linux'
+                  ? linux
+                  : item.category === 'Diverse'
+                  ? misc
+                  : item.category === 'Mobile'
+                  ? mobile
+                  : item.category === 'Seriale SD'
+                  ? sdtv
+                  : item.category === 'Filme 3D'
+                  ? a3d
+                  : item.category === 'Filme 4K Blu-Ray'
+                  ? a4kbd
+                  : item.category === 'Seriale 4K'
+                  ? a4ktv
+                  : null
+              }
+            />
           </View>
           <View style={HomePage.itemPressableNameContainer}>
-            <Text style={[HomePage.itemPressableNameText, {fontSize: fontSz(12), textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
-          color: lightTheme ? MAIN_DARK : 'white'}]}>{item.name}</Text>
-            <Text style={[HomePage.itemPressableUploadText, {fontSize: fontSz(11), textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
-          color: lightTheme ? 'grey' : 'silver'}]}>
+            <RText
+              title={item.name}
+              t8
+              style={[
+                HomePage.itemPressableNameText,
+                {
+                  textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                  color: lightTheme ? MAIN_DARK : 'white',
+                },
+              ]}
+            />
+            <Text
+              style={[
+                HomePage.itemPressableUploadText,
+                {
+                  fontSize: fontSz(11),
+                  textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                  color: lightTheme ? 'grey' : 'silver',
+                },
+              ]}>
               [ {item.upload_date.substring(0, 16)} ]
             </Text>
             <View style={HomePage.itemPressableUploadContainer}>
-            {item.doubleup === 1 ? (
-              <Text style={[HomePage.itemPressableDoubleUpText, {fontSize: fontSz(10)}]}>2X UPLOAD</Text>
-            ) : null}
-            {item.internal === 1 ? (
-              <Text style={[HomePage.itemPressableInternalText, {fontSize: fontSz(10)}]}>INTERNAL</Text>
-            ) : null}
-            {item.freeleech === 1 ? (
-              <Text style={[HomePage.itemPressableFreeleechText, {fontSize: fontSz(10)}]}>FREELEECH</Text>
-            ) : null}
-          </View>
+              {item.doubleup === 1 ? (
+                <Text
+                  style={[
+                    HomePage.itemPressableDoubleUpText,
+                    {fontSize: fontSz(10)},
+                  ]}>
+                  2X UPLOAD
+                </Text>
+              ) : null}
+              {item.internal === 1 ? (
+                <Text
+                  style={[
+                    HomePage.itemPressableInternalText,
+                    {fontSize: fontSz(10)},
+                  ]}>
+                  INTERNAL
+                </Text>
+              ) : null}
+              {item.freeleech === 1 ? (
+                <Text
+                  style={[
+                    HomePage.itemPressableFreeleechText,
+                    {fontSize: fontSz(10)},
+                  ]}>
+                  FREELEECH
+                </Text>
+              ) : null}
+            </View>
           </View>
         </View>
       </View>
@@ -940,636 +967,860 @@ export default function Home() {
         backgroundColor={'transparent'}
         translucent={true}
       />
-      <SafeAreaView style={[HomePage.mainSafeAreaView, {
-      backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+      <SafeAreaView
+        style={[
+          HomePage.mainSafeAreaView,
+          {
+            backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+          },
+        ]}>
         <Overlay
-                statusBarTranslucent
-                animationType="fade"
-                overlayStyle={[HomePage.catCheckOverlay, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}
-                isVisible={catListLatest}
-                onBackdropPress={() => {setCatListLatest(false);
-                  setAnimes(false);
-                  setAudio(false);
-                  setDesene(false);
-                  setDiverse(false);
-                  setDoc(false);
-                  setFilme3d(false);
-                  setFilme4k(false);
-                  setFilme4kBD(false);
-                  setFilmeBD(false);
-                  setFilmeDvd(false);
-                  setFilmeDvdRo(false);
-                  setFilmeHd(false);
-                  setFilmeHdRo(false);
-                  setFilmeSd(false);
-                  setFlacs(false);
-                  setJocConsole(false);
-                  setJocPc(false);
-                  setLin(false);
-                  setMob(false);
-                  setSoftware(false);
-                  setSeriale4k(false);
-                  setSerialeHd(false);
-                  setSerialeSd(false);
-                  setSports(false);
-                  setVideos(false);
-                  setPorn(false);}}>
-                <View style={HomePage.catCheckContainer}>
-                  <ScrollView
-                    showsVerticalScrollIndicator={true}
-                    style={[HomePage.catCheckScrollView,{backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
-                    <View style={HomePage.catCheckScrollContainer}>
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Anime"
-                        checked={animes}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setAnimes(!animes)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Audio"
-                        checked={audio}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setAudio(!audio)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Desene"
-                        checked={desene}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setDesene(!desene)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Diverse"
-                        checked={diverse}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setDiverse(!diverse)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Docs"
-                        checked={doc}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setDoc(!doc)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Filme 3D"
-                        checked={filme3d}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setFilme3d(!filme3d)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Filme 4K"
-                        checked={filme4k}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setFilme4k(!filme4k)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Filme 4K Blu-Ray"
-                        checked={filme4kbd}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setFilme4kBD(!filme4kbd)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Filme Blu-Ray"
-                        checked={filmeBD}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setFilmeBD(!filmeBD)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Filme DVD"
-                        checked={filmeDvd}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setFilmeDvd(!filmeDvd)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Filme DVD-RO"
-                        checked={filmeDvdRo}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setFilmeDvdRo(!filmeDvdRo)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Filme HD"
-                        checked={filmeHd}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setFilmeHd(!filmeHd)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Filme HD-RO"
-                        checked={filmeHdRo}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setFilmeHdRo(!filmeHdRo)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Filme SD"
-                        checked={filmeSd}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setFilmeSd(!filmeSd)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="FLAC"
-                        checked={flacs}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setFlacs(!flacs)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Jocuri Console"
-                        checked={jocConsole}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setJocConsole(!jocConsole)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Jocuri PC"
-                        checked={jocPc}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setJocPc(!jocPc)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Linux"
-                        checked={lin}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setLin(!lin)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Mobile"
-                        checked={mob}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setMob(!mob)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Programe"
-                        checked={software}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setSoftware(!software)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Seriale 4K"
-                        checked={seriale4k}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setSeriale4k(!seriale4k)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Seriale HD"
-                        checked={serialeHd}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setSerialeHd(!serialeHd)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Seriale SD"
-                        checked={serialeSd}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setSerialeSd(!serialeSd)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Sport"
-                        checked={sports}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setSports(!sports)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="Videoclip"
-                        checked={videos}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setVideos(!videos)}
-                      />
-                      <CheckBox
-                        containerStyle={HomePage.catCheckBoxLast}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
-                        center
-                        title="XXX"
-                        checked={porn}
-                        checkedIcon={
-                          <FontAwesomeIcon
-                            style={HomePage.catCheckedIcon}
-                            size={20}
-                            icon={faCheckSquare}
-                          />
-                        }
-                        uncheckedIcon={
-                          <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
-                            size={20}
-                            icon={faAngleDoubleUp}
-                          />
-                        }
-                        onPress={() => setPorn(!porn)}
-                      />
-                    </View>
-                  </ScrollView>
-                  <View style={HomePage.catCheckOverlayFooter}>
-                    <Pressable
-                      style={HomePage.catCheckOverlayPressable}
-                      android_ripple={{
-                        color: 'white',
-                        borderless: false,
+          statusBarTranslucent
+          animationType="fade"
+          overlayStyle={[
+            HomePage.catCheckOverlay,
+            {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+          ]}
+          isVisible={catListLatest}
+          onBackdropPress={() => {
+            setCatListLatest(false);
+            setAnimes(false);
+            setAudio(false);
+            setDesene(false);
+            setDiverse(false);
+            setDoc(false);
+            setFilme3d(false);
+            setFilme4k(false);
+            setFilme4kBD(false);
+            setFilmeBD(false);
+            setFilmeDvd(false);
+            setFilmeDvdRo(false);
+            setFilmeHd(false);
+            setFilmeHdRo(false);
+            setFilmeSd(false);
+            setFlacs(false);
+            setJocConsole(false);
+            setJocPc(false);
+            setLin(false);
+            setMob(false);
+            setSoftware(false);
+            setSeriale4k(false);
+            setSerialeHd(false);
+            setSerialeSd(false);
+            setSports(false);
+            setVideos(false);
+            setPorn(false);
+          }}>
+          <View style={HomePage.catCheckContainer}>
+            <ScrollView
+              showsVerticalScrollIndicator={true}
+              style={[
+                HomePage.catCheckScrollView,
+                {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+              ]}>
+              <View style={HomePage.catCheckScrollContainer}>
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Anime"
+                  checked={animes}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
                       }}
-                      onPress={handleLatestSearch}>
-                      <Text style={HomePage.catCheckOverlayText}>Caută</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              </Overlay>
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setAnimes(!animes)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Audio"
+                  checked={audio}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setAudio(!audio)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Desene"
+                  checked={desene}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setDesene(!desene)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Diverse"
+                  checked={diverse}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setDiverse(!diverse)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Docs"
+                  checked={doc}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setDoc(!doc)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Filme 3D"
+                  checked={filme3d}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setFilme3d(!filme3d)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Filme 4K"
+                  checked={filme4k}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setFilme4k(!filme4k)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Filme 4K Blu-Ray"
+                  checked={filme4kbd}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setFilme4kBD(!filme4kbd)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Filme Blu-Ray"
+                  checked={filmeBD}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setFilmeBD(!filmeBD)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Filme DVD"
+                  checked={filmeDvd}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setFilmeDvd(!filmeDvd)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Filme DVD-RO"
+                  checked={filmeDvdRo}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setFilmeDvdRo(!filmeDvdRo)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Filme HD"
+                  checked={filmeHd}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setFilmeHd(!filmeHd)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Filme HD-RO"
+                  checked={filmeHdRo}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setFilmeHdRo(!filmeHdRo)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Filme SD"
+                  checked={filmeSd}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setFilmeSd(!filmeSd)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="FLAC"
+                  checked={flacs}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setFlacs(!flacs)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Jocuri Console"
+                  checked={jocConsole}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setJocConsole(!jocConsole)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Jocuri PC"
+                  checked={jocPc}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setJocPc(!jocPc)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Linux"
+                  checked={lin}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setLin(!lin)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Mobile"
+                  checked={mob}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setMob(!mob)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Programe"
+                  checked={software}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setSoftware(!software)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Seriale 4K"
+                  checked={seriale4k}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setSeriale4k(!seriale4k)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Seriale HD"
+                  checked={serialeHd}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setSerialeHd(!serialeHd)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Seriale SD"
+                  checked={serialeSd}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setSerialeSd(!serialeSd)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Sport"
+                  checked={sports}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setSports(!sports)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBox}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="Videoclip"
+                  checked={videos}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setVideos(!videos)}
+                />
+                <CheckBox
+                  containerStyle={HomePage.catCheckBoxLast}
+                  textStyle={{
+                    fontSize: fontSz(16),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  }}
+                  center
+                  title="XXX"
+                  checked={porn}
+                  checkedIcon={
+                    <FontAwesomeIcon
+                      style={HomePage.catCheckedIcon}
+                      size={20}
+                      icon={faCheckSquare}
+                    />
+                  }
+                  uncheckedIcon={
+                    <FontAwesomeIcon
+                      style={{
+                        color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                        borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        borderRadius: 1,
+                        borderWidth: 1,
+                      }}
+                      size={20}
+                      icon={faAngleDoubleUp}
+                    />
+                  }
+                  onPress={() => setPorn(!porn)}
+                />
+              </View>
+            </ScrollView>
+            <View style={HomePage.catCheckOverlayFooter}>
+              <Pressable
+                style={HomePage.catCheckOverlayPressable}
+                android_ripple={{
+                  color: 'white',
+                  borderless: false,
+                }}
+                onPress={handleLatestSearch}>
+                <Text style={HomePage.catCheckOverlayText}>Caută</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Overlay>
         <Overlay
           statusBarTranslucent
           animationType="slide"
-          overlayStyle={[HomePage.advSearchOverlay, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,}]}
+          overlayStyle={[
+            HomePage.advSearchOverlay,
+            {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+          ]}
           isVisible={advSearch}
           onBackdropPress={() => {
             AdvSearchRef.current.clear();
@@ -1603,20 +1854,29 @@ export default function Home() {
           }}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={HomePage.advSearchContainer}>
-            <Overlay
+              <Overlay
                 statusBarTranslucent
                 animationType="fade"
-                overlayStyle={[HomePage.catCheckOverlay, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}
+                overlayStyle={[
+                  HomePage.catCheckOverlay,
+                  {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+                ]}
                 isVisible={catList}
                 onBackdropPress={() => setCatList(false)}>
                 <View style={HomePage.catCheckContainer}>
                   <ScrollView
                     showsVerticalScrollIndicator={true}
-                    style={[HomePage.catCheckScrollView,{backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+                    style={[
+                      HomePage.catCheckScrollView,
+                      {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+                    ]}>
                     <View style={HomePage.catCheckScrollContainer}>
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Anime"
                         checked={animes}
@@ -1629,7 +1889,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1638,7 +1903,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Audio"
                         checked={audio}
@@ -1651,7 +1919,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1660,7 +1933,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Desene"
                         checked={desene}
@@ -1673,7 +1949,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1682,7 +1963,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Diverse"
                         checked={diverse}
@@ -1695,7 +1979,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1704,7 +1993,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Docs"
                         checked={doc}
@@ -1717,7 +2009,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1726,7 +2023,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Filme 3D"
                         checked={filme3d}
@@ -1739,7 +2039,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1748,7 +2053,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Filme 4K"
                         checked={filme4k}
@@ -1761,7 +2069,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1770,7 +2083,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Filme 4K Blu-Ray"
                         checked={filme4kbd}
@@ -1783,7 +2099,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1792,7 +2113,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Filme Blu-Ray"
                         checked={filmeBD}
@@ -1805,7 +2129,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1814,7 +2143,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Filme DVD"
                         checked={filmeDvd}
@@ -1827,7 +2159,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1836,7 +2173,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Filme DVD-RO"
                         checked={filmeDvdRo}
@@ -1849,7 +2189,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1858,7 +2203,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Filme HD"
                         checked={filmeHd}
@@ -1871,7 +2219,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1880,7 +2233,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Filme HD-RO"
                         checked={filmeHdRo}
@@ -1893,7 +2249,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1902,7 +2263,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Filme SD"
                         checked={filmeSd}
@@ -1915,7 +2279,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1924,7 +2293,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="FLAC"
                         checked={flacs}
@@ -1937,7 +2309,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1946,7 +2323,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Jocuri Console"
                         checked={jocConsole}
@@ -1959,7 +2339,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1968,7 +2353,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Jocuri PC"
                         checked={jocPc}
@@ -1981,7 +2369,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -1990,7 +2383,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Linux"
                         checked={lin}
@@ -2003,7 +2399,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -2012,7 +2413,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Mobile"
                         checked={mob}
@@ -2025,7 +2429,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -2034,7 +2443,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Programe"
                         checked={software}
@@ -2047,7 +2459,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -2056,7 +2473,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Seriale 4K"
                         checked={seriale4k}
@@ -2069,7 +2489,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -2078,7 +2503,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Seriale HD"
                         checked={serialeHd}
@@ -2091,7 +2519,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -2100,7 +2533,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Seriale SD"
                         checked={serialeSd}
@@ -2113,7 +2549,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -2122,7 +2563,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Sport"
                         checked={sports}
@@ -2135,7 +2579,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -2144,7 +2593,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="Videoclip"
                         checked={videos}
@@ -2157,7 +2609,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -2166,7 +2623,10 @@ export default function Home() {
                       />
                       <CheckBox
                         containerStyle={HomePage.catCheckBoxLast}
-                        textStyle={{fontSize: fontSz(16), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        }}
                         center
                         title="XXX"
                         checked={porn}
@@ -2179,7 +2639,12 @@ export default function Home() {
                         }
                         uncheckedIcon={
                           <FontAwesomeIcon
-                            style={{color: lightTheme ? MAIN_LIGHT : MAIN_DARK, borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT, borderRadius: 1, borderWidth: 1}}
+                            style={{
+                              color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                              borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              borderRadius: 1,
+                              borderWidth: 1,
+                            }}
                             size={20}
                             icon={faAngleDoubleUp}
                           />
@@ -2196,7 +2661,13 @@ export default function Home() {
                         borderless: false,
                       }}
                       onPress={() => setCatList(false)}>
-                      <Text style={[HomePage.catCheckOverlayText, {fontSize: fontSz(16)}]}>OK</Text>
+                      <Text
+                        style={[
+                          HomePage.catCheckOverlayText,
+                          {fontSize: fontSz(16)},
+                        ]}>
+                        OK
+                      </Text>
                     </Pressable>
                   </View>
                 </View>
@@ -2204,21 +2675,37 @@ export default function Home() {
               <ScrollView
                 showsVerticalScrollIndicator={true}
                 contentContainerStyle={HomePage.advSearchScrollView}>
-                <View style={HomePage.advSearchView}>
-                  <Text style={[HomePage.advSearchViewText, {fontSize: fontSz(18) ,color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                    Căutare avansată
-                  </Text>
+                <View>
+                  <RText
+                    title={'Căutare avansată'}
+                    t14
+                    style={{
+                      color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                      fontWeight: 'bold',
+                    }}
+                  />
                 </View>
                 <Input
                   ref={AdvSearchRef}
-                  style={[HomePage.advSearchInputStyle, {fontSize: fontSz(18), color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}
-                  containerStyle={[HomePage.advSearchContainerStyle, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,}]}
+                  style={[
+                    HomePage.advSearchInputStyle,
+                    {
+                      fontSize: Adjust(14),
+                      color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                    },
+                  ]}
+                  containerStyle={[
+                    HomePage.advSearchContainerStyle,
+                    {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+                  ]}
                   inputContainerStyle={[
                     HomePage.advSearchInputContainerStyle,
                     {
                       borderBottomColor: advSearchValidation
                         ? 'crimson'
-                        : lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        : lightTheme
+                        ? MAIN_DARK
+                        : MAIN_LIGHT,
                     },
                   ]}
                   keyboardType="default"
@@ -2233,11 +2720,13 @@ export default function Home() {
                     advSearchValidation ? 'crimson' : 'grey'
                   }
                   leftIcon={
-                    <FontAwesomeIcon
-                      size={20}
-                      color={advSearchValidation ? 'crimson' : 'grey'}
-                      icon={faSearch}
-                    />
+                    <View style={{paddingBottom: 8}}>
+                      <FontAwesomeIcon
+                        size={20}
+                        color={advSearchValidation ? 'crimson' : 'grey'}
+                        icon={faSearch}
+                      />
+                    </View>
                   }
                   onChangeText={(advSearchText) =>
                     setAdvSearchText(advSearchText)
@@ -2246,7 +2735,14 @@ export default function Home() {
                 />
                 <View style={HomePage.advSearchTypeViewContainer}>
                   <View style={HomePage.advSearchTypeView}>
-                    <Text style={[HomePage.advSearchTypeText, {fontSize: fontSz(14), color: lightTheme ? MAIN_DARK : MAIN_LIGHT,}]}>
+                    <Text
+                      style={[
+                        HomePage.advSearchTypeText,
+                        {
+                          fontSize: fontSz(14),
+                          color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                        },
+                      ]}>
                       Tipul căutării
                     </Text>
                     <Pressable
@@ -2283,9 +2779,22 @@ export default function Home() {
                       <CheckBox
                         containerStyle={[
                           HomePage.advSearchTypeCheckBox1,
-                          {borderColor: advKeyword ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT},
+                          {
+                            borderColor: advKeyword
+                              ? 'grey'
+                              : lightTheme
+                              ? MAIN_DARK
+                              : MAIN_LIGHT,
+                          },
                         ]}
-                        textStyle={{fontSize: fontSz(16), color: advKeyword ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: advKeyword
+                            ? 'grey'
+                            : lightTheme
+                            ? MAIN_DARK
+                            : MAIN_LIGHT,
+                        }}
                         center
                         title="Cuvânt cheie"
                         checked={advKeyword}
@@ -2302,7 +2811,11 @@ export default function Home() {
                               HomePage.advSearchTypeUnchecked,
                               {
                                 color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
-                                borderColor: advKeyword ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                                borderColor: advKeyword
+                                  ? 'grey'
+                                  : lightTheme
+                                  ? MAIN_DARK
+                                  : MAIN_LIGHT,
                               },
                             ]}
                             size={20}
@@ -2335,9 +2848,22 @@ export default function Home() {
                       <CheckBox
                         containerStyle={[
                           HomePage.advSearchTypeCheckBox2,
-                          {borderColor: advIMDb ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT},
+                          {
+                            borderColor: advIMDb
+                              ? 'grey'
+                              : lightTheme
+                              ? MAIN_DARK
+                              : MAIN_LIGHT,
+                          },
                         ]}
-                        textStyle={{fontSize: fontSz(16), color: advIMDb ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT}}
+                        textStyle={{
+                          fontSize: fontSz(16),
+                          color: advIMDb
+                            ? 'grey'
+                            : lightTheme
+                            ? MAIN_DARK
+                            : MAIN_LIGHT,
+                        }}
                         center
                         title="Cod IMDb"
                         checked={advIMDb}
@@ -2354,7 +2880,11 @@ export default function Home() {
                               HomePage.advSearchTypeUnchecked,
                               {
                                 color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
-                                borderColor: advIMDb ? 'grey' : lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                                borderColor: advIMDb
+                                  ? 'grey'
+                                  : lightTheme
+                                  ? MAIN_DARK
+                                  : MAIN_LIGHT,
                               },
                             ]}
                             size={20}
@@ -2385,8 +2915,12 @@ export default function Home() {
                 </View>
                 <View style={HomePage.advSearchCatContainer}>
                   <CheckBox
-                    containerStyle={[HomePage.advSearchCatCheck, {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}
-                    textStyle={{fontSize: fontSz(16),
+                    containerStyle={[
+                      HomePage.advSearchCatCheck,
+                      {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT},
+                    ]}
+                    textStyle={{
+                      fontSize: fontSz(16),
                       color:
                         animes ||
                         audio ||
@@ -2466,8 +3000,14 @@ export default function Home() {
                 </View>
                 <View style={HomePage.advSearchOptions}>
                   <CheckBox
-                    containerStyle={[HomePage.advSearchOptionsCheck, {borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
-                    textStyle={{fontSize: fontSz(16),color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
+                    containerStyle={[
+                      HomePage.advSearchOptionsCheck,
+                      {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT},
+                    ]}
+                    textStyle={{
+                      fontSize: fontSz(16),
+                      color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                    }}
                     center
                     title="2X Upload"
                     checked={doubleUp}
@@ -2480,9 +3020,13 @@ export default function Home() {
                     }
                     uncheckedIcon={
                       <FontAwesomeIcon
-                        style={[HomePage.advSearchOptionsUnchecked, {
-                          color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
-                          borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
+                        style={[
+                          HomePage.advSearchOptionsUnchecked,
+                          {
+                            color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                            borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                          },
+                        ]}
                         size={20}
                         icon={faAngleDoubleUp}
                       />
@@ -2506,8 +3050,14 @@ export default function Home() {
                     }}
                   />
                   <CheckBox
-                    containerStyle={[HomePage.advSearchOptionsCheck, {borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
-                    textStyle={{fontSize: fontSz(16),color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
+                    containerStyle={[
+                      HomePage.advSearchOptionsCheck,
+                      {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT},
+                    ]}
+                    textStyle={{
+                      fontSize: fontSz(16),
+                      color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                    }}
                     center
                     title="Freeleech"
                     checked={freeleech}
@@ -2520,9 +3070,13 @@ export default function Home() {
                     }
                     uncheckedIcon={
                       <FontAwesomeIcon
-                        style={[HomePage.advSearchOptionsUnchecked, {
-                          color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
-                          borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
+                        style={[
+                          HomePage.advSearchOptionsUnchecked,
+                          {
+                            color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                            borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                          },
+                        ]}
                         size={20}
                         icon={faAngleDoubleUp}
                       />
@@ -2548,8 +3102,14 @@ export default function Home() {
                 </View>
                 <View style={HomePage.advSearchOptions}>
                   <CheckBox
-                    containerStyle={[HomePage.advSearchOptionsCheck,{borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
-                    textStyle={{fontSize: fontSz(16),color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
+                    containerStyle={[
+                      HomePage.advSearchOptionsCheck,
+                      {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT},
+                    ]}
+                    textStyle={{
+                      fontSize: fontSz(16),
+                      color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                    }}
                     center
                     title="Internal"
                     checked={internal}
@@ -2562,9 +3122,13 @@ export default function Home() {
                     }
                     uncheckedIcon={
                       <FontAwesomeIcon
-                        style={[HomePage.advSearchOptionsUnchecked, {
-                          color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
-                          borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
+                        style={[
+                          HomePage.advSearchOptionsUnchecked,
+                          {
+                            color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                            borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                          },
+                        ]}
                         size={20}
                         icon={faAngleDoubleUp}
                       />
@@ -2588,8 +3152,14 @@ export default function Home() {
                     }}
                   />
                   <CheckBox
-                    containerStyle={[HomePage.advSearchOptionsCheck,{borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
-                    textStyle={{fontSize: fontSz(16),color: lightTheme ? MAIN_DARK :  MAIN_LIGHT}}
+                    containerStyle={[
+                      HomePage.advSearchOptionsCheck,
+                      {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT},
+                    ]}
+                    textStyle={{
+                      fontSize: fontSz(16),
+                      color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                    }}
                     center
                     title="Moderated"
                     checked={moderated}
@@ -2602,9 +3172,13 @@ export default function Home() {
                     }
                     uncheckedIcon={
                       <FontAwesomeIcon
-                        style={[HomePage.advSearchOptionsUnchecked, {
-                          color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
-                          borderColor: lightTheme ? MAIN_DARK :  MAIN_LIGHT}]}
+                        style={[
+                          HomePage.advSearchOptionsUnchecked,
+                          {
+                            color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                            borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                          },
+                        ]}
                         size={20}
                         icon={faAngleDoubleUp}
                       />
@@ -2641,7 +3215,13 @@ export default function Home() {
                       size={fontSz(20)}
                       icon={faSearch}
                     />
-                    <Text style={[HomePage.advSearchPressableText, {fontSize: fontSz(20)}]}>Caută</Text>
+                    <Text
+                      style={[
+                        HomePage.advSearchPressableText,
+                        {fontSize: fontSz(20)},
+                      ]}>
+                      Caută
+                    </Text>
                   </Pressable>
                 </View>
               </ScrollView>
@@ -2653,8 +3233,10 @@ export default function Home() {
           animationType="fade"
           overlayStyle={[
             HomePage.imdbOverlayStyle,
-            {height: IMDbID !== null ? '70%' : '40%',
-          backgroundColor: lightTheme ? MAIN_LIGHT:MAIN_DARK},
+            {
+              height: IMDbID !== null ? '70%' : '40%',
+              backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+            },
           ]}
           isVisible={infoModal}
           onBackdropPress={() => {
@@ -2663,9 +3245,9 @@ export default function Home() {
             setIMDbID(null);
           }}>
           <ScrollView
-                showsVerticalScrollIndicator={true}
-                contentContainerStyle={HomePage.imdbInfoContainer}
-                style={HomePage.imdbInfoContainerStyle}>
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={HomePage.imdbInfoContainer}
+            style={HomePage.imdbInfoContainerStyle}>
             {modalData
               ? modalData.map((item, index) => {
                   return (
@@ -2731,18 +3313,50 @@ export default function Home() {
                           }
                         />
                         <View style={HomePage.imdbInfoHeaderText}>
-                          <Text selectable style={[HomePage.imdbInfoHeaderCat, {fontSize: fontSz(20),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                          <Text
+                            selectable
+                            style={[
+                              HomePage.imdbInfoHeaderCat,
+                              {
+                                fontSize: fontSz(20),
+                                textShadowColor: lightTheme
+                                  ? MAIN_LIGHT
+                                  : MAIN_DARK,
+                                color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              },
+                            ]}>
                             {item.category}
                           </Text>
-                          <Text selectable style={[HomePage.imdbInfoHeaderDesc, {fontSize: fontSz(11),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+                          <Text
+                            selectable
+                            style={[
+                              HomePage.imdbInfoHeaderDesc,
+                              {
+                                fontSize: fontSz(11),
+                                textShadowColor: lightTheme
+                                  ? MAIN_LIGHT
+                                  : MAIN_DARK,
+                              },
+                            ]}>
                             [ {item.small_description} ]
                           </Text>
                         </View>
                       </View>
                       <View style={HomePage.imdbInfoTitleSection}>
-                        <Text selectable style={[HomePage.imdbInfoTitleText, {fontSize: fontSz(14), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                          {item.name}
-                        </Text>
+                        <RText
+                          title={item.name}
+                          t8
+                          selectable
+                          style={[
+                            HomePage.imdbInfoTitleText,
+                            {
+                              textShadowColor: lightTheme
+                                ? MAIN_LIGHT
+                                : MAIN_DARK,
+                              color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                            },
+                          ]}
+                        />
                       </View>
                       <View
                         style={[
@@ -2757,34 +3371,47 @@ export default function Home() {
                           },
                         ]}>
                         {item.doubleup === 1 ? (
-                          <Text style={[HomePage.imdbInfoDoubleUpBadge, {fontSize: fontSz(10)}]}>
+                          <Text
+                            style={[
+                              HomePage.imdbInfoDoubleUpBadge,
+                              {fontSize: fontSz(10)},
+                            ]}>
                             2X UPLOAD
                           </Text>
                         ) : null}
                         {item.internal === 1 ? (
-                          <Text style={[HomePage.imdbInfoInternalBadge, {fontSize: fontSz(10)}]}>
+                          <Text
+                            style={[
+                              HomePage.imdbInfoInternalBadge,
+                              {fontSize: fontSz(10)},
+                            ]}>
                             INTERNAL
                           </Text>
                         ) : null}
                         {item.freeleech === 1 ? (
-                          <Text style={[HomePage.imdbInfoFreeleechBadge, {fontSize: fontSz(10)}]}>
+                          <Text
+                            style={[
+                              HomePage.imdbInfoFreeleechBadge,
+                              {fontSize: fontSz(10)},
+                            ]}>
                             FREELEECH
                           </Text>
                         ) : null}
                       </View>
-                      {IMDbID !== null ? (<>
-                        <View style={HomePage.imdbInfoDataContainer}>
-                          {IMDbLoading ? (
-                            <View style={HomePage.imdbInfoActivityIndicator}>
-                              <ActivityIndicator
-                                size="large"
-                                color={ACCENT_COLOR}
-                              />
-                            </View>
-                          ) : (
-                            <>
-                              {IMDbData
-                                ? IMDbData.map((item, index) => {
+                      {IMDbID !== null ? (
+                        <>
+                          <View style={HomePage.imdbInfoDataContainer}>
+                            {IMDbLoading ? (
+                              <View style={HomePage.imdbInfoActivityIndicator}>
+                                <ActivityIndicator
+                                  size="large"
+                                  color={ACCENT_COLOR}
+                                />
+                              </View>
+                            ) : (
+                              <>
+                                {IMDbData ? (
+                                  IMDbData.map((item, index) => {
                                     return (
                                       <View
                                         style={HomePage.imdbInfoMainView}
@@ -2829,7 +3456,8 @@ export default function Home() {
                                                 uri: item.poster,
                                               }}
                                             />
-                                            {item.rating === '' ? null : (
+                                            {item.rating === '' ||
+                                            item.rating === undefined ? null : (
                                               <>
                                                 <View
                                                   style={
@@ -2837,18 +3465,29 @@ export default function Home() {
                                                   }>
                                                   <Text
                                                     style={[
-                                                      HomePage.imdbInfoRatingText
-                                                    , {fontSize: fontSz(20), color: lightTheme ? MAIN_DARK : 'white', textShadowColor: lightTheme ? 'silver' : 'black'}]}>
-                                                    {item.rating === undefined
-                                                      ? 'Fără'
-                                                      : item.rating}
+                                                      HomePage.imdbInfoRatingText,
+                                                      {
+                                                        fontSize: fontSz(20),
+                                                        color: lightTheme
+                                                          ? MAIN_DARK
+                                                          : 'white',
+                                                        textShadowColor: lightTheme
+                                                          ? 'silver'
+                                                          : 'black',
+                                                      },
+                                                    ]}>
+                                                    {item.rating}
                                                   </Text>
                                                   <FontAwesomeIcon
                                                     size={20}
                                                     style={
                                                       HomePage.imdbInfoRatingIcon
                                                     }
-                                                    color={lightTheme ? 'goldenrod':'gold'}
+                                                    color={
+                                                      lightTheme
+                                                        ? 'goldenrod'
+                                                        : 'gold'
+                                                    }
                                                     icon={faStar}
                                                   />
                                                 </View>
@@ -2861,15 +3500,34 @@ export default function Home() {
                                           <View
                                             style={HomePage.imdbInfoMainPlot}>
                                             <Text
-                                              style={[HomePage.imdbInfoMainPlotTitle, {fontSize: fontSz(14), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+                                              style={[
+                                                HomePage.imdbInfoMainPlotTitle,
+                                                {
+                                                  fontSize: fontSz(14),
+                                                  textShadowColor: lightTheme
+                                                    ? MAIN_LIGHT
+                                                    : MAIN_DARK,
+                                                },
+                                              ]}>
                                               Plot
                                             </Text>
                                             <Text
-                                                selectable
-                                                style={[
-                                                  HomePage.imdbInfoMainPlotText
-                                                , {fontSize: fontSz(12), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                                            {item.plot === undefined ? "Acest material nu conţine plot" : item.plot.split('\n')[0]}
+                                              selectable
+                                              style={[
+                                                HomePage.imdbInfoMainPlotText,
+                                                {
+                                                  fontSize: fontSz(12),
+                                                  textShadowColor: lightTheme
+                                                    ? MAIN_LIGHT
+                                                    : MAIN_DARK,
+                                                  color: lightTheme
+                                                    ? MAIN_DARK
+                                                    : MAIN_LIGHT,
+                                                },
+                                              ]}>
+                                              {item.plot === undefined
+                                                ? 'Acest material încă nu dispune de plot.'
+                                                : item.plot.split('\n')[0]}
                                             </Text>
                                             {item.duration === '' ? null : (
                                               <>
@@ -2880,16 +3538,30 @@ export default function Home() {
                                                 />
                                                 <Text
                                                   style={[
-                                                    HomePage.imdbInfoMainETATitle
-                                                  ,{fontSize: fontSz(14), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+                                                    HomePage.imdbInfoMainETATitle,
+                                                    {
+                                                      fontSize: fontSz(14),
+                                                      textShadowColor: lightTheme
+                                                        ? MAIN_LIGHT
+                                                        : MAIN_DARK,
+                                                    },
+                                                  ]}>
                                                   Durată:
                                                   <Text
                                                     style={[
-                                                      HomePage.imdbInfoMainETAText
-                                                    , {textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
+                                                      HomePage.imdbInfoMainETAText,
+                                                      {
+                                                        textShadowColor: lightTheme
+                                                          ? MAIN_LIGHT
+                                                          : MAIN_DARK,
+                                                        color: lightTheme
+                                                          ? MAIN_DARK
+                                                          : MAIN_LIGHT,
+                                                      },
+                                                    ]}>
                                                     {' '}
                                                     {item.duration === undefined
-                                                      ? 'Necunoscută'
+                                                      ? '∞'
                                                       : item.duration}
                                                   </Text>
                                                 </Text>
@@ -2900,500 +3572,648 @@ export default function Home() {
                                       </View>
                                     );
                                   })
-                                : <View style={{width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center'}}><Text style={{textAlign: 'center', color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>Conexiune offline.</Text><Text style={{textAlign: 'center', color: lightTheme ? MAIN_DARK : MAIN_LIGHT}}>Reconectează-te pentru a putea vedea informaţii despre acest material.</Text></View>}
-                            </>
-                          )}
-                        </View>
-                        <View style={HomePage.imdbInfoMainFooter}>
-                        <View style={HomePage.imdbInfoMainFooterView}>
-                          <View style={HomePage.imdbInfoMainFooter3rd}>
-                            <Pressable
-                              style={HomePage.imdbInfoMainFooter3rdPressable}
-                              android_ripple={{
-                                color: 'grey',
-                                borderless: false,
-                                radius: 40,
-                              }}
-                              onPress={() =>
-                                Alert.alert(
-                                  'Info',
-                                  'Mărimea totală a torrentului.',
-                                  [
-                                    {
-                                      text: 'OK',
-                                      onPress: () => {},
-                                    },
-                                  ],
-                                  {cancelable: true},
-                                )
-                              }>
-                              <FontAwesomeIcon
-                                size={14}
-                                icon={faDatabase}
-                                color={ACCENT_COLOR}
-                              />
-                              <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                                {formatBytes(item.size)}
-                              </Text>
-                            </Pressable>
+                                ) : (
+                                  <View
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      justifyContent: 'center',
+                                      alignItems: 'center',
+                                    }}>
+                                    <Text
+                                      style={{
+                                        textAlign: 'center',
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      }}>
+                                      Conexiune offline.
+                                    </Text>
+                                    <Text
+                                      style={{
+                                        textAlign: 'center',
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      }}>
+                                      Reconectează-te pentru a putea vedea
+                                      informaţii despre acest material.
+                                    </Text>
+                                  </View>
+                                )}
+                              </>
+                            )}
                           </View>
-                          <View style={HomePage.imdbInfoMainFooter3rd}>
-                            <Pressable
-                              style={HomePage.imdbInfoMainFooter3rdPressable}
-                              android_ripple={{
-                                color: 'grey',
-                                borderless: false,
-                                radius: 40,
-                              }}
-                              onPress={() =>
-                                Alert.alert(
-                                  'Info',
-                                  'Numărul de fişiere din torrent.',
-                                  [
-                                    {
-                                      text: 'OK',
-                                    },
-                                  ],
-                                  {onDismiss: () => {}, cancelable: true},
-                                )
-                              }>
-                              <FontAwesomeIcon
-                                size={14}
-                                icon={faCopy}
-                                color={ACCENT_COLOR}
-                              />
-                              <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                                {item.files}
-                              </Text>
-                            </Pressable>
+                          <View style={HomePage.imdbInfoMainFooter}>
+                            <View style={HomePage.imdbInfoMainFooterView}>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'Mărimea totală a torrentului.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faDatabase}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {formatBytes(item.size)}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'Numărul de fişiere din torrent.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                        },
+                                      ],
+                                      {onDismiss: () => {}, cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faCopy}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {item.files}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'Numărul de persoane care ţin torrentul la seed în acest moment.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faChevronCircleUp}
+                                    color={'limegreen'}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {item.seeders}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                            </View>
+                            <View style={HomePage.imdbInfoMainFooterView2}>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'Data la care torrentul a apărut pe Filelist.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faCalendarWeek}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {item.upload_date.substring(0, 10)}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'De câte ori a fost descărcat torrentul.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faDownload}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {item.times_completed}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'Numărul de persoane care descarcă torrentul în acest moment.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faChevronCircleDown}
+                                    color={'crimson'}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {item.leechers}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                            </View>
                           </View>
-                          <View style={HomePage.imdbInfoMainFooter3rd}>
-                            <Pressable
-                              style={HomePage.imdbInfoMainFooter3rdPressable}
-                              android_ripple={{
-                                color: 'grey',
-                                borderless: false,
-                                radius: 40,
-                              }}
-                              onPress={() =>
-                                Alert.alert(
-                                  'Info',
-                                  'Numărul de persoane care ţin torrentul la seed în acest moment.',
-                                  [
-                                    {
-                                      text: 'OK',
-                                      onPress: () => {},
-                                    },
-                                  ],
-                                  {cancelable: true},
-                                )
-                              }>
-                              <FontAwesomeIcon
-                                size={14}
-                                icon={faChevronCircleUp}
-                                color={'limegreen'}
-                              />
-                              <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                                {item.seeders}
-                              </Text>
-                            </Pressable>
+                        </>
+                      ) : (
+                        <>
+                          <View style={HomePage.imdbInfoMainFooter}>
+                            <View style={HomePage.imdbInfoMainFooterView}>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'Mărimea totală a torrentului.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faDatabase}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {formatBytes(item.size)}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'Numărul de fişiere din torrent.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                        },
+                                      ],
+                                      {onDismiss: () => {}, cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faCopy}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {item.files}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'Numărul de persoane care ţin torrentul la seed în acest moment.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faChevronCircleUp}
+                                    color={'limegreen'}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {item.seeders}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                            </View>
+                            <View style={HomePage.imdbInfoMainFooterView2}>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'Data la care torrentul a apărut pe Filelist.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faCalendarWeek}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {item.upload_date.substring(0, 10)}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'De câte ori a fost descărcat torrentul.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faDownload}
+                                    color={ACCENT_COLOR}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {item.times_completed}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                              <View style={HomePage.imdbInfoMainFooter3rd}>
+                                <Pressable
+                                  style={
+                                    HomePage.imdbInfoMainFooter3rdPressable
+                                  }
+                                  android_ripple={{
+                                    color: 'grey',
+                                    borderless: false,
+                                    radius: 40,
+                                  }}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Info',
+                                      'Numărul de persoane care descarcă torrentul în acest moment.',
+                                      [
+                                        {
+                                          text: 'OK',
+                                          onPress: () => {},
+                                        },
+                                      ],
+                                      {cancelable: true},
+                                    )
+                                  }>
+                                  <FontAwesomeIcon
+                                    size={14}
+                                    icon={faChevronCircleDown}
+                                    color={'crimson'}
+                                  />
+                                  <Text
+                                    style={[
+                                      HomePage.imdbInfoMainFooter3rdText,
+                                      {
+                                        fontSize: fontSz(12),
+                                        textShadowColor: lightTheme
+                                          ? MAIN_LIGHT
+                                          : MAIN_DARK,
+                                        color: lightTheme
+                                          ? MAIN_DARK
+                                          : MAIN_LIGHT,
+                                      },
+                                    ]}>
+                                    {item.leechers}
+                                  </Text>
+                                </Pressable>
+                              </View>
+                            </View>
                           </View>
-                        </View>
-                        <View style={HomePage.imdbInfoMainFooterView2}>
-                          <View style={HomePage.imdbInfoMainFooter3rd}>
-                            <Pressable
-                              style={HomePage.imdbInfoMainFooter3rdPressable}
-                              android_ripple={{
-                                color: 'grey',
-                                borderless: false,
-                                radius: 40,
-                              }}
-                              onPress={() =>
-                                Alert.alert(
-                                  'Info',
-                                  'Data la care torrentul a apărut pe Filelist.',
-                                  [
-                                    {
-                                      text: 'OK',
-                                      onPress: () => {},
-                                    },
-                                  ],
-                                  {cancelable: true},
-                                )
-                              }>
-                              <FontAwesomeIcon
-                                size={14}
-                                icon={faCalendarWeek}
-                                color={ACCENT_COLOR}
-                              />
-                              <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                                {item.upload_date.substring(0, 10)}
-                              </Text>
-                            </Pressable>
-                          </View>
-                          <View style={HomePage.imdbInfoMainFooter3rd}>
-                            <Pressable
-                              style={HomePage.imdbInfoMainFooter3rdPressable}
-                              android_ripple={{
-                                color: 'grey',
-                                borderless: false,
-                                radius: 40,
-                              }}
-                              onPress={() =>
-                                Alert.alert(
-                                  'Info',
-                                  'De câte ori a fost descărcat torrentul.',
-                                  [
-                                    {
-                                      text: 'OK',
-                                      onPress: () => {},
-                                    },
-                                  ],
-                                  {cancelable: true},
-                                )
-                              }>
-                              <FontAwesomeIcon
-                                size={14}
-                                icon={faDownload}
-                                color={ACCENT_COLOR}
-                              />
-                              <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                                {item.times_completed}
-                              </Text>
-                            </Pressable>
-                          </View>
-                          <View style={HomePage.imdbInfoMainFooter3rd}>
-                            <Pressable
-                              style={HomePage.imdbInfoMainFooter3rdPressable}
-                              android_ripple={{
-                                color: 'grey',
-                                borderless: false,
-                                radius: 40,
-                              }}
-                              onPress={() =>
-                                Alert.alert(
-                                  'Info',
-                                  'Numărul de persoane care descarcă torrentul în acest moment.',
-                                  [
-                                    {
-                                      text: 'OK',
-                                      onPress: () => {},
-                                    },
-                                  ],
-                                  {cancelable: true},
-                                )
-                              }>
-                              <FontAwesomeIcon
-                                size={14}
-                                icon={faChevronCircleDown}
-                                color={'crimson'}
-                              />
-                              <Text
-                                style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                                {item.leechers}
-                              </Text>
-                            </Pressable>
-                          </View>
-                        </View>
-                      </View></>
-                      ) : 
-                          <>
-                      <View style={HomePage.imdbInfoMainFooter}>
-                      <View style={HomePage.imdbInfoMainFooterView}>
-                        <View style={HomePage.imdbInfoMainFooter3rd}>
-                          <Pressable
-                            style={HomePage.imdbInfoMainFooter3rdPressable}
-                            android_ripple={{
-                              color: 'grey',
-                              borderless: false,
-                              radius: 40,
-                            }}
-                            onPress={() =>
-                              Alert.alert(
-                                'Info',
-                                'Mărimea totală a torrentului.',
-                                [
-                                  {
-                                    text: 'OK',
-                                    onPress: () => {},
-                                  },
-                                ],
-                                {cancelable: true},
-                              )
-                            }>
-                            <FontAwesomeIcon
-                              size={14}
-                              icon={faDatabase}
-                              color={ACCENT_COLOR}
-                            />
-                            <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                              {formatBytes(item.size)}
-                            </Text>
-                          </Pressable>
-                        </View>
-                        <View style={HomePage.imdbInfoMainFooter3rd}>
-                          <Pressable
-                            style={HomePage.imdbInfoMainFooter3rdPressable}
-                            android_ripple={{
-                              color: 'grey',
-                              borderless: false,
-                              radius: 40,
-                            }}
-                            onPress={() =>
-                              Alert.alert(
-                                'Info',
-                                'Numărul de fişiere din torrent.',
-                                [
-                                  {
-                                    text: 'OK',
-                                  },
-                                ],
-                                {onDismiss: () => {}, cancelable: true},
-                              )
-                            }>
-                            <FontAwesomeIcon
-                              size={14}
-                              icon={faCopy}
-                              color={ACCENT_COLOR}
-                            />
-                            <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                              {item.files}
-                            </Text>
-                          </Pressable>
-                        </View>
-                        <View style={HomePage.imdbInfoMainFooter3rd}>
-                          <Pressable
-                            style={HomePage.imdbInfoMainFooter3rdPressable}
-                            android_ripple={{
-                              color: 'grey',
-                              borderless: false,
-                              radius: 40,
-                            }}
-                            onPress={() =>
-                              Alert.alert(
-                                'Info',
-                                'Numărul de persoane care ţin torrentul la seed în acest moment.',
-                                [
-                                  {
-                                    text: 'OK',
-                                    onPress: () => {},
-                                  },
-                                ],
-                                {cancelable: true},
-                              )
-                            }>
-                            <FontAwesomeIcon
-                              size={14}
-                              icon={faChevronCircleUp}
-                              color={'limegreen'}
-                            />
-                            <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                              {item.seeders}
-                            </Text>
-                          </Pressable>
-                        </View>
-                      </View>
-                      <View style={HomePage.imdbInfoMainFooterView2}>
-                        <View style={HomePage.imdbInfoMainFooter3rd}>
-                          <Pressable
-                            style={HomePage.imdbInfoMainFooter3rdPressable}
-                            android_ripple={{
-                              color: 'grey',
-                              borderless: false,
-                              radius: 40,
-                            }}
-                            onPress={() =>
-                              Alert.alert(
-                                'Info',
-                                'Data la care torrentul a apărut pe Filelist.',
-                                [
-                                  {
-                                    text: 'OK',
-                                    onPress: () => {},
-                                  },
-                                ],
-                                {cancelable: true},
-                              )
-                            }>
-                            <FontAwesomeIcon
-                              size={14}
-                              icon={faCalendarWeek}
-                              color={ACCENT_COLOR}
-                            />
-                            <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                              {item.upload_date.substring(0, 10)}
-                            </Text>
-                          </Pressable>
-                        </View>
-                        <View style={HomePage.imdbInfoMainFooter3rd}>
-                          <Pressable
-                            style={HomePage.imdbInfoMainFooter3rdPressable}
-                            android_ripple={{
-                              color: 'grey',
-                              borderless: false,
-                              radius: 40,
-                            }}
-                            onPress={() =>
-                              Alert.alert(
-                                'Info',
-                                'De câte ori a fost descărcat torrentul.',
-                                [
-                                  {
-                                    text: 'OK',
-                                    onPress: () => {},
-                                  },
-                                ],
-                                {cancelable: true},
-                              )
-                            }>
-                            <FontAwesomeIcon
-                              size={14}
-                              icon={faDownload}
-                              color={ACCENT_COLOR}
-                            />
-                            <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12),textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                              {item.times_completed}
-                            </Text>
-                          </Pressable>
-                        </View>
-                        <View style={HomePage.imdbInfoMainFooter3rd}>
-                          <Pressable
-                            style={HomePage.imdbInfoMainFooter3rdPressable}
-                            android_ripple={{
-                              color: 'grey',
-                              borderless: false,
-                              radius: 40,
-                            }}
-                            onPress={() =>
-                              Alert.alert(
-                                'Info',
-                                'Numărul de persoane care descarcă torrentul în acest moment.',
-                                [
-                                  {
-                                    text: 'OK',
-                                    onPress: () => {},
-                                  },
-                                ],
-                                {cancelable: true},
-                              )
-                            }>
-                            <FontAwesomeIcon
-                              size={14}
-                              icon={faChevronCircleDown}
-                              color={'crimson'}
-                            />
-                            <Text
-                              style={[HomePage.imdbInfoMainFooter3rdText, {fontSize: fontSz(12), textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, color: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-                              {item.leechers}
-                            </Text>
-                          </Pressable>
-                        </View>
-                      </View>
+                        </>
+                      )}
                     </View>
-                          </>}
-                      </View>
                   );
                 })
               : null}
-              </ScrollView>
+          </ScrollView>
         </Overlay>
         <Overlay
           statusBarTranslucent
           animationType="slide"
           overlayStyle={HomePage.infoOverlay}
-          isVisible={isInfo}
+          isVisible={appInfo}
           onBackdropPress={() => {
-            setIsInfo(false);
+            dispatch(AppConfigActions.toggleAppInfo());
             setActiveSections([]);
           }}>
-          <View style={[HomePage.infoOverlayCloseContainer, {backgroundColor: lightTheme ? 'white' : MAIN_DARK}]}>
-          <ScrollView
-            showsVerticalScrollIndicator={true}
-            contentContainerStyle={[HomePage.infoOverlayScrollView, {backgroundColor: lightTheme ? 'white':MAIN_DARK}]}>
-            <View style={HomePage.infoTitleContainer}>
-              <Text style={{
-                color: lightTheme ? MAIN_DARK:'white',
-                textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK, textShadowOffset: {width: 0.8, height: 0.8},
-                textShadowRadius: 1,
-                fontWeight: 'bold',
-                fontSize: fontSz(20)}}>Informaţii folosire</Text>
-            </View>
-            <Accordion
-              sections={INFO}
-              containerStyle={HomePage.accordionContainer}
-              expandMultiple
-              underlayColor={lightTheme ? MAIN_LIGHT : '#303030'}
-              activeSections={activeSections}
-              renderHeader={_renderHeader}
-              renderContent={_renderContent}
-              onChange={_updateSections}
-            />
-            </ScrollView>
-          </View>
-        </Overlay>
-        <Overlay
-          statusBarTranslucent
-          animationType="slide"
-          overlayStyle={HomePage.settingsOverlay}
-          isVisible={isSettings}
-          onBackdropPress={() => {
-            setIsSettings(false);
-          }}>
-          <View style={[HomePage.settingsOverlayCloseContainer, {backgroundColor: lightTheme ? MAIN_DARK : MAIN_LIGHT}]}>
-            <View style={HomePage.settingsOverlayThemeContainer}>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}><Text style={[HomePage.settingsOverlayThemeText, {fontSize: fontSz(20), textShadowColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-              color: lightTheme ? 'white' : MAIN_DARK}]}>Temă curentă: </Text>
-              {lightTheme ? <FontAwesomeIcon color={MAIN_LIGHT} size={fontSz(22)} icon={faSun}/> : <FontAwesomeIcon color={MAIN_DARK} size={22} icon={faMoon}/>}</View>
-              <Switch
-                trackColor={{ false: 'grey', true: 'grey' }}
-                thumbColor={lightTheme ? "white" : "black"}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={switchTheme}
-                value={lightTheme}
+          <View
+            style={[
+              HomePage.infoOverlayCloseContainer,
+              {backgroundColor: lightTheme ? 'white' : MAIN_DARK},
+            ]}>
+            <ScrollView
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={[
+                HomePage.infoOverlayScrollView,
+                {backgroundColor: lightTheme ? 'white' : MAIN_DARK},
+              ]}>
+              <View style={HomePage.infoTitleContainer}>
+                <RText
+                  title={'Informaţii folosire'}
+                  t14
+                  style={{
+                    color: lightTheme ? MAIN_DARK : 'white',
+                    textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                    textShadowOffset: {width: 0.8, height: 0.8},
+                    textShadowRadius: 1,
+                    fontWeight: 'bold',
+                  }}
+                />
+              </View>
+              <Accordion
+                sections={INFO}
+                containerStyle={HomePage.accordionContainer}
+                expandMultiple
+                underlayColor={lightTheme ? MAIN_LIGHT : '#303030'}
+                activeSections={activeSections}
+                renderHeader={_renderHeader}
+                renderContent={_renderContent}
+                onChange={_updateSections}
               />
-            </View>
-            <View style={HomePage.settingsOverlayUseContainer}>
-              <Pressable
-                style={HomePage.settingsOverlayUsePressable}
-                android_ripple={{
-                  color: 'white',
-                  borderless: false,
-                }}
-                onPress={() => {
-                  setIsInfo(true);
-                }}>
-                <Text style={[HomePage.settingsOverlayLogoutText, {fontSize: fontSz(20)}]}>Informaţii folosire</Text>
-              </Pressable>
-            </View>
-            <View style={HomePage.settingsOverlayLogoutContainer}>
-              <Pressable
-                style={HomePage.settingsOverlayLogoutPressable}
-                android_ripple={{
-                  color: 'white',
-                  borderless: false,
-                }}
-                onPress={() => {
-                  setIsSettings(false);
-                  handleLogout();
-                }}>
-                <Text style={[HomePage.settingsOverlayLogoutText, {fontSize: fontSz(20)}]}>Logout</Text>
-              </Pressable>
-            </View>
+            </ScrollView>
           </View>
         </Overlay>
         <View style={HomePage.mainHeader}>
           <View style={HomePage.mainHeaderContainer}>
-          <View style={HomePage.mainHeaderInfoContainer}>
+            <View style={HomePage.mainHeaderInfoContainer}>
               <Pressable
                 style={HomePage.mainHeaderInfoPressable}
                 android_ripple={{
@@ -3401,8 +4221,12 @@ export default function Home() {
                   borderless: true,
                   radius: 16,
                 }}
-                onPress={() => setIsInfo(true)}>
-                <FontAwesomeIcon size={fontSz(26)} color={'white'} icon={faInfoCircle} />
+                onPress={() => dispatch(AppConfigActions.toggleAppInfo())}>
+                <FontAwesomeIcon
+                  size={fontSz(26)}
+                  color={'white'}
+                  icon={faInfoCircle}
+                />
               </Pressable>
             </View>
             <Text style={[HomePage.mainHeaderText, {fontSize: fontSz(20)}]}>
@@ -3416,80 +4240,107 @@ export default function Home() {
                   borderless: true,
                   radius: 16,
                 }}
-                onPress={() => setIsSettings(true)}>
-                <FontAwesomeIcon size={fontSz(26)} color={'white'} icon={faCog} />
+                onPress={() => navigation.openDrawer()}>
+                <FontAwesomeIcon
+                  size={fontSz(26)}
+                  color={'white'}
+                  icon={faCog}
+                />
               </Pressable>
             </View>
           </View>
         </View>
-        {isSearchBar ? <View
-          style={[HomePage.mainClearSearchBar, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
-          <View style={HomePage.mainClearSearchBarContainer}>
-            <Pressable
-              style={HomePage.mainClearSearchBarPressable}
-              android_ripple={{
-                color: 'white',
-                borderless: false,
-              }}
-              onPress={() => {
-                clearSearch();
-              }}>
-              <FontAwesomeIcon size={20} color={'white'} icon={faArrowLeft} />
-            </Pressable>
-          </View>
-          <Text selectable style={[HomePage.mainClearSearchBarText, {fontSize: fontSz(15), color: lightTheme ? MAIN_DARK : 'white'}]}>
-            Rezultatele căutării după "
-            <Text style={[HomePage.mainClearSearchBarTextSecond, {color: lightTheme ? MAIN_DARK : 'white'}]}>
-              {search !== ''
-                ? search
-                : advSearchText !== ''
-                ? advSearchText
-                : ''}
-            </Text>
-            "
-          </Text>
-        </View> : <Input
-          ref={SearchBarRef}
-          style={{fontSize: fontSz(18), color: lightTheme ? MAIN_DARK : 'white'}}
-          containerStyle={[HomePage.searchInputContainerStyle, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}
-          inputContainerStyle={[
-            HomePage.searchInContainerStyle,
-            {
-              borderColor: searchValidation ? 'crimson' : 'grey',
-            },
-          ]}
-          keyboardType="default"
-          selectionColor="grey"
-          autoCapitalize="none"
-          placeholder={
-            searchValidation
-              ? 'Căsuţa nu poate fi goală...'
-              : 'Caută după cuvinte cheie, IMDb...'
-          }
-          placeholderTextColor={searchValidation ? 'crimson' : 'grey'}
-          rightIcon={
-            <View style={HomePage.searchInputRIContainer}>
+        {isSearchBar ? (
+          <View
+            style={[
+              HomePage.mainClearSearchBar,
+              {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+            ]}>
+            <View style={HomePage.mainClearSearchBarContainer}>
               <Pressable
-                style={HomePage.searchInputRIPressable}
+                style={HomePage.mainClearSearchBarPressable}
                 android_ripple={{
                   color: 'white',
                   borderless: false,
                 }}
                 onPress={() => {
-                  handleSearch();
-                }}
-                onLongPress={() => setCatListLatest(true)}>
-                <FontAwesomeIcon
-                  size={22}
-                  color={ACCENT_COLOR}
-                  icon={faSearch}
-                />
+                  clearSearch();
+                }}>
+                <FontAwesomeIcon size={20} color={'white'} icon={faArrowLeft} />
               </Pressable>
             </View>
-          }
-          onChangeText={(search) => setSearch(search)}
-          value={search}
-        />}
+            <Text
+              selectable
+              style={[
+                HomePage.mainClearSearchBarText,
+                {fontSize: fontSz(15), color: lightTheme ? MAIN_DARK : 'white'},
+              ]}>
+              Rezultatele căutării după "
+              <Text
+                style={[
+                  HomePage.mainClearSearchBarTextSecond,
+                  {color: lightTheme ? MAIN_DARK : 'white'},
+                ]}>
+                {search !== ''
+                  ? search
+                  : advSearchText !== ''
+                  ? advSearchText
+                  : ''}
+              </Text>
+              "
+            </Text>
+          </View>
+        ) : (
+          <Input
+            ref={SearchBarRef}
+            style={{
+              fontSize: Adjust(14),
+              color: lightTheme ? MAIN_DARK : 'white',
+            }}
+            containerStyle={[
+              HomePage.searchInputContainerStyle,
+              {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+            ]}
+            inputContainerStyle={[
+              HomePage.searchInContainerStyle,
+              {
+                borderColor: searchValidation ? 'crimson' : 'grey',
+              },
+            ]}
+            keyboardType="default"
+            selectionColor="grey"
+            autoCapitalize="none"
+            placeholder={
+              searchValidation
+                ? 'Căsuţa nu poate fi goală...'
+                : 'Caută după cuvinte cheie, IMDb...'
+            }
+            placeholderTextColor={searchValidation ? 'crimson' : 'grey'}
+            rightIcon={
+              <View style={HomePage.searchInputRIContainer}>
+                <Pressable
+                  style={HomePage.searchInputRIPressable}
+                  android_ripple={{
+                    color: ACCENT_COLOR,
+                    borderless: false,
+                    radius: 16,
+                  }}
+                  onPress={() => {
+                    handleSearch();
+                  }}
+                  onLongPress={() => setCatListLatest(true)}>
+                  <FontAwesomeIcon
+                    size={22}
+                    color={ACCENT_COLOR}
+                    icon={faSearch}
+                  />
+                </Pressable>
+              </View>
+            }
+            onChangeText={(search) => setSearch(search)}
+            value={search}
+          />
+        )}
         {searchLoading ? (
           <View style={HomePage.searchLoadingContainer}>
             <ActivityIndicator
@@ -3500,10 +4351,26 @@ export default function Home() {
           </View>
         ) : noResults ? (
           <View style={HomePage.searchNoResults}>
-            <Text style={[HomePage.searchNoResultsTextPrimary, {fontSize: fontSz(20), textShadowColor: lightTheme ? MAIN_LIGHT : 'black', color: lightTheme ? MAIN_DARK:'white'}]}>
+            <Text
+              style={[
+                HomePage.searchNoResultsTextPrimary,
+                {
+                  fontSize: fontSz(20),
+                  textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                  color: lightTheme ? MAIN_DARK : 'white',
+                },
+              ]}>
               Nu s-a găsit nimic
             </Text>
-            <Text style={[HomePage.searchNoResultsTextSecondary, {fontSize: fontSz(16), textShadowColor: lightTheme ? MAIN_LIGHT : 'black', color: lightTheme ? MAIN_DARK:'white'}]}>
+            <Text
+              style={[
+                HomePage.searchNoResultsTextSecondary,
+                {
+                  fontSize: fontSz(16),
+                  textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                  color: lightTheme ? MAIN_DARK : 'white',
+                },
+              ]}>
               Încearcă din nou cu alt șir de căutare
             </Text>
           </View>
@@ -3539,15 +4406,19 @@ export default function Home() {
             }
             contentContainerStyle={HomePage.flatListsContentContainer}
             data={listLatestLoading ? [{id: 'ABC'}] : listLatest}
-            renderItem={listLatestLoading ? (item, index) => (
-              <View key={index} style={HomePage.searchLoadingContainer}>
-            <ActivityIndicator
-              style={HomePage.searchLoadingAI}
-              size="large"
-              color={ACCENT_COLOR}
-            />
-          </View>
-            ) : renderItem}
+            renderItem={
+              listLatestLoading
+                ? (item, index) => (
+                    <View key={index} style={HomePage.searchLoadingContainer}>
+                      <ActivityIndicator
+                        style={HomePage.searchLoadingAI}
+                        size="large"
+                        color={ACCENT_COLOR}
+                      />
+                    </View>
+                  )
+                : renderItem
+            }
             keyExtractor={(item) => item.id.toString()}
           />
         )}
@@ -3572,7 +4443,9 @@ export default function Home() {
           style={[
             HomePage.refreshContainer,
             {
-              backgroundColor: lightTheme ? 'rgba(0, 0, 0, 0.7)':'rgba(255, 255, 255, 0.9)',
+              backgroundColor: lightTheme
+                ? 'rgba(0, 0, 0, 0.7)'
+                : 'rgba(255, 255, 255, 0.9)',
               transform: [
                 {
                   scale: showStatus,
@@ -3581,11 +4454,25 @@ export default function Home() {
             },
           ]}>
           <Animated.Text
-            style={[HomePage.refreshTextPrimary, {fontSize: fontSz(16), opacity: textOpacity,color: lightTheme ? 'white' : 'black'}]}>
+            style={[
+              HomePage.refreshTextPrimary,
+              {
+                fontSize: fontSz(16),
+                opacity: textOpacity,
+                color: lightTheme ? 'white' : 'black',
+              },
+            ]}>
             Actualizare completă
           </Animated.Text>
           <Animated.Text
-            style={[HomePage.refreshTextSecondary, {fontSize: fontSz(16), opacity: textOpacity,color: lightTheme ? 'white' : 'black'}]}>
+            style={[
+              HomePage.refreshTextSecondary,
+              {
+                fontSize: fontSz(16),
+                opacity: textOpacity,
+                color: lightTheme ? 'white' : 'black',
+              },
+            ]}>
             (nu există torrente noi)
           </Animated.Text>
         </Animated.View>
@@ -3593,7 +4480,9 @@ export default function Home() {
           style={[
             HomePage.clipboardAlertContainer,
             {
-              backgroundColor: lightTheme ? 'rgba(0, 0, 0, 0.7)':'rgba(255, 255, 255, 0.9)',
+              backgroundColor: lightTheme
+                ? 'rgba(0, 0, 0, 0.7)'
+                : 'rgba(255, 255, 255, 0.9)',
               transform: [
                 {
                   scale: showClipboardStatus,
@@ -3604,7 +4493,11 @@ export default function Home() {
           <Animated.Text
             style={[
               HomePage.clipboardAlertText,
-              {fontSize: fontSz(16), opacity: textClipboardOpacity, color: lightTheme ? 'white' : 'black'},
+              {
+                fontSize: fontSz(16),
+                opacity: textClipboardOpacity,
+                color: lightTheme ? 'white' : 'black',
+              },
             ]}>
             Link descărcare copiat în Clipboard
           </Animated.Text>
@@ -3622,9 +4515,12 @@ export default function Home() {
             },
           ]}>
           <Animated.Text
-            style={{fontSize: fontSz(18),
-            fontWeight: 'bold', opacity: showNetworkAlertText, color: 'white'}
-            }>
+            style={{
+              fontSize: fontSz(18),
+              fontWeight: 'bold',
+              opacity: showNetworkAlertText,
+              color: 'white',
+            }}>
             {isNetReachable ? 'Online' : 'Offline'}
           </Animated.Text>
         </Animated.View>
@@ -3634,981 +4530,977 @@ export default function Home() {
 }
 
 const HomePage = EStyleSheet.create({
-    itemPressable: {
-      elevation: 7,
-      zIndex: 7,
-      marginBottom: '15rem',
-    },
-    itemPressableContainer: {
-      height: '70rem',
-      width: '100%',
-      borderColor: '#181818',
-      borderWidth: '0.5rem',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    },
-    itemPressableFirst: {
-      height: '90%',
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start'
-    },
-    itemPresssablePic: {
-      height: '100%',
-      width: '20%',
-      paddingLeft: '4rem',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-    },
-    itemPresssableFastImage: {height: '100%', width: '100%'},
-    itemPressableNameContainer: {
-      justifyContent: 'space-between',
-      paddingHorizontal: '4rem',
-      height: '100%',
-      width: '78%',
-    },
-    itemPressableNameText: {
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-    },
-    itemPressableUploadText: {
-      color: 'silver',
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-    },
-    itemPressableUploadContainer: {
-      position: 'absolute',
-      bottom: 0,
-      right: 0,
-      height: '14rem',
-      width: '70%',
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      alignItems: 'center'
-    },
-    itemPressableFreeleechText: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '1rem', height: '1rem'},
-      textShadowRadius: '1rem',
-      paddingHorizontal: '1rem',
-      borderColor: '#1ec621',
-      borderWidth: '0.5rem',
-      color: 'aliceblue',
-      marginLeft: '5rem',
-      backgroundColor: '#09580a',
-    },
-    itemPressableDoubleUpText: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '1rem', height: '1rem'},
-      textShadowRadius: '1rem',
-      paddingHorizontal: '1rem',
-      borderColor: '#7c00ff',
-      borderWidth: '0.5rem',
-      color: 'aliceblue',
-      marginLeft: '5rem',
-      backgroundColor: '#370f61',
-    },
-    itemPressableInternalText: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '1rem', height: '1rem'},
-      textShadowRadius: '1rem',
-      paddingHorizontal: '1rem',
-      borderColor: '#1e87c6',
-      borderWidth: '0.5rem',
-      color: 'aliceblue',
-      marginLeft: '5rem',
-      backgroundColor: '#093b58',
-    },
-    renderItemStyle: {
-      backgroundColor: 'transparent',
-    },
-    mainSafeAreaView: {
-      flex: 1,
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    advSearchOverlay: {
-      width: '100%',
-      height: '55%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 0,
-    },
-    advSearchContainer: {
-      width: '100%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      paddingTop: '8rem',
-    },
-    catCheckOverlay: {
-      width: '70%',
-      height: '80%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 0,
-    },
-    catCheckContainer: {
-      width: '100%',
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    catCheckScrollView: {
-      width: '100%',
-      height: '100%',
-      marginBottom: '8rem',
-    },
-    catCheckScrollContainer: {
-      width: '100%',
-      height: '100%',
-    },
-    catCheckBox: {
-      width: '100%',
-      backgroundColor: 'transparent',
-      borderColor: 'grey',
-      borderBottomWidth: '0.5rem',
-      borderTopWidth: 0,
-      borderRightWidth: 0,
-      borderLeftWidth: 0,
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    catCheckBoxLast: {
-      width: '100%',
-      backgroundColor: 'transparent',
-      borderWidth: 0,
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    catCheckedIcon: {
-      color: ACCENT_COLOR,
-    },
-    // catUncheckedIcon: {
-    //   // color: 'red',
-    //   // borderColor: 'red',
-    //   borderRadius: '1rem',
-    //   borderWidth: '1rem',
-    // },
-    catCheckOverlayFooter: {
-      width: '100%',
-      height: '5%',
-      borderRadius: 34,
-      overflow: 'hidden',
-    },
-    catCheckOverlayPressable: {
-      width: '100%',
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: ACCENT_COLOR,
-      borderRadius: 34,
-    },
-    catCheckOverlayText: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-      color: 'white',
-      textAlign: 'center',
-      fontWeight: 'bold',
-    },
-    advSearchScrollView: {
-      width: '100%',
-      paddingBottom: StatusBar.currentHeight,
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    advSearchView: {
-      width: '100%',
-    },
-    advSearchViewText: {
-      textAlign: 'center',
-      fontWeight: 'bold',
-    },
-    advSearchInputStyle: {
-      fontWeight: 'normal',
-    },
-    advSearchContainerStyle: {
-      height: '64rem',
-      width: '100%',
-      paddingTop: '10rem',
-      paddingBottom: '1rem',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    advSearchInputContainerStyle: {
-      height: '80%',
-      width: '100%',
-      paddingLeft: '6rem',
-      paddingRight: '3rem',
-      borderBottomWidth: '0.5rem',
-    },
-    advSearchTypeViewContainer: {
-      height: '64rem',
-      width: '100%',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-    },
-    advSearchTypeView: {
-      height: '25%',
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      paddingHorizontal: '2%',
-    },
-    advSearchTypeText: {
-      textAlign: 'center',
-      fontWeight: 'bold',
-    },
-    advSearchTypePressable: {
-      height: '100%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginLeft: '3%',
-    },
-    advSearchTypeCheckView: {
-      height: '75%',
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    advSearchTypeViewHalf: {
-      width: '50%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    advSearchTypeCheckBox1: {
-      width: '93%',
-      backgroundColor: 'transparent',
-      borderBottomWidth: '0.5rem',
-      borderTopWidth: 0,
-      borderRightWidth: 0,
-      borderLeftWidth: 0,
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    advSearchTypeCheckBox2: {
-      width: '92%',
-      backgroundColor: 'transparent',
-      borderBottomWidth: '0.5rem',
-      borderTopWidth: 0,
-      borderRightWidth: 0,
-      borderLeftWidth: 0,
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    advSearchTypeChecked: {
-      color: 'grey',
-    },
-    advSearchTypeUnchecked: {
-      borderRadius: '1rem',
-      borderWidth: '1rem',
-    },
-    advSearchCatContainer: {
-      width: '96%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: '3rem',
-      marginBottom: '13rem',
-    },
-    advSearchCatCheck: {
-      width: '100%',
-      backgroundColor: 'transparent',
-      borderBottomWidth: '0.5rem',
-      borderTopWidth: 0,
-      borderRightWidth: 0,
-      borderLeftWidth: 0,
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    advSearchOptions: {
-      width: '96%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    advSearchOptionsCheck: {
-      width: '47%',
-      backgroundColor: 'transparent',
-      borderBottomWidth: '0.5rem',
-      borderTopWidth: 0,
-      borderRightWidth: 0,
-      borderLeftWidth: 0,
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    advSearchOptionsChecked: {
-      color: ACCENT_COLOR,
-    },
-    advSearchOptionsUnchecked: {
-      borderRadius: '1rem',
-      borderWidth: '1rem',
-    },
-    advSearchPressableContainer: {
-      width: StatusBar.currentHeight * 7,
-      height: '10%',
-      backgroundColor: ACCENT_COLOR,
-      overflow: 'hidden',
-      borderRadius: 34,
-      marginTop: StatusBar.currentHeight,
-      marginBottom: '8rem',
-    },
-    advSearchPressable: {
-      width: '100%',
-      height: '100%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 34,
-    },
-    advSearchPressableIcon: {
-      color: 'white',
-      marginRight: '12rem',
-    },
-    advSearchPressableText: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-      textAlign: 'center',
-      fontWeight: 'bold',
-      color: 'white',
-    },
-    imdbOverlayStyle: {
-      width: '87%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 0
-    },
-    imdbInfoContainer: {
-      width: '100%',
-      paddingBottom: StatusBar.currentHeight,
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start'
-    },
-    imdbInfoContainerStyle: {
-      width: '100%',
-    },
-    imdbInfoView: {
-      width: '100%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
-    },
-    imdbInfoHeader: {
-      width: '100%',
-      height: '45rem',
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-      marginBottom: '8rem'
-    },
-    imdbInfoHeaderFastImage: {
-      position: 'absolute',
-      left: 0,
-      height: '45rem',
-      width: '45rem',
-    },
-    imdbInfoHeaderText: {
-      width: '85%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-      paddingLeft: '2%',
-    },
-    imdbInfoHeaderCat: {
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-    },
-    imdbInfoHeaderDesc: {
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-      color: 'grey',
-      fontWeight: 'bold',
-      textAlign: 'center',
-    },
-    imdbInfoTitleSection: {
-      width: '100%',
-      height: '60rem',
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
-      borderTopWidth: '0.5rem',
-      borderTopColor: '#303030',
-      paddingTop: '6rem'
-    },
-    imdbInfoTitleText: {
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-      fontWeight: 'bold',
-    },
-    imdbInfoTitleBadges: {
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      marginBottom: '6rem'
-    },
-    imdbInfoFreeleechBadge: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '1rem', height: '1rem'},
-      textShadowRadius: '1rem',
-      borderColor: '#1ec621',
-      borderWidth: '0.5rem',
-      color: 'aliceblue',
-      marginRight: '4rem',
-      backgroundColor: '#09580a',
-    },
-    imdbInfoDoubleUpBadge: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '1rem', height: '1rem'},
-      textShadowRadius: '1rem',
-      borderColor: '#7c00ff',
-      borderWidth: '0.5rem',
-      color: 'aliceblue',
-      marginRight: '4rem',
-      backgroundColor: '#370f61',
-    },
-    imdbInfoInternalBadge: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '1rem', height: '1rem'},
-      textShadowRadius: '1rem',
-      borderColor: '#1e87c6',
-      borderWidth: '0.5rem',
-      color: 'aliceblue',
-      marginRight: '4rem',
-      backgroundColor: '#093b58',
-    },
-    imdbInfoDataContainer: {
-      borderTopColor: '#303030',
-      borderTopWidth: '0.5rem',
-      paddingTop: '12rem',
-      width: '100%',
-      height: '250rem',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: '15rem'
-    },
-    imdbInfoActivityIndicator: {
-      width: '100%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'transparent',
-    },
-    imdbInfoMainView: {
-      width: '100%',
-      height: '100%',
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
-    },
-    imdbInfoMainPoster: {
-      width: '50%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start'
-    },
-    imdbInfoPosterPressable: {
-      width: '100%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
-    },
-    imdbInfoMainPosterFastImage: {
-      width: '90%',
-      height: '79%',
-    },
-    imdbInfoRatingView: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: '90%',
-      height: '21%',
-    },
-    imdbInfoRatingText: {
-      textShadowOffset: {
-        width: '1rem',
-        height: '1rem',
-      },
-      textShadowRadius: '1rem',
-      fontWeight: 'bold',
-    },
-    imdbInfoRatingIcon: {marginLeft: '8rem'},
-    imdbInfoMainPlotView: {
-      width: '50%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      paddingRight: '2%',
-    },
-    imdbInfoMainPlot: {
-      width: '100%',
-      height: '80%',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
-    },
-    imdbInfoMainPlotTitle: {
-      textShadowOffset: {
-        width: '1rem',
-        height: '1rem',
-      },
-      textShadowRadius: '1rem',
-      color: 'grey',
-      fontWeight: 'bold',
-    },
-    imdbInfoMainPlotText: {
-      textShadowOffset: {
-        width: '1rem',
-        height: '1rem',
-      },
-      textShadowRadius: '1rem',
-      paddingTop: '3%',
-    },
-    imdbInfoMainSeparator: {
-      position: 'relative',
-      top: 0,
-      left: 0,
-      marginVertical: '5rem',
-      width: '100%',
-      height: '0.5rem',
-      backgroundColor: '#303030',
-    },
-    imdbInfoMainETATitle: {
-      textShadowOffset: {
-        width: '1rem',
-        height: '1rem',
-      },
-      textShadowRadius: '1rem',
-      color: 'grey',
-      fontWeight: 'bold',
-    },
-    imdbInfoMainETAText: {
-      textShadowOffset: {
-        width: '1rem',
-        height: '1rem',
-      },
-      textShadowRadius: '1rem',
-    },
-    imdbInfoMainFooter: {
-      borderTopWidth: '0.5rem',
-      borderTopColor: '#303030',
-      width: '100%',
-      paddingTop: '12rem',
-      height: '80rem',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    imdbInfoMainFooterView: {
-      width: '100%',
-      height: '50%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    imdbInfoMainFooterView2: {
-      width: '100%',
-      height: '50%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: '10rem',
-    },
-    imdbInfoMainFooter3rd: {
-      width: '33.33%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    imdbInfoMainFooter3rdPressable: {
-      width: '100%',
-      height: '100%',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-    },
-    imdbInfoMainFooter3rdText: {
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-    },
-    imdbInfoMainFooterTall: {
-      width: '100%',
-      height: '200rem',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    imdbInfoMainFooterTallView: {
-      width: '100%',
-      height: '30%',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    infoOverlay: {
-      width: '90%',
-      height: '50%',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 0,
-      padding: 0
-    },
-    infoOverlayCloseContainer: {
-      width: '100%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    infoOverlayScrollView: {
-      width: '100%',
-      paddingBottom: StatusBar.currentHeight,
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    infoTitleContainer: {
-      width: '100%',
-      height: '50rem',
-      justifyContent: 'center',
-      alignItems: 'center',
-      position: 'absolute',
-      top: 0,
-    },
-    accordionContainer: {width: '100%', paddingHorizontal: '18rem', marginTop: '50rem'},
-    renderHeader: {marginVertical: '6rem'},
-    renderContent: {flexDirection: 'row', justifyContent: 'flex-start', paddingHorizontal: '13rem'},
-    infoOverlayClosePressable: {
-      position: 'absolute',
-      right: 0,
-      width: '15%',
-      height: '25%',
-      bottom: '75%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    settingsOverlay: {
-      position: 'absolute',
-      bottom: 0,
-      width: '100%',
-      height: '20%',
-      flexDirection: 'column',
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-      borderRadius: 0,
-      padding: 0,
-      margin: 0,
-    },
-    settingsOverlayCloseContainer: {
-      width: '100%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-    },
-    settingsOverlayClosePressable: {
-      position: 'absolute',
-      right: 0,
-      width: '15%',
-      height: '25%',
-      bottom: '75%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    settingsOverlayThemeContainer: {
-      width: '100%',
-      height: '33.33%',
-      paddingHorizontal: '10rem',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    settingsOverlayThemeText: {
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-      fontWeight: 'bold',
-    },
-    settingsOverlayUseContainer: {
-      width: '100%',
-      height: '33.33%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: ACCENT_COLOR,
-    },
-    settingsOverlayUsePressable: {
-      width: '100%',
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: ACCENT_COLOR,
-    },
-    settingsOverlayLogoutContainer: {
-      width: '100%',
-      height: '33.33%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'crimson',
-    },
-    settingsOverlayLogoutPressable: {
-      width: '100%',
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'crimson',
-    },
-    settingsOverlayLogoutText: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-      color: 'white',
-      fontWeight: 'bold'
-    },
-    mainHeader: {
-      height: StatusBar.currentHeight * 3,
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'flex-start',
-      alignItems: 'flex-end',
-      backgroundColor: ACCENT_COLOR,
-      paddingBottom: '5rem',
-    },
-    mainHeaderContainer: {
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    mainHeaderInfoContainer: {
-      position: 'absolute',
-      left: 18,
-      width: '10%',
-      height: '40%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    mainHeaderInfoPressable: {
-      width: '100%',
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    mainHeaderText: {
-      textShadowColor: 'black',
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-      color: 'white',
-      fontWeight: 'bold',
-    },
-    mainHeaderCogContainer: {
-      position: 'absolute',
-      right: 18,
-      width: '10%',
-      height: '40%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    mainHeaderCogPressable: {
-      width: '100%',
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    mainClearSearchBar: {
-      zIndex: 8,
-      elevation: 8,
-      height: '64rem',
-      width: '100%',
-      paddingHorizontal: '18rem',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    mainClearSearchBarContainer: {
-      height: '40rem',
-      width: '40rem',
-      overflow: 'hidden',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 100,
-      backgroundColor: ACCENT_COLOR,
-    },
-    mainClearSearchBarPressable: {
-      height: '100%',
-      width: '100%',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 100,
-      backgroundColor: ACCENT_COLOR,
-      padding: '8rem',
-    },
-    mainClearSearchBarText: {
-      fontWeight: 'normal',
-      paddingHorizontal: '22rem',
-      width: '94%',
-    },
-    mainClearSearchBarTextSecond: {
-      fontWeight: 'bold',
-    },
-    searchInputContainerStyle: {
-      zIndex: 8,
-      elevation: 8,
-      height: '64rem',
-      width: '100%',
-      paddingTop: '8rem',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    searchInContainerStyle: {
-      borderBottomWidth: '0.5rem',
-      height: '80%',
-      width: '100%',
-      paddingLeft: '6rem',
-      paddingRight: '1.5rem',
-    },
-    searchInputRIContainer: {
-      height: '35rem',
-      width: '35rem',
-      borderRadius: 100,
-      justifyContent: 'center',
-      alignItems: 'center',
-      overflow: 'hidden',
-    },
-    searchInputRIPressable: {
-      height: '100%',
-      width: '100%',
-      borderRadius: 100,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    searchLoadingContainer: {
-      width: '100%',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-    },
-    searchLoadingAI: {
-      marginTop: StatusBar.currentHeight * 5,
-    },
-    searchNoResults: {
-      width: '100%',
-      height: '100%',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      paddingTop: StatusBar.currentHeight * 1.5,
-      paddingBottom: StatusBar.currentHeight * 2 + '64rem',
-    },
-    searchNoResultsTextPrimary: {
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-      textAlign: 'center',
-      fontWeight: 'bold',
-    },
-    searchNoResultsTextSecondary: {
-      marginTop: '4rem',
-      textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-      textShadowRadius: '1rem',
-      textAlign: 'center',
-    },
-    flatListsContentContainer: {
-      paddingTop: '15rem',
-      paddingHorizontal: '15rem',
-    },
-    advSearchBtnContainer: {
-      width: '45rem',
-      height: '45rem',
-      zIndex: 5,
-      elevation: 5,
-      overflow: 'hidden',
-      bottom: '18rem',
-      right: '20rem',
-      borderRadius: 100,
-      position: 'absolute',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: ACCENT_COLOR,
-    },
-    advSearchBtnPressable: {
-      width: '45rem',
-      height: '45rem',
-      borderRadius: 100,
-      position: 'absolute',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: ACCENT_COLOR,
-    },
-    refreshContainer: {
-      height: StatusBar.currentHeight * 2,
-      width: '93%',
-      elevation: 9,
-      zIndex: 9,
-      position: 'absolute',
-      top: '50%',
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 34,
-    },
-    refreshTextPrimary: {
-      fontWeight: 'bold',
-    },
-    refreshTextSecondary: {
-      paddingBottom: '4rem',
-    },
-    clipboardAlertContainer: {
-      width: '93%',
-      height: StatusBar.currentHeight * 2,
-      elevation: 9,
-      zIndex: 9,
-      position: 'absolute',
-      top: '50%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 34,
-    },
-    clipboardAlertText: {
-      fontWeight: 'bold',
-    },
-    networkAlertContainer: {
-      width: '100%',
-      height: StatusBar.currentHeight * 3,
-      paddingTop: StatusBar.currentHeight * 1.5,
-      elevation: 9,
-      zIndex: 9,
-      position: 'absolute',
-      top: 0,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-  });
+  itemPressable: {
+    elevation: 7,
+    zIndex: 7,
+    marginBottom: '15rem',
+  },
+  itemPressableContainer: {
+    height: '70rem',
+    width: '100%',
+    borderColor: '#181818',
+    borderWidth: '0.5rem',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  itemPressableFirst: {
+    height: '90%',
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  itemPresssablePic: {
+    height: '100%',
+    width: '20%',
+    paddingLeft: '4rem',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  itemPresssableFastImage: {height: '100%', width: '100%'},
+  itemPressableNameContainer: {
+    justifyContent: 'space-between',
+    paddingHorizontal: '4rem',
+    height: '100%',
+    width: '78%',
+  },
+  itemPressableNameText: {
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+  },
+  itemPressableUploadText: {
+    color: 'silver',
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+  },
+  itemPressableUploadContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    height: '14rem',
+    width: '70%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  itemPressableFreeleechText: {
+    textShadowColor: 'black',
+    textShadowOffset: {width: '1rem', height: '1rem'},
+    textShadowRadius: '1rem',
+    paddingHorizontal: '1rem',
+    borderColor: '#1ec621',
+    borderWidth: '0.5rem',
+    color: 'aliceblue',
+    marginLeft: '5rem',
+    backgroundColor: '#09580a',
+  },
+  itemPressableDoubleUpText: {
+    textShadowColor: 'black',
+    textShadowOffset: {width: '1rem', height: '1rem'},
+    textShadowRadius: '1rem',
+    paddingHorizontal: '1rem',
+    borderColor: '#7c00ff',
+    borderWidth: '0.5rem',
+    color: 'aliceblue',
+    marginLeft: '5rem',
+    backgroundColor: '#370f61',
+  },
+  itemPressableInternalText: {
+    textShadowColor: 'black',
+    textShadowOffset: {width: '1rem', height: '1rem'},
+    textShadowRadius: '1rem',
+    paddingHorizontal: '1rem',
+    borderColor: '#1e87c6',
+    borderWidth: '0.5rem',
+    color: 'aliceblue',
+    marginLeft: '5rem',
+    backgroundColor: '#093b58',
+  },
+  renderItemStyle: {
+    backgroundColor: 'transparent',
+  },
+  mainSafeAreaView: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  advSearchOverlay: {
+    width: '100%',
+    height: '55%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 0,
+  },
+  advSearchContainer: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: '8rem',
+  },
+  catCheckOverlay: {
+    width: '70%',
+    height: '80%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 0,
+  },
+  catCheckContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  catCheckScrollView: {
+    width: '100%',
+    height: '100%',
+    marginBottom: '8rem',
+  },
+  catCheckScrollContainer: {
+    width: '100%',
+    height: '100%',
+  },
+  catCheckBox: {
+    width: '100%',
+    backgroundColor: 'transparent',
+    borderColor: 'grey',
+    borderBottomWidth: '0.5rem',
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+    borderLeftWidth: 0,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  catCheckBoxLast: {
+    width: '100%',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  catCheckedIcon: {
+    color: ACCENT_COLOR,
+  },
+  catCheckOverlayFooter: {
+    width: '100%',
+    height: '5%',
+    borderRadius: 34,
+    overflow: 'hidden',
+  },
+  catCheckOverlayPressable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: ACCENT_COLOR,
+    borderRadius: 34,
+  },
+  catCheckOverlayText: {
+    textShadowColor: 'black',
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    color: 'white',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  advSearchScrollView: {
+    width: '100%',
+    paddingBottom: StatusBar.currentHeight,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  advSearchInputStyle: {
+    fontWeight: 'normal',
+  },
+  advSearchContainerStyle: {
+    height: '64rem',
+    width: '100%',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  advSearchInputContainerStyle: {
+    height: '80%',
+    width: '100%',
+    paddingTop: '24rem',
+    paddingLeft: '6rem',
+    paddingRight: '3rem',
+    borderBottomWidth: '0.5rem',
+  },
+  advSearchTypeViewContainer: {
+    height: '64rem',
+    width: '100%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  advSearchTypeView: {
+    height: '25%',
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingHorizontal: '2%',
+  },
+  advSearchTypeText: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  advSearchTypePressable: {
+    height: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: '3%',
+  },
+  advSearchTypeCheckView: {
+    height: '75%',
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  advSearchTypeViewHalf: {
+    width: '50%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  advSearchTypeCheckBox1: {
+    width: '93%',
+    backgroundColor: 'transparent',
+    borderBottomWidth: '0.5rem',
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+    borderLeftWidth: 0,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  advSearchTypeCheckBox2: {
+    width: '92%',
+    backgroundColor: 'transparent',
+    borderBottomWidth: '0.5rem',
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+    borderLeftWidth: 0,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  advSearchTypeChecked: {
+    color: 'grey',
+  },
+  advSearchTypeUnchecked: {
+    borderRadius: '1rem',
+    borderWidth: '1rem',
+  },
+  advSearchCatContainer: {
+    width: '96%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: '3rem',
+    marginBottom: '13rem',
+  },
+  advSearchCatCheck: {
+    width: '100%',
+    backgroundColor: 'transparent',
+    borderBottomWidth: '0.5rem',
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+    borderLeftWidth: 0,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  advSearchOptions: {
+    width: '96%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  advSearchOptionsCheck: {
+    width: '47%',
+    backgroundColor: 'transparent',
+    borderBottomWidth: '0.5rem',
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+    borderLeftWidth: 0,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  advSearchOptionsChecked: {
+    color: ACCENT_COLOR,
+  },
+  advSearchOptionsUnchecked: {
+    borderRadius: '1rem',
+    borderWidth: '1rem',
+  },
+  advSearchPressableContainer: {
+    width: StatusBar.currentHeight * 6,
+    height: StatusBar.currentHeight * 1.5,
+    backgroundColor: ACCENT_COLOR,
+    overflow: 'hidden',
+    borderRadius: 34,
+    marginTop: StatusBar.currentHeight,
+    marginBottom: '8rem',
+  },
+  advSearchPressable: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 34,
+  },
+  advSearchPressableIcon: {
+    color: 'white',
+    marginRight: '12rem',
+  },
+  advSearchPressableText: {
+    textShadowColor: 'black',
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  imdbOverlayStyle: {
+    width: '87%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 0,
+  },
+  imdbInfoContainer: {
+    width: '100%',
+    paddingBottom: StatusBar.currentHeight,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  imdbInfoContainerStyle: {
+    width: '100%',
+  },
+  imdbInfoView: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  imdbInfoHeader: {
+    width: '100%',
+    height: '45rem',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginBottom: '8rem',
+  },
+  imdbInfoHeaderFastImage: {
+    position: 'absolute',
+    left: 0,
+    height: '45rem',
+    width: '45rem',
+  },
+  imdbInfoHeaderText: {
+    width: '85%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingLeft: '2%',
+  },
+  imdbInfoHeaderCat: {
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+  },
+  imdbInfoHeaderDesc: {
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    color: 'grey',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  imdbInfoTitleSection: {
+    width: '100%',
+    height: '60rem',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    borderTopWidth: '0.5rem',
+    borderTopColor: '#303030',
+    paddingTop: '6rem',
+  },
+  imdbInfoTitleText: {
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    fontWeight: 'bold',
+  },
+  imdbInfoTitleBadges: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginBottom: '6rem',
+  },
+  imdbInfoFreeleechBadge: {
+    textShadowColor: 'black',
+    textShadowOffset: {width: '1rem', height: '1rem'},
+    textShadowRadius: '1rem',
+    borderColor: '#1ec621',
+    borderWidth: '0.5rem',
+    color: 'aliceblue',
+    marginRight: '4rem',
+    backgroundColor: '#09580a',
+  },
+  imdbInfoDoubleUpBadge: {
+    textShadowColor: 'black',
+    textShadowOffset: {width: '1rem', height: '1rem'},
+    textShadowRadius: '1rem',
+    borderColor: '#7c00ff',
+    borderWidth: '0.5rem',
+    color: 'aliceblue',
+    marginRight: '4rem',
+    backgroundColor: '#370f61',
+  },
+  imdbInfoInternalBadge: {
+    textShadowColor: 'black',
+    textShadowOffset: {width: '1rem', height: '1rem'},
+    textShadowRadius: '1rem',
+    borderColor: '#1e87c6',
+    borderWidth: '0.5rem',
+    color: 'aliceblue',
+    marginRight: '4rem',
+    backgroundColor: '#093b58',
+  },
+  imdbInfoDataContainer: {
+    borderTopColor: '#303030',
+    borderTopWidth: '0.5rem',
+    paddingTop: '12rem',
+    width: '100%',
+    height: '250rem',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: '15rem',
+  },
+  imdbInfoActivityIndicator: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  imdbInfoMainView: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  imdbInfoMainPoster: {
+    width: '50%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  imdbInfoPosterPressable: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  imdbInfoMainPosterFastImage: {
+    width: '90%',
+    height: '79%',
+  },
+  imdbInfoRatingView: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '90%',
+    height: '21%',
+  },
+  imdbInfoRatingText: {
+    textShadowOffset: {
+      width: '1rem',
+      height: '1rem',
+    },
+    textShadowRadius: '1rem',
+    fontWeight: 'bold',
+  },
+  imdbInfoRatingIcon: {marginLeft: '8rem'},
+  imdbInfoMainPlotView: {
+    width: '50%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingRight: '2%',
+  },
+  imdbInfoMainPlot: {
+    width: '100%',
+    height: '80%',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  imdbInfoMainPlotTitle: {
+    textShadowOffset: {
+      width: '1rem',
+      height: '1rem',
+    },
+    textShadowRadius: '1rem',
+    color: 'grey',
+    fontWeight: 'bold',
+  },
+  imdbInfoMainPlotText: {
+    textShadowOffset: {
+      width: '1rem',
+      height: '1rem',
+    },
+    textShadowRadius: '1rem',
+    paddingTop: '3%',
+  },
+  imdbInfoMainSeparator: {
+    position: 'relative',
+    top: 0,
+    left: 0,
+    marginVertical: '5rem',
+    width: '100%',
+    height: '0.5rem',
+    backgroundColor: '#303030',
+  },
+  imdbInfoMainETATitle: {
+    textShadowOffset: {
+      width: '1rem',
+      height: '1rem',
+    },
+    textShadowRadius: '1rem',
+    color: 'grey',
+    fontWeight: 'bold',
+  },
+  imdbInfoMainETAText: {
+    textShadowOffset: {
+      width: '1rem',
+      height: '1rem',
+    },
+    textShadowRadius: '1rem',
+  },
+  imdbInfoMainFooter: {
+    borderTopWidth: '0.5rem',
+    borderTopColor: '#303030',
+    width: '100%',
+    paddingTop: '12rem',
+    height: '80rem',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imdbInfoMainFooterView: {
+    width: '100%',
+    height: '50%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imdbInfoMainFooterView2: {
+    width: '100%',
+    height: '50%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: '10rem',
+  },
+  imdbInfoMainFooter3rd: {
+    width: '33.33%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imdbInfoMainFooter3rdPressable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  imdbInfoMainFooter3rdText: {
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+  },
+  imdbInfoMainFooterTall: {
+    width: '100%',
+    height: '200rem',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imdbInfoMainFooterTallView: {
+    width: '100%',
+    height: '30%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  infoOverlay: {
+    width: '90%',
+    height: '50%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 0,
+    padding: 0,
+  },
+  infoOverlayCloseContainer: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  infoOverlayScrollView: {
+    width: '100%',
+    paddingBottom: StatusBar.currentHeight,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  infoTitleContainer: {
+    width: '100%',
+    height: '50rem',
+    paddingHorizontal: '18rem',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    position: 'absolute',
+    top: 0,
+  },
+  accordionContainer: {
+    width: '100%',
+    paddingHorizontal: '18rem',
+    marginTop: '50rem',
+  },
+  renderHeader: {marginVertical: '6rem'},
+  renderContent: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    paddingHorizontal: '13rem',
+  },
+  infoOverlayClosePressable: {
+    position: 'absolute',
+    right: 0,
+    width: '15%',
+    height: '25%',
+    bottom: '75%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingsOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    height: '20%',
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    borderRadius: 0,
+    padding: 0,
+    margin: 0,
+  },
+  settingsOverlayCloseContainer: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  settingsOverlayClosePressable: {
+    position: 'absolute',
+    right: 0,
+    width: '15%',
+    height: '25%',
+    bottom: '75%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingsOverlayThemeContainer: {
+    width: '100%',
+    height: '33.33%',
+    paddingHorizontal: '10rem',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingsOverlayThemeText: {
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    fontWeight: 'bold',
+  },
+  settingsOverlayUseContainer: {
+    width: '100%',
+    height: '33.33%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: ACCENT_COLOR,
+  },
+  settingsOverlayUsePressable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: ACCENT_COLOR,
+  },
+  settingsOverlayLogoutContainer: {
+    width: '100%',
+    height: '33.33%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'crimson',
+  },
+  settingsOverlayLogoutPressable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'crimson',
+  },
+  settingsOverlayLogoutText: {
+    textShadowColor: 'black',
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  mainHeader: {
+    height: StatusBar.currentHeight * 3,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    backgroundColor: ACCENT_COLOR,
+    paddingBottom: '5rem',
+  },
+  mainHeaderContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mainHeaderInfoContainer: {
+    position: 'absolute',
+    left: 18,
+    width: '10%',
+    height: '40%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mainHeaderInfoPressable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mainHeaderText: {
+    textShadowColor: 'black',
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  mainHeaderCogContainer: {
+    position: 'absolute',
+    right: 18,
+    width: '10%',
+    height: '40%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mainHeaderCogPressable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mainClearSearchBar: {
+    zIndex: 8,
+    elevation: 8,
+    height: '64rem',
+    width: '100%',
+    paddingHorizontal: '18rem',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mainClearSearchBarContainer: {
+    height: '40rem',
+    width: '40rem',
+    overflow: 'hidden',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 100,
+    backgroundColor: ACCENT_COLOR,
+  },
+  mainClearSearchBarPressable: {
+    height: '100%',
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 100,
+    backgroundColor: ACCENT_COLOR,
+    padding: '8rem',
+  },
+  mainClearSearchBarText: {
+    fontWeight: 'normal',
+    paddingHorizontal: '22rem',
+    width: '94%',
+  },
+  mainClearSearchBarTextSecond: {
+    fontWeight: 'bold',
+  },
+  searchInputContainerStyle: {
+    zIndex: 8,
+    elevation: 8,
+    height: '58rem',
+    width: '100%',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  searchInContainerStyle: {
+    borderBottomWidth: '0.5rem',
+    height: '80%',
+    width: '100%',
+    paddingTop: '16rem',
+    paddingLeft: '6rem',
+    paddingRight: '1.5rem',
+  },
+  searchInputRIContainer: {
+    height: '35rem',
+    width: '35rem',
+    borderRadius: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    paddingBottom: '6rem',
+  },
+  searchInputRIPressable: {
+    height: '100%',
+    width: '100%',
+    borderRadius: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchLoadingContainer: {
+    width: '100%',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  searchLoadingAI: {
+    marginTop: StatusBar.currentHeight * 5,
+  },
+  searchNoResults: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: StatusBar.currentHeight * 1.5,
+    paddingBottom: StatusBar.currentHeight * 2 + '64rem',
+  },
+  searchNoResultsTextPrimary: {
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  searchNoResultsTextSecondary: {
+    marginTop: '4rem',
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    textAlign: 'center',
+  },
+  flatListsContentContainer: {
+    paddingTop: '15rem',
+    paddingHorizontal: '15rem',
+  },
+  advSearchBtnContainer: {
+    width: '45rem',
+    height: '45rem',
+    zIndex: 5,
+    elevation: 5,
+    overflow: 'hidden',
+    bottom: '18rem',
+    right: '20rem',
+    borderRadius: 100,
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: ACCENT_COLOR,
+  },
+  advSearchBtnPressable: {
+    width: '45rem',
+    height: '45rem',
+    borderRadius: 100,
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: ACCENT_COLOR,
+  },
+  refreshContainer: {
+    height: StatusBar.currentHeight * 2,
+    width: '93%',
+    elevation: 9,
+    zIndex: 9,
+    position: 'absolute',
+    top: '50%',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 34,
+  },
+  refreshTextPrimary: {
+    fontWeight: 'bold',
+  },
+  refreshTextSecondary: {
+    paddingBottom: '4rem',
+  },
+  clipboardAlertContainer: {
+    width: '93%',
+    height: StatusBar.currentHeight * 2,
+    elevation: 9,
+    zIndex: 9,
+    position: 'absolute',
+    top: '50%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 34,
+  },
+  clipboardAlertText: {
+    fontWeight: 'bold',
+  },
+  networkAlertContainer: {
+    width: '100%',
+    height: StatusBar.currentHeight * 3,
+    paddingTop: StatusBar.currentHeight * 1.5,
+    elevation: 9,
+    zIndex: 9,
+    position: 'absolute',
+    top: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

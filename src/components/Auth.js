@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-community/async-storage';
 import Loading from './Loading';
 import Login from './Login';
 import Home from './Home';
+import RightDrawer from './RightDrawer';
+import {createDrawerNavigator} from '@react-navigation/drawer';
 import {
   createStackNavigator,
   CardStyleInterpolators,
@@ -12,6 +14,19 @@ import {AppConfigActions} from '../redux/actions';
 
 const MAIN_LIGHT = '#E8E6E6';
 const Stack = createStackNavigator();
+const Drawer = createDrawerNavigator();
+
+const RightDrawerHome = ({navigation}) => {
+  return (
+    <Drawer.Navigator
+      drawerPosition="right"
+      backBehavior="history"
+      drawerStyle={{width: '70%'}}
+      drawerContent={(props) => <RightDrawer {...props} />}>
+      <Drawer.Screen name="Home" component={Home} />
+    </Drawer.Navigator>
+  );
+};
 
 export default function Auth() {
   const dispatch = useDispatch();
@@ -33,7 +48,7 @@ export default function Auth() {
       const currentTheme = await AsyncStorage.getItem('theme');
       if (currentTheme !== null) {
         if (currentTheme === 'light') {
-          dispatch(AppConfigActions.toggleLightTheme())
+          dispatch(AppConfigActions.toggleLightTheme());
         } else {
           // do notin'
         }
@@ -43,7 +58,7 @@ export default function Auth() {
     } catch (e) {
       alert(e);
     }
-  }
+  };
 
   return (
     <Stack.Navigator
@@ -54,8 +69,8 @@ export default function Auth() {
       headerMode="none">
       {listLatest ? (
         <Stack.Screen
-          name="Home"
-          component={Home}
+          name="RightDrawerHome"
+          component={RightDrawerHome}
           options={{
             animationTypeForReplace: 'push',
           }}
