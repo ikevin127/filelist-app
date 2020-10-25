@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import AsyncStorage from '@react-native-community/async-storage';
+import crashlytics from '@react-native-firebase/crashlytics';
 import Axios from 'axios';
-import RText from './Text';
 import Adjust from './AdjustText';
 import Clipboard from '@react-native-community/clipboard';
 import NetInfo from '@react-native-community/netinfo';
@@ -45,7 +45,6 @@ import {
   faTasks,
   faAngleDoubleUp,
   faCheckSquare,
-  faInfoCircle,
   faCog,
   faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
@@ -683,17 +682,17 @@ export default function Home({navigation}) {
   const _renderHeader = (section) => {
     return (
       <View style={HomePage.renderHeader}>
-        <RText
-          title={section.title}
-          t12
+        <Text
           style={{
+            fontSize: Adjust(12),
             textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
             textShadowOffset: {width: 0.8, height: 0.8},
             textShadowRadius: 1,
             color: ACCENT_COLOR,
             fontWeight: 'bold',
-          }}
-        />
+          }}>
+          {section.title}
+        </Text>
       </View>
     );
   };
@@ -701,11 +700,10 @@ export default function Home({navigation}) {
   const _renderContent = (section) => {
     return (
       <View style={HomePage.renderContent}>
-        <RText
-          title={section.content}
-          t12
-          style={{color: lightTheme ? 'black' : 'white'}}
-        />
+        <Text
+          style={{color: lightTheme ? 'black' : 'white', fontSize: Adjust(12)}}>
+          {section.content}
+        </Text>
       </View>
     );
   };
@@ -889,22 +887,22 @@ export default function Home({navigation}) {
             />
           </View>
           <View style={HomePage.itemPressableNameContainer}>
-            <RText
-              title={item.name}
-              t8
+            <Text
               style={[
                 HomePage.itemPressableNameText,
                 {
+                  fontSize: Adjust(8),
                   textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
                   color: lightTheme ? MAIN_DARK : 'white',
                 },
-              ]}
-            />
+              ]}>
+              {item.name}
+            </Text>
             <Text
               style={[
                 HomePage.itemPressableUploadText,
                 {
-                  fontSize: fontSz(11),
+                  fontSize: Adjust(6),
                   textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
                   color: lightTheme ? 'grey' : 'silver',
                 },
@@ -916,7 +914,7 @@ export default function Home({navigation}) {
                 <Text
                   style={[
                     HomePage.itemPressableDoubleUpText,
-                    {fontSize: fontSz(10)},
+                    {fontSize: Adjust(6)},
                   ]}>
                   2X UPLOAD
                 </Text>
@@ -925,7 +923,7 @@ export default function Home({navigation}) {
                 <Text
                   style={[
                     HomePage.itemPressableInternalText,
-                    {fontSize: fontSz(10)},
+                    {fontSize: Adjust(6)},
                   ]}>
                   INTERNAL
                 </Text>
@@ -934,7 +932,7 @@ export default function Home({navigation}) {
                 <Text
                   style={[
                     HomePage.itemPressableFreeleechText,
-                    {fontSize: fontSz(10)},
+                    {fontSize: Adjust(6)},
                   ]}>
                   FREELEECH
                 </Text>
@@ -1809,7 +1807,13 @@ export default function Home({navigation}) {
                   borderless: false,
                 }}
                 onPress={handleLatestSearch}>
-                <Text style={HomePage.catCheckOverlayText}>Caută</Text>
+                <Text
+                  style={[
+                    HomePage.catCheckOverlayText,
+                    {fontSize: Adjust(14)},
+                  ]}>
+                  Caută
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -2664,7 +2668,7 @@ export default function Home({navigation}) {
                       <Text
                         style={[
                           HomePage.catCheckOverlayText,
-                          {fontSize: fontSz(16)},
+                          {fontSize: Adjust(14)},
                         ]}>
                         OK
                       </Text>
@@ -2676,21 +2680,21 @@ export default function Home({navigation}) {
                 showsVerticalScrollIndicator={true}
                 contentContainerStyle={HomePage.advSearchScrollView}>
                 <View>
-                  <RText
-                    title={'Căutare avansată'}
-                    t14
+                  <Text
                     style={{
+                      fontSize: Adjust(14),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                       fontWeight: 'bold',
-                    }}
-                  />
+                    }}>
+                    Căutare avansată
+                  </Text>
                 </View>
                 <Input
                   ref={AdvSearchRef}
                   style={[
                     HomePage.advSearchInputStyle,
                     {
-                      fontSize: Adjust(14),
+                      fontSize: Adjust(12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                     },
                   ]}
@@ -2713,7 +2717,7 @@ export default function Home({navigation}) {
                   autoCapitalize="none"
                   placeholder={
                     advIMDb
-                      ? 'Caută după Cod IMDb...'
+                      ? 'Caută după cod IMDb...'
                       : 'Caută după Cuvinte Cheie...'
                   }
                   placeholderTextColor={
@@ -2739,7 +2743,7 @@ export default function Home({navigation}) {
                       style={[
                         HomePage.advSearchTypeText,
                         {
-                          fontSize: fontSz(14),
+                          fontSize: Adjust(10),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         },
                       ]}>
@@ -2894,7 +2898,7 @@ export default function Home({navigation}) {
                         onLongPress={() =>
                           Alert.alert(
                             'Info',
-                            'Această opţiune permite căutarea după Codul IMDb pe modelul modelul: tt4719744 ori 4719744.',
+                            'Această opţiune permite căutarea după codul IMDb pe modelul modelul: tt4719744 ori 4719744.',
                             [
                               {
                                 text: 'OK',
@@ -3210,15 +3214,10 @@ export default function Home({navigation}) {
                       borderless: false,
                     }}
                     onPress={handleAdvancedSearch}>
-                    <FontAwesomeIcon
-                      style={HomePage.advSearchPressableIcon}
-                      size={fontSz(20)}
-                      icon={faSearch}
-                    />
                     <Text
                       style={[
                         HomePage.advSearchPressableText,
-                        {fontSize: fontSz(20)},
+                        {fontSize: Adjust(16)},
                       ]}>
                       Caută
                     </Text>
@@ -3318,7 +3317,7 @@ export default function Home({navigation}) {
                             style={[
                               HomePage.imdbInfoHeaderCat,
                               {
-                                fontSize: fontSz(20),
+                                fontSize: Adjust(16),
                                 textShadowColor: lightTheme
                                   ? MAIN_LIGHT
                                   : MAIN_DARK,
@@ -3332,7 +3331,7 @@ export default function Home({navigation}) {
                             style={[
                               HomePage.imdbInfoHeaderDesc,
                               {
-                                fontSize: fontSz(11),
+                                fontSize: Adjust(6),
                                 textShadowColor: lightTheme
                                   ? MAIN_LIGHT
                                   : MAIN_DARK,
@@ -3343,20 +3342,20 @@ export default function Home({navigation}) {
                         </View>
                       </View>
                       <View style={HomePage.imdbInfoTitleSection}>
-                        <RText
-                          title={item.name}
-                          t8
+                        <Text
                           selectable
                           style={[
                             HomePage.imdbInfoTitleText,
                             {
+                              fontSize: Adjust(8),
                               textShadowColor: lightTheme
                                 ? MAIN_LIGHT
                                 : MAIN_DARK,
                               color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                             },
-                          ]}
-                        />
+                          ]}>
+                          {item.name}
+                        </Text>
                       </View>
                       <View
                         style={[
@@ -3374,7 +3373,7 @@ export default function Home({navigation}) {
                           <Text
                             style={[
                               HomePage.imdbInfoDoubleUpBadge,
-                              {fontSize: fontSz(10)},
+                              {fontSize: Adjust(6)},
                             ]}>
                             2X UPLOAD
                           </Text>
@@ -3383,7 +3382,7 @@ export default function Home({navigation}) {
                           <Text
                             style={[
                               HomePage.imdbInfoInternalBadge,
-                              {fontSize: fontSz(10)},
+                              {fontSize: Adjust(6)},
                             ]}>
                             INTERNAL
                           </Text>
@@ -3392,7 +3391,7 @@ export default function Home({navigation}) {
                           <Text
                             style={[
                               HomePage.imdbInfoFreeleechBadge,
-                              {fontSize: fontSz(10)},
+                              {fontSize: Adjust(6)},
                             ]}>
                             FREELEECH
                           </Text>
@@ -3467,7 +3466,7 @@ export default function Home({navigation}) {
                                                     style={[
                                                       HomePage.imdbInfoRatingText,
                                                       {
-                                                        fontSize: fontSz(20),
+                                                        fontSize: Adjust(14),
                                                         color: lightTheme
                                                           ? MAIN_DARK
                                                           : 'white',
@@ -3479,7 +3478,7 @@ export default function Home({navigation}) {
                                                     {item.rating}
                                                   </Text>
                                                   <FontAwesomeIcon
-                                                    size={20}
+                                                    size={Adjust(16)}
                                                     style={
                                                       HomePage.imdbInfoRatingIcon
                                                     }
@@ -3503,7 +3502,7 @@ export default function Home({navigation}) {
                                               style={[
                                                 HomePage.imdbInfoMainPlotTitle,
                                                 {
-                                                  fontSize: fontSz(14),
+                                                  fontSize: Adjust(8),
                                                   textShadowColor: lightTheme
                                                     ? MAIN_LIGHT
                                                     : MAIN_DARK,
@@ -3516,7 +3515,7 @@ export default function Home({navigation}) {
                                               style={[
                                                 HomePage.imdbInfoMainPlotText,
                                                 {
-                                                  fontSize: fontSz(12),
+                                                  fontSize: Adjust(8),
                                                   textShadowColor: lightTheme
                                                     ? MAIN_LIGHT
                                                     : MAIN_DARK,
@@ -3540,7 +3539,7 @@ export default function Home({navigation}) {
                                                   style={[
                                                     HomePage.imdbInfoMainETATitle,
                                                     {
-                                                      fontSize: fontSz(14),
+                                                      fontSize: Adjust(8),
                                                       textShadowColor: lightTheme
                                                         ? MAIN_LIGHT
                                                         : MAIN_DARK,
@@ -3582,6 +3581,7 @@ export default function Home({navigation}) {
                                     }}>
                                     <Text
                                       style={{
+                                        fontSize: Adjust(10),
                                         textAlign: 'center',
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3591,6 +3591,7 @@ export default function Home({navigation}) {
                                     </Text>
                                     <Text
                                       style={{
+                                        fontSize: Adjust(10),
                                         textAlign: 'center',
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3638,7 +3639,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -3682,7 +3683,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -3727,7 +3728,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -3774,7 +3775,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -3819,7 +3820,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -3864,7 +3865,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -3916,7 +3917,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -3960,7 +3961,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -4005,7 +4006,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -4052,7 +4053,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -4097,7 +4098,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -4142,7 +4143,7 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: fontSz(12),
+                                        fontSize: Adjust(8),
                                         textShadowColor: lightTheme
                                           ? MAIN_LIGHT
                                           : MAIN_DARK,
@@ -4186,17 +4187,17 @@ export default function Home({navigation}) {
                 {backgroundColor: lightTheme ? 'white' : MAIN_DARK},
               ]}>
               <View style={HomePage.infoTitleContainer}>
-                <RText
-                  title={'Informaţii folosire'}
-                  t14
+                <Text
                   style={{
+                    fontSize: Adjust(14),
                     color: lightTheme ? MAIN_DARK : 'white',
                     textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
                     textShadowOffset: {width: 0.8, height: 0.8},
                     textShadowRadius: 1,
                     fontWeight: 'bold',
-                  }}
-                />
+                  }}>
+                  Informaţii folosire
+                </Text>
               </View>
               <Accordion
                 sections={INFO}
@@ -4213,25 +4214,6 @@ export default function Home({navigation}) {
         </Overlay>
         <View style={HomePage.mainHeader}>
           <View style={HomePage.mainHeaderContainer}>
-            <View style={HomePage.mainHeaderInfoContainer}>
-              <Pressable
-                style={HomePage.mainHeaderInfoPressable}
-                android_ripple={{
-                  color: 'white',
-                  borderless: true,
-                  radius: 16,
-                }}
-                onPress={() => dispatch(AppConfigActions.toggleAppInfo())}>
-                <FontAwesomeIcon
-                  size={fontSz(26)}
-                  color={'white'}
-                  icon={faInfoCircle}
-                />
-              </Pressable>
-            </View>
-            <Text style={[HomePage.mainHeaderText, {fontSize: fontSz(20)}]}>
-              {isSearch ? 'Căutare' : 'Recent adăugate'}
-            </Text>
             <View style={HomePage.mainHeaderCogContainer}>
               <Pressable
                 style={HomePage.mainHeaderCogPressable}
@@ -4248,6 +4230,9 @@ export default function Home({navigation}) {
                 />
               </Pressable>
             </View>
+            <Text style={[HomePage.mainHeaderText, {fontSize: Adjust(14)}]}>
+              {isSearch ? 'Căutare' : 'Recent adăugate'}
+            </Text>
           </View>
         </View>
         {isSearchBar ? (
@@ -4273,7 +4258,7 @@ export default function Home({navigation}) {
               selectable
               style={[
                 HomePage.mainClearSearchBarText,
-                {fontSize: fontSz(15), color: lightTheme ? MAIN_DARK : 'white'},
+                {fontSize: Adjust(10), color: lightTheme ? MAIN_DARK : 'white'},
               ]}>
               Rezultatele căutării după "
               <Text
@@ -4294,7 +4279,7 @@ export default function Home({navigation}) {
           <Input
             ref={SearchBarRef}
             style={{
-              fontSize: Adjust(14),
+              fontSize: Adjust(13),
               color: lightTheme ? MAIN_DARK : 'white',
             }}
             containerStyle={[
@@ -4321,9 +4306,9 @@ export default function Home({navigation}) {
                 <Pressable
                   style={HomePage.searchInputRIPressable}
                   android_ripple={{
-                    color: ACCENT_COLOR,
-                    borderless: false,
-                    radius: 16,
+                    color: 'grey',
+                    borderless: true,
+                    radius: 14,
                   }}
                   onPress={() => {
                     handleSearch();
@@ -4355,7 +4340,7 @@ export default function Home({navigation}) {
               style={[
                 HomePage.searchNoResultsTextPrimary,
                 {
-                  fontSize: fontSz(20),
+                  fontSize: Adjust(14),
                   textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
                   color: lightTheme ? MAIN_DARK : 'white',
                 },
@@ -4366,7 +4351,7 @@ export default function Home({navigation}) {
               style={[
                 HomePage.searchNoResultsTextSecondary,
                 {
-                  fontSize: fontSz(16),
+                  fontSize: Adjust(12),
                   textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
                   color: lightTheme ? MAIN_DARK : 'white',
                 },
@@ -4628,8 +4613,8 @@ const HomePage = EStyleSheet.create({
     alignItems: 'center',
   },
   advSearchOverlay: {
-    width: '100%',
-    height: '55%',
+    width: '90%',
+    height: '70%',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 0,
@@ -4644,7 +4629,7 @@ const HomePage = EStyleSheet.create({
   },
   catCheckOverlay: {
     width: '70%',
-    height: '80%',
+    height: '75%',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 0,
@@ -5156,7 +5141,7 @@ const HomePage = EStyleSheet.create({
   },
   infoOverlay: {
     width: '90%',
-    height: '50%',
+    height: '70%',
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
@@ -5180,16 +5165,16 @@ const HomePage = EStyleSheet.create({
   infoTitleContainer: {
     width: '100%',
     height: '50rem',
-    paddingHorizontal: '18rem',
+    paddingHorizontal: '25rem',
     justifyContent: 'center',
     alignItems: 'flex-start',
     position: 'absolute',
-    top: 0,
+    top: '10rem',
   },
   accordionContainer: {
     width: '100%',
-    paddingHorizontal: '18rem',
-    marginTop: '50rem',
+    paddingHorizontal: '25rem',
+    marginTop: '60rem',
   },
   renderHeader: {marginVertical: '6rem'},
   renderContent: {
@@ -5290,26 +5275,11 @@ const HomePage = EStyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
     backgroundColor: ACCENT_COLOR,
-    paddingBottom: '5rem',
   },
   mainHeaderContainer: {
     flex: 1,
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mainHeaderInfoContainer: {
-    position: 'absolute',
-    left: 18,
-    width: '10%',
-    height: '40%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mainHeaderInfoPressable: {
-    width: '100%',
-    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -5319,10 +5289,12 @@ const HomePage = EStyleSheet.create({
     textShadowRadius: '1rem',
     color: 'white',
     fontWeight: 'bold',
+    paddingBottom: '10rem',
   },
   mainHeaderCogContainer: {
     position: 'absolute',
-    right: 18,
+    right: '16rem',
+    bottom: '6rem',
     width: '10%',
     height: '40%',
     justifyContent: 'center',

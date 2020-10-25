@@ -1,11 +1,12 @@
-import React, {useState} from 'react';
-import RText from './Text';
+import React, {useState, useEffect} from 'react';
 import Adjust from './AdjustText';
 import AsyncStorage from '@react-native-community/async-storage';
+import FastImage from 'react-native-fast-image';
 import EStyleSheet from 'react-native-extended-stylesheet';
 import {
   Alert,
   Animated,
+  Text,
   View,
   Easing,
   Switch,
@@ -31,10 +32,28 @@ export default function RightDrawer({navigation}) {
   const dispatch = useDispatch();
   const {lightTheme} = useSelector((state) => state.appConfig);
   const [darkLight] = useState(new Animated.Value(0));
+  const [user, setUser] = useState('');
+  const [firebasePic, setFirebasePic] = useState(false);
   const spinIt = darkLight.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
+    inputRange: [0, 1, 2],
+    outputRange: ['0deg', '180deg', '360deg'],
   });
+
+  useEffect(() => {
+    getCurrentUser();
+  }, []);
+
+  const getCurrentUser = async () => {
+    try {
+      const currentUser = await AsyncStorage.getItem('username');
+      if (currentUser !== null) {
+        setUser(currentUser);
+      }
+    } catch (e) {
+      alert(e);
+    }
+  };
+
   const switchTheme = async () => {
     try {
       const currentTheme = await AsyncStorage.getItem('theme');
@@ -52,7 +71,7 @@ export default function RightDrawer({navigation}) {
           await AsyncStorage.setItem('theme', 'dark');
           dispatch(AppConfigActions.toggleLightTheme());
           Animated.timing(darkLight, {
-            toValue: 0,
+            toValue: 2,
             duration: 500,
             easing: Easing.cubic,
             useNativeDriver: true,
@@ -83,6 +102,118 @@ export default function RightDrawer({navigation}) {
         RightDrawerStyle.settingsOverlayMainContainer,
         {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
       ]}>
+      <View style={RightDrawerStyle.profileContainer}>
+        <View style={RightDrawerStyle.profilePicContainer}>
+          <View
+            style={[
+              RightDrawerStyle.profilePicView,
+              {
+                backgroundColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+              },
+            ]}>
+            {firebasePic ? (
+              <FastImage
+                style={RightDrawerStyle.profilePic}
+                resizeMode={FastImage.resizeMode.contain}
+                source={require('../assets/pass.png')}
+              />
+            ) : (
+              <Text
+                style={{
+                  fontSize: Adjust(50),
+                  color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                }}>
+                {user !== '' ? user.charAt(0) : null}
+              </Text>
+            )}
+          </View>
+        </View>
+        <View style={RightDrawerStyle.usernameView}>
+          <Text
+            style={{
+              fontSize: Adjust(16),
+              fontWeight: 'bold',
+              color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+            }}>
+            {user !== '' ? user : null}
+          </Text>
+        </View>
+      </View>
+      <View style={RightDrawerStyle.settingsOverlayContainer}>
+        <Pressable
+          style={RightDrawerStyle.settingsOverlayPressable}
+          android_ripple={{
+            color: 'grey',
+            borderless: false,
+          }}
+          onPress={() => dispatch(AppConfigActions.toggleAppInfo())}>
+          <FontAwesomeIcon
+            color={lightTheme ? MAIN_DARK : MAIN_LIGHT}
+            size={Adjust(22)}
+            icon={faInfoCircle}
+          />
+          <Text
+            style={[
+              RightDrawerStyle.settingsOverlayText,
+              {
+                fontSize: Adjust(14),
+                color: lightTheme ? 'black' : 'white',
+                textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
+              },
+            ]}>
+            Informaţii folosire
+          </Text>
+        </Pressable>
+      </View>
+      <View style={RightDrawerStyle.settingsOverlayContainer}>
+        <Pressable
+          style={RightDrawerStyle.settingsOverlayPressable}
+          android_ripple={{
+            color: 'grey',
+            borderless: false,
+          }}
+          onPress={() => switchTheme()}>
+          <Animated.View
+            style={{
+              transform: [
+                {
+                  rotate: spinIt,
+                },
+              ],
+            }}>
+            <FontAwesomeIcon
+              color={lightTheme ? 'black' : MAIN_LIGHT}
+              size={Adjust(22)}
+              icon={faAdjust}
+            />
+          </Animated.View>
+          <Text
+            style={[
+              RightDrawerStyle.settingsOverlayText,
+              {
+                fontSize: Adjust(14),
+                color: lightTheme ? 'black' : 'white',
+                textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
+              },
+            ]}>
+            Temă culori
+          </Text>
+          <View
+            style={{
+              position: 'absolute',
+              right: 0,
+              paddingRight: StatusBar.currentHeight,
+            }}
+            pointerEvents={'none'}>
+            <Switch
+              trackColor={{false: 'grey', true: MAIN_LIGHT}}
+              thumbColor={lightTheme ? 'white' : 'black'}
+              ios_backgroundColor="#909090"
+              value={!lightTheme}
+            />
+          </View>
+        </Pressable>
+      </View>
       <View style={RightDrawerStyle.settingsOverlayContainer}>
         <Pressable
           style={RightDrawerStyle.settingsOverlayPressable}
@@ -109,103 +240,24 @@ export default function RightDrawer({navigation}) {
             )
           }>
           <FontAwesomeIcon
-            color={ACCENT_COLOR}
+            color={lightTheme ? MAIN_DARK : MAIN_LIGHT}
             size={Adjust(22)}
             icon={faLink}
           />
-          <RText
-            title={'Filelist.io'}
-            t14
+          <Text
             style={[
               RightDrawerStyle.settingsOverlayText,
               {
+                fontSize: Adjust(14),
                 color: lightTheme ? 'black' : 'white',
                 textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
-            ]}
-          />
+            ]}>
+            Filelist.io
+          </Text>
         </Pressable>
       </View>
       <View style={RightDrawerStyle.settingsOverlayContainer}>
-        <Pressable
-          style={RightDrawerStyle.settingsOverlayPressable}
-          android_ripple={{
-            color: 'grey',
-            borderless: false,
-          }}
-          onPress={() => dispatch(AppConfigActions.toggleAppInfo())}>
-          <FontAwesomeIcon
-            color={'grey'}
-            size={Adjust(22)}
-            icon={faInfoCircle}
-          />
-          <RText
-            title={'Informaţii folosire'}
-            t14
-            style={[
-              RightDrawerStyle.settingsOverlayText,
-              {
-                color: lightTheme ? 'black' : 'white',
-                textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
-              },
-            ]}
-          />
-        </Pressable>
-      </View>
-      <View style={RightDrawerStyle.settingsOverlayContainer}>
-        <Pressable
-          style={RightDrawerStyle.settingsOverlayPressable}
-          android_ripple={{
-            color: 'grey',
-            borderless: false,
-          }}
-          onPress={() => switchTheme()}>
-          <Animated.View
-            style={{
-              transform: [
-                {
-                  rotate: spinIt,
-                },
-              ],
-            }}>
-            <FontAwesomeIcon
-              color={lightTheme ? 'black' : MAIN_LIGHT}
-              size={Adjust(22)}
-              icon={faAdjust}
-            />
-          </Animated.View>
-          <RText
-            title={'Temă culori'}
-            t14
-            style={[
-              RightDrawerStyle.settingsOverlayText,
-              {
-                color: lightTheme ? 'black' : 'white',
-                textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
-              },
-            ]}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              right: 0,
-              paddingRight: StatusBar.currentHeight,
-            }}
-            pointerEvents={'none'}>
-            <Switch
-              trackColor={{false: 'grey', true: MAIN_LIGHT}}
-              thumbColor={lightTheme ? 'white' : 'black'}
-              ios_backgroundColor="#909090"
-              value={!lightTheme}
-            />
-          </View>
-        </Pressable>
-      </View>
-      <View
-        style={[
-          RightDrawerStyle.settingsOverlayContainer,
-          {position: 'absolute', bottom: 0},
-        ]}>
         <Pressable
           style={RightDrawerStyle.settingsOverlayPressable}
           android_ripple={{
@@ -228,17 +280,17 @@ export default function RightDrawer({navigation}) {
             size={Adjust(25)}
             icon={faSignOutAlt}
           />
-          <RText
-            title={'Logout'}
-            t14
+          <Text
             style={[
               RightDrawerStyle.settingsOverlayText,
               {
+                fontSize: Adjust(14),
                 color: lightTheme ? 'black' : 'white',
                 textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
-            ]}
-          />
+            ]}>
+            Logout
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -246,20 +298,58 @@ export default function RightDrawer({navigation}) {
 }
 
 const RightDrawerStyle = EStyleSheet.create({
+  profileContainer: {
+    width: '100%',
+    height: '200rem',
+    position: 'absolute',
+    top: StatusBar.currentHeight * 1.5,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  profilePicContainer: {
+    width: '100%',
+    height: '80%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profilePicView: {
+    width: '130rem',
+    height: '130rem',
+    borderRadius: 100,
+    borderColor: 'grey',
+    borderWidth: '2rem',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profilePic: {
+    width: '130rem',
+    height: '130rem',
+    borderRadius: 100,
+  },
+  usernameView: {
+    width: '100%',
+    height: '20%',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+
   settingsOverlayMainContainer: {
     width: '100%',
     height: '100%',
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingVertical: StatusBar.currentHeight / 2,
   },
   settingsOverlayContainer: {
     width: '100%',
-    height: '50rem',
+    height: '55rem',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: StatusBar.currentHeight / 2,
+    marginTop: StatusBar.currentHeight / 2,
   },
   settingsOverlayPressable: {
     width: '100%',

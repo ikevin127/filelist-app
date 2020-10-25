@@ -1,6 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
 import EStyleSheet from 'react-native-extended-stylesheet';
-import RText from './Text';
 import Adjust from './AdjustText';
 import FastImage from 'react-native-fast-image';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -15,6 +14,7 @@ import {
   StatusBar,
   ActivityIndicator,
   KeyboardAvoidingView,
+  Text,
   Linking,
   Platform,
 } from 'react-native';
@@ -102,6 +102,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     setLoginLoading(true);
+    Keyboard.dismiss();
     if (user.length === 0 && pass.length > 0) {
       setInvalidUser(true);
       setLoginLoading(false);
@@ -154,15 +155,23 @@ export default function Login() {
             <Pressable
               style={LoginPage.filelistPressable}
               onPress={() => Linking.openURL('https://filelist.io')}>
-              <RText
-                title={`Deschide${' '}`}
-                t12
+              <Text
                 style={{
-                  color: lightTheme ? MAIN_DARK : 'white',
                   fontWeight: 'bold',
-                }}
-              />
-              <RText title={'Filelist.io'} t12 style={LoginPage.filelistText} />
+                  fontSize: Adjust(12),
+                  color: lightTheme ? MAIN_DARK : 'white',
+                }}>
+                Deschide{' '}
+              </Text>
+              <Text
+                style={[
+                  LoginPage.filelistText,
+                  {
+                    fontSize: Adjust(12),
+                  },
+                ]}>
+                Filelist.io
+              </Text>
             </Pressable>
           </View>
           <View style={LoginPage.imageContainer}>
@@ -194,19 +203,23 @@ export default function Login() {
             <Pressable
               style={LoginPage.filelistPressable}
               onPress={() => Linking.openURL('https://filelist.io')}>
-              <RText
-                title={`Deschide${' '}`}
-                t12
+              <Text
                 style={{
-                  color: lightTheme ? MAIN_DARK : 'white',
                   fontWeight: 'bold',
-                }}
-              />
-              <RText
-                title={'Filelist.io'}
-                t12
-                style={[LoginPage.filelistText]}
-              />
+                  fontSize: Adjust(12),
+                  color: lightTheme ? MAIN_DARK : 'white',
+                }}>
+                Deschide{' '}
+              </Text>
+              <Text
+                style={[
+                  LoginPage.filelistText,
+                  {
+                    fontSize: Adjust(12),
+                  },
+                ]}>
+                Filelist.io
+              </Text>
             </Pressable>
           </View>
           <View style={LoginPage.imageContainer}>
@@ -221,14 +234,12 @@ export default function Login() {
       <Overlay
         statusBarTranslucent
         animationType="fade"
-        overlayStyle={{
-          width: '90%',
-          height: '30%',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderRadius: 0,
-          backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
-        }}
+        overlayStyle={[
+          LoginPage.aboutOverlayStyle,
+          {
+            backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+          },
+        ]}
         isVisible={aboutModal}
         onBackdropPress={() => {
           setAboutModal(false);
@@ -242,80 +253,80 @@ export default function Login() {
             ]}>
             <View style={LoginPage.aboutFirst}>
               <View style={LoginPage.aboutLeftHalf}>
-                <RText
-                  title={'About'}
-                  t12
-                  style={{
-                    fontWeight: 'bold',
-                    textShadowOffset: {width: 1, height: 1},
-                    textShadowRadius: 1,
-                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                    textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
-                  }}
-                />
+                <Text
+                  style={[
+                    LoginPage.aboutLeftText,
+                    {
+                      fontSize: Adjust(12),
+                      color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                    },
+                  ]}>
+                  About
+                </Text>
               </View>
               <View style={LoginPage.aboutRightHalf}>
-                <RText
-                  title={'Filelist App'}
-                  t12
-                  style={{
-                    color: ACCENT_COLOR,
-                    textShadowOffset: {width: 1, height: 1},
-                    textShadowRadius: 1,
-                    textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
-                  }}
-                />
+                <Text
+                  style={[
+                    LoginPage.aboutLeftTextAccent,
+                    {
+                      fontSize: Adjust(12),
+                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                    },
+                  ]}>
+                  Filelist App
+                </Text>
               </View>
             </View>
             <View style={LoginPage.aboutSecond}>
               <View style={LoginPage.aboutLeftHalf}>
-                <RText
-                  title={'Version'}
-                  t12
-                  style={{
-                    fontWeight: 'bold',
-                    textShadowOffset: {width: 1, height: 1},
-                    textShadowRadius: 1,
-                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                    textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
-                  }}
-                />
+                <Text
+                  style={[
+                    LoginPage.aboutLeftText,
+                    {
+                      fontSize: Adjust(12),
+                      color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                    },
+                  ]}>
+                  Version
+                </Text>
                 <View style={LoginPage.aboutSeparator} />
-                <RText
-                  title={'Publisher'}
-                  t12
-                  style={{
-                    fontWeight: 'bold',
-                    textShadowOffset: {width: 1, height: 1},
-                    textShadowRadius: 1,
-                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                    textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
-                  }}
-                />
+                <Text
+                  style={[
+                    LoginPage.aboutLeftText,
+                    {
+                      fontSize: Adjust(12),
+                      color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                    },
+                  ]}>
+                  Publisher
+                </Text>
                 <View style={LoginPage.aboutSeparator} />
-                <RText
-                  title={'Developed with'}
-                  t12
-                  style={{
-                    fontWeight: 'bold',
-                    textShadowOffset: {width: 1, height: 1},
-                    textShadowRadius: 1,
-                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                    textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
-                  }}
-                />
+                <Text
+                  style={[
+                    LoginPage.aboutLeftText,
+                    {
+                      fontSize: Adjust(12),
+                      color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                    },
+                  ]}>
+                  Developed with
+                </Text>
               </View>
               <View style={LoginPage.aboutRightHalf}>
-                <RText
-                  title={'v3.0.1'}
-                  t12
-                  style={{
-                    color: ACCENT_COLOR,
-                    textShadowOffset: {width: 1, height: 1},
-                    textShadowRadius: 1,
-                    textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
-                  }}
-                />
+                <Text
+                  style={[
+                    LoginPage.aboutLeftTextAccent,
+                    {
+                      fontSize: Adjust(12),
+                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                    },
+                  ]}>
+                  v3.0.1
+                </Text>
                 <View style={LoginPage.aboutSeparator} />
                 <View style={LoginPage.aboutPressView}>
                   <Pressable
@@ -326,17 +337,16 @@ export default function Login() {
                     onPress={() =>
                       Linking.openURL('https://github.com/baderproductions')
                     }>
-                    <RText
-                      title={'BADERproductions'}
-                      t12
-                      style={{
-                        color: ACCENT_COLOR,
-                        textDecorationLine: 'underline',
-                        textShadowOffset: {width: 1, height: 1},
-                        textShadowRadius: 1,
-                        textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
-                      }}
-                    />
+                    <Text
+                      style={[
+                        LoginPage.aboutLeftTextUnderline,
+                        {
+                          fontSize: Adjust(12),
+                          textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                        },
+                      ]}>
+                      BADERproductions
+                    </Text>
                   </Pressable>
                 </View>
                 <View style={LoginPage.aboutSeparator} />
@@ -351,17 +361,16 @@ export default function Login() {
                         'https://www.npmjs.com/package/react-native',
                       )
                     }>
-                    <RText
-                      title={'React Native v0.63'}
-                      t12
-                      style={{
-                        color: ACCENT_COLOR,
-                        textDecorationLine: 'underline',
-                        textShadowOffset: {width: 1, height: 1},
-                        textShadowRadius: 1,
-                        textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
-                      }}
-                    />
+                    <Text
+                      style={[
+                        LoginPage.aboutLeftTextUnderline,
+                        {
+                          fontSize: Adjust(12),
+                          textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                        },
+                      ]}>
+                      React Native v0.63
+                    </Text>
                   </Pressable>
                 </View>
               </View>
@@ -399,11 +408,12 @@ export default function Login() {
             </View>
             <View style={LoginPage.form}>
               <Input
-                style={{
-                  height: 45,
-                  fontSize: Adjust(11),
-                  color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                }}
+                style={[
+                  LoginPage.inputStyle,
+                  {
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  },
+                ]}
                 containerStyle={LoginPage.inputContainer}
                 inputContainerStyle={LoginPage.inputContainerInner}
                 keyboardType="default"
@@ -438,11 +448,13 @@ export default function Login() {
                 value={user}
               />
               <Input
-                style={{
-                  height: 45,
-                  fontSize: Adjust(11),
-                  color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                }}
+                style={[
+                  LoginPage.inputStyle,
+                  {
+                    fontSize: Adjust(11),
+                    color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                  },
+                ]}
                 containerStyle={LoginPage.inputContainer}
                 inputContainerStyle={LoginPage.inputContainerInner}
                 leftIcon={
@@ -476,32 +488,42 @@ export default function Login() {
                 value={pass}
               />
               {latestError && (
-                <RText
-                  title={'Utilizator sau Passkey incorect'}
-                  t12
-                  style={LoginPage.error}
-                />
+                <Text style={[LoginPage.error, {fontSize: Adjust(12)}]}>
+                  {latestError === 403
+                    ? 'Nume utilizator sau Passkey incorect, încearcă din nou'
+                    : latestError === 401
+                    ? 'Introdu numele de utilizator şi codul passkey'
+                    : latestError === 429
+                    ? Alert.alert(
+                        'Info',
+                        'Ai atins limita maximă (150) de utilizări a API-ului. Revino după o oră pentru a putea folosi API-ul din nou.',
+                        [
+                          {
+                            text: 'OK',
+                            onPress: () => {},
+                          },
+                        ],
+                        {cancelable: true},
+                      )
+                    : latestError === 503
+                    ? 'API-ul nu este disponibil. Verifică forumul Filelist.io pentru informaţii legate de API.'
+                    : latestError}
+                </Text>
               )}
               {invalid && (
-                <RText
-                  title={'Introdu Numele de utilizator şi codul Passkey'}
-                  t12
-                  style={LoginPage.error}
-                />
+                <Text style={[LoginPage.error, {fontSize: Adjust(12)}]}>
+                  Introdu numele de utilizator şi codul passkey
+                </Text>
               )}
               {invalidUser && (
-                <RText
-                  title={'Introdu Numele de utilizator'}
-                  t12
-                  style={LoginPage.error}
-                />
+                <Text style={[LoginPage.error, {fontSize: Adjust(12)}]}>
+                  Introdu numele de utilizator
+                </Text>
               )}
               {invalidPass && (
-                <RText
-                  title={'Introdu codul Passkey'}
-                  t12
-                  style={LoginPage.error}
-                />
+                <Text style={[LoginPage.error, {fontSize: Adjust(12)}]}>
+                  Introdu codul passkey
+                </Text>
               )}
               <View style={LoginPage.btnContainer}>
                 <Pressable
@@ -515,7 +537,9 @@ export default function Login() {
                   {loginLoading ? (
                     <ActivityIndicator size="small" color={'white'} />
                   ) : (
-                    <RText title={'Login'} t14 style={LoginPage.btnText} />
+                    <Text style={[LoginPage.btnText, {fontSize: Adjust(14)}]}>
+                      Login
+                    </Text>
                   )}
                 </Pressable>
               </View>
@@ -529,13 +553,13 @@ export default function Login() {
                     borderless: false,
                   }}
                   onPress={() => setAboutModal(true)}>
-                  <RText
-                    title={'About'}
-                    t12
+                  <Text
                     style={{
+                      fontSize: Adjust(12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                    }}
-                  />
+                    }}>
+                    About
+                  </Text>
                 </Pressable>
               </View>
             )}
@@ -547,7 +571,6 @@ export default function Login() {
 }
 
 const LoginPage = EStyleSheet.create({
-  // user pass info overlay
   dataContainer: {
     width: '100%',
     height: '100%',
@@ -577,7 +600,13 @@ const LoginPage = EStyleSheet.create({
   },
   imageContainer: {width: '100%', height: '80%'},
   imageStyle: {width: '100%', height: '100%'},
-  // about overlay
+  aboutOverlayStyle: {
+    width: '90%',
+    height: '30%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 0,
+  },
   aboutScrollView: {
     width: '100%',
     paddingTop: StatusBar.currentHeight,
@@ -609,6 +638,22 @@ const LoginPage = EStyleSheet.create({
     alignItems: 'flex-start',
     paddingLeft: '20rem',
   },
+  aboutLeftText: {
+    fontWeight: 'bold',
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+  },
+  aboutLeftTextAccent: {
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    color: ACCENT_COLOR,
+  },
+  aboutLeftTextUnderline: {
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+    textDecorationLine: 'underline',
+    color: ACCENT_COLOR,
+  },
   aboutRightHalf: {
     width: '55%',
     height: '100%',
@@ -632,7 +677,6 @@ const LoginPage = EStyleSheet.create({
     height: '0.3rem',
     backgroundColor: '#404040',
   },
-  // login page
   KeyboardAvoidingView: {
     flex: 1,
   },
@@ -656,6 +700,9 @@ const LoginPage = EStyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
+  },
+  inputStyle: {
+    height: '40rem',
   },
   picture: {
     width: '200rem',
