@@ -1,13 +1,14 @@
 import React, {useEffect, useRef, useState} from 'react';
 import EStyleSheet from 'react-native-extended-stylesheet';
+import crashlytics from '@react-native-firebase/crashlytics';
+import NetInfo from '@react-native-community/netinfo';
 import Adjust from './AdjustText';
 import FastImage from 'react-native-fast-image';
 import AsyncStorage from '@react-native-community/async-storage';
 import {
-  Dimensions,
-  PixelRatio,
   View,
   Pressable,
+  Animated,
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
@@ -35,7 +36,7 @@ const ACCENT_COLOR = '#15ABF4';
 
 export default function Login() {
   const dispatch = useDispatch();
-  const {lightTheme, listLatest, latestError} = useSelector(
+  const {lightTheme, listLatest, latestError, fontSizes} = useSelector(
     (state) => state.appConfig,
   );
   const [userModal, setUserModal] = useState(false);
@@ -43,6 +44,11 @@ export default function Login() {
   const [aboutModal, setAboutModal] = useState(false);
   const [user, setUser] = useState(USERNAME);
   const [pass, setPass] = useState(PASSKEY);
+  const [isNetReachable, setIsNetReachable] = useState(true);
+  const [showNetworkAlert] = useState(
+    new Animated.Value(-StatusBar.currentHeight * 4),
+  );
+  const [showNetworkAlertText] = useState(new Animated.Value(0));
   const [invalid, setInvalid] = useState(false);
   const [invalidUser, setInvalidUser] = useState(false);
   const [invalidPass, setInvalidPass] = useState(false);
@@ -56,6 +62,38 @@ export default function Login() {
     if (latestError !== null) {
       setLoginLoading(false);
     }
+    dispatch(AppConfigActions.setFonts());
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      if (state.isInternetReachable === true) {
+        setIsNetReachable(true);
+      } else {
+        setIsNetReachable(false);
+        setTimeout(() => {
+          Animated.timing(showNetworkAlert, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }).start();
+          Animated.timing(showNetworkAlertText, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }).start();
+        }, 100);
+        setTimeout(() => {
+          Animated.timing(showNetworkAlert, {
+            toValue: -StatusBar.currentHeight * 4,
+            duration: 700,
+            useNativeDriver: true,
+          }).start();
+          Animated.timing(showNetworkAlertText, {
+            toValue: 0,
+            duration: 700,
+            useNativeDriver: true,
+          }).start();
+        }, 4000);
+      }
+    });
 
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
@@ -71,65 +109,92 @@ export default function Login() {
     );
 
     return () => {
+      unsubscribe();
       clearInterval(err1.current);
       clearInterval(err2.current);
       clearInterval(err3.current);
       keyboardDidHideListener.remove();
       keyboardDidShowListener.remove();
     };
-  }, [listLatest, latestError]);
-
-  const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
-  const scale = SCREEN_WIDTH / SCREEN_WIDTH;
-
-  function fontSz(size) {
-    const newSize = size * scale;
-    if (Platform.OS === 'ios') {
-      return Math.round(PixelRatio.roundToNearestPixel(newSize));
-    } else {
-      return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
-    }
-  }
+  }, [listLatest, latestError, isNetReachable]);
 
   const storeData = async (value0, value1) => {
     try {
       await AsyncStorage.setItem('username', value0);
       await AsyncStorage.setItem('passkey', value1);
+      const fonts = await AsyncStorage.getItem('fontSizes');
+      if (fonts === null) {
+        await AsyncStorage.setItem(
+          'fontSizes',
+          JSON.stringify([6, 8, 10, 11, 12, 13, 14, 16, 22, 50]),
+        );
+      }
     } catch (e) {
-      alert(e);
+      crashlytics().recordError(e);
     }
   };
 
   const handleLogin = async () => {
-    setLoginLoading(true);
-    Keyboard.dismiss();
-    if (user.length === 0 && pass.length > 0) {
-      setInvalidUser(true);
-      setLoginLoading(false);
-      err1.current = setTimeout(() => {
-        setInvalidUser(false);
-      }, 5000);
-    }
-    if (user.length > 0 && pass.length === 0) {
-      setInvalidPass(true);
-      setLoginLoading(false);
-      err2.current = setTimeout(() => {
-        setInvalidPass(false);
-      }, 5000);
-    }
-    if (user.length === 0 && pass.length === 0) {
-      setInvalid(true);
-      setLoginLoading(false);
-      err3.current = setTimeout(() => {
-        setInvalid(false);
-      }, 5000);
-    }
-    if (user.length > 0 && pass.length > 0) {
-      await storeData(user, pass);
-      dispatch(AppConfigActions.getLatest(user, pass));
-      setTimeout(() => {
-        dispatch(AppConfigActions.latestError());
-      }, 5000);
+    try {
+      if (isNetReachable) {
+        setLoginLoading(true);
+        Keyboard.dismiss();
+        if (user.length === 0 && pass.length > 0) {
+          setInvalidUser(true);
+          setLoginLoading(false);
+          err1.current = setTimeout(() => {
+            setInvalidUser(false);
+          }, 5000);
+        }
+        if (user.length > 0 && pass.length === 0) {
+          setInvalidPass(true);
+          setLoginLoading(false);
+          err2.current = setTimeout(() => {
+            setInvalidPass(false);
+          }, 5000);
+        }
+        if (user.length === 0 && pass.length === 0) {
+          setInvalid(true);
+          setLoginLoading(false);
+          err3.current = setTimeout(() => {
+            setInvalid(false);
+          }, 5000);
+        }
+        if (user.length > 0 && pass.length > 0) {
+          await storeData(user, pass);
+          dispatch(AppConfigActions.getLatest(user, pass));
+          setTimeout(() => {
+            dispatch(AppConfigActions.latestError());
+          }, 5000);
+        }
+      } else {
+        setTimeout(() => {
+          Animated.timing(showNetworkAlert, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }).start();
+          Animated.timing(showNetworkAlertText, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }).start();
+        }, 100);
+        setTimeout(() => {
+          Animated.timing(showNetworkAlert, {
+            toValue: -StatusBar.currentHeight * 4,
+            duration: 700,
+            useNativeDriver: true,
+          }).start();
+          Animated.timing(showNetworkAlertText, {
+            toValue: 0,
+            duration: 700,
+            useNativeDriver: true,
+          }).start();
+        }, 4000);
+      }
+    } catch (error) {
+      crashlytics().recordError(error);
     }
   };
 
@@ -158,7 +223,7 @@ export default function Login() {
               <Text
                 style={{
                   fontWeight: 'bold',
-                  fontSize: Adjust(12),
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                   color: lightTheme ? MAIN_DARK : 'white',
                 }}>
                 Deschide{' '}
@@ -167,7 +232,7 @@ export default function Login() {
                 style={[
                   LoginPage.filelistText,
                   {
-                    fontSize: Adjust(12),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                   },
                 ]}>
                 Filelist.io
@@ -206,7 +271,7 @@ export default function Login() {
               <Text
                 style={{
                   fontWeight: 'bold',
-                  fontSize: Adjust(12),
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                   color: lightTheme ? MAIN_DARK : 'white',
                 }}>
                 Deschide{' '}
@@ -215,7 +280,7 @@ export default function Login() {
                 style={[
                   LoginPage.filelistText,
                   {
-                    fontSize: Adjust(12),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                   },
                 ]}>
                 Filelist.io
@@ -257,9 +322,9 @@ export default function Login() {
                   style={[
                     LoginPage.aboutLeftText,
                     {
-                      fontSize: Adjust(12),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                      textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                     },
                   ]}>
                   About
@@ -270,8 +335,8 @@ export default function Login() {
                   style={[
                     LoginPage.aboutLeftTextAccent,
                     {
-                      fontSize: Adjust(12),
-                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
+                      textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                     },
                   ]}>
                   Filelist App
@@ -284,9 +349,9 @@ export default function Login() {
                   style={[
                     LoginPage.aboutLeftText,
                     {
-                      fontSize: Adjust(12),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                      textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                     },
                   ]}>
                   Version
@@ -296,9 +361,9 @@ export default function Login() {
                   style={[
                     LoginPage.aboutLeftText,
                     {
-                      fontSize: Adjust(12),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                      textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                     },
                   ]}>
                   Publisher
@@ -308,9 +373,9 @@ export default function Login() {
                   style={[
                     LoginPage.aboutLeftText,
                     {
-                      fontSize: Adjust(12),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
-                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                      textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                     },
                   ]}>
                   Developed with
@@ -321,8 +386,8 @@ export default function Login() {
                   style={[
                     LoginPage.aboutLeftTextAccent,
                     {
-                      fontSize: Adjust(12),
-                      textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
+                      textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                     },
                   ]}>
                   v3.0.1
@@ -341,8 +406,12 @@ export default function Login() {
                       style={[
                         LoginPage.aboutLeftTextUnderline,
                         {
-                          fontSize: Adjust(12),
-                          textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
+                          textShadowColor: lightTheme
+                            ? 'transparent'
+                            : MAIN_DARK,
                         },
                       ]}>
                       BADERproductions
@@ -365,8 +434,12 @@ export default function Login() {
                       style={[
                         LoginPage.aboutLeftTextUnderline,
                         {
-                          fontSize: Adjust(12),
-                          textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
+                          textShadowColor: lightTheme
+                            ? 'transparent'
+                            : MAIN_DARK,
                         },
                       ]}>
                       React Native v0.63
@@ -389,6 +462,28 @@ export default function Login() {
         }
         translucent={Platform.Version < 23 ? false : true}
       />
+      <Animated.View
+        style={[
+          LoginPage.networkAlertContainer,
+          {
+            backgroundColor: isNetReachable ? 'limegreen' : 'crimson',
+            transform: [
+              {
+                translateY: showNetworkAlert,
+              },
+            ],
+          },
+        ]}>
+        <Animated.Text
+          style={{
+            fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+            fontWeight: 'bold',
+            opacity: showNetworkAlertText,
+            color: 'white',
+          }}>
+          {isNetReachable ? 'Online' : 'Offline'}
+        </Animated.Text>
+      </Animated.View>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
           enabled={false}
@@ -411,6 +506,7 @@ export default function Login() {
                 style={[
                   LoginPage.inputStyle,
                   {
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   },
                 ]}
@@ -451,7 +547,7 @@ export default function Login() {
                 style={[
                   LoginPage.inputStyle,
                   {
-                    fontSize: Adjust(11),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   },
                 ]}
@@ -488,7 +584,11 @@ export default function Login() {
                 value={pass}
               />
               {latestError && (
-                <Text style={[LoginPage.error, {fontSize: Adjust(12)}]}>
+                <Text
+                  style={[
+                    LoginPage.error,
+                    {fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12)},
+                  ]}>
                   {latestError === 403
                     ? 'Nume utilizator sau Passkey incorect, încearcă din nou'
                     : latestError === 401
@@ -511,17 +611,29 @@ export default function Login() {
                 </Text>
               )}
               {invalid && (
-                <Text style={[LoginPage.error, {fontSize: Adjust(12)}]}>
+                <Text
+                  style={[
+                    LoginPage.error,
+                    {fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12)},
+                  ]}>
                   Introdu numele de utilizator şi codul passkey
                 </Text>
               )}
               {invalidUser && (
-                <Text style={[LoginPage.error, {fontSize: Adjust(12)}]}>
+                <Text
+                  style={[
+                    LoginPage.error,
+                    {fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12)},
+                  ]}>
                   Introdu numele de utilizator
                 </Text>
               )}
               {invalidPass && (
-                <Text style={[LoginPage.error, {fontSize: Adjust(12)}]}>
+                <Text
+                  style={[
+                    LoginPage.error,
+                    {fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12)},
+                  ]}>
                   Introdu codul passkey
                 </Text>
               )}
@@ -537,7 +649,15 @@ export default function Login() {
                   {loginLoading ? (
                     <ActivityIndicator size="small" color={'white'} />
                   ) : (
-                    <Text style={[LoginPage.btnText, {fontSize: Adjust(14)}]}>
+                    <Text
+                      style={[
+                        LoginPage.btnText,
+                        {
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[6] : 14,
+                          ),
+                        },
+                      ]}>
                       Login
                     </Text>
                   )}
@@ -555,7 +675,7 @@ export default function Login() {
                   onPress={() => setAboutModal(true)}>
                   <Text
                     style={{
-                      fontSize: Adjust(12),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                     }}>
                     About
@@ -773,6 +893,17 @@ const LoginPage = EStyleSheet.create({
   aboutPressable: {
     width: '100%',
     height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  networkAlertContainer: {
+    width: '100%',
+    height: StatusBar.currentHeight * 2,
+    paddingTop: StatusBar.currentHeight,
+    elevation: 9,
+    zIndex: 9,
+    position: 'absolute',
+    top: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },

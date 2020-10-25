@@ -1,10 +1,12 @@
 import Axios from 'axios';
 import AsyncStorage from '@react-native-community/async-storage';
+import crashlytics from '@react-native-firebase/crashlytics';
 import {types} from '../types';
 
 const initState = {
   lightTheme: false,
   appInfo: false,
+  fontSizes: null,
   listLatest: null,
   listSearch: null,
   listImdb: null,
@@ -22,6 +24,21 @@ export const actions = {
   toggleAppInfo: () => ({
     type: types.APP_CONFIG.APP_INFO,
   }),
+  setFonts: () => async (dispatch) => {
+    try {
+      const fonts = await AsyncStorage.getItem('fontSizes');
+      if (fonts !== null) {
+        dispatch({
+          type: types.APP_CONFIG.FONT_SIZES,
+          payload: JSON.parse(fonts),
+        });
+      } else {
+        crashlytics().log('FontSizes not found in AsyncStorage.');
+      }
+    } catch (error) {
+      crashlytics().recordError(error);
+    }
+  },
   getLatest: (user, pass) => async (dispatch) => {
     await Axios.get(
       `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=latest-torrents&limit=50`,
@@ -35,7 +52,7 @@ export const actions = {
         try {
           await AsyncStorage.setItem('latest', JSON.stringify(data));
         } catch (e) {
-          console.log(e);
+          crashlytics().recordError(e);
         }
       })
       .catch((err) => {
@@ -60,7 +77,7 @@ export const actions = {
         });
       }
     } catch (e) {
-      console.log(e);
+      crashlytics().recordError(e);
     }
   },
   latestError: () => async (dispatch) => {
@@ -79,7 +96,7 @@ export const actions = {
         try {
           await AsyncStorage.setItem('search', JSON.stringify(data));
         } catch (e) {
-          console.log(e);
+          crashlytics().recordError(e);
         }
       })
       .catch((err) => {
@@ -101,7 +118,7 @@ export const actions = {
         });
       }
     } catch (e) {
-      console.log(e);
+      crashlytics().recordError(e);
     }
   },
   searchError: () => async (dispatch) => {
@@ -120,7 +137,7 @@ export const actions = {
         try {
           await AsyncStorage.setItem('imdb', JSON.stringify(data));
         } catch (e) {
-          console.log(e);
+          crashlytics().recordError(e);
         }
       })
       .catch((err) => {
@@ -142,7 +159,7 @@ export const actions = {
         });
       }
     } catch (e) {
-      console.log(e);
+      crashlytics().recordError(e);
     }
   },
   imdbError: () => async (dispatch) => {
@@ -172,7 +189,7 @@ export const actions = {
         try {
           await AsyncStorage.setItem('searchAdv', JSON.stringify(data));
         } catch (e) {
-          console.log(e);
+          crashlytics().recordError(e);
         }
       })
       .catch((err) => {
@@ -194,7 +211,7 @@ export const actions = {
         });
       }
     } catch (e) {
-      console.log(e);
+      crashlytics().recordError(e);
     }
   },
   searchAdvError: () => async (dispatch) => {
@@ -208,6 +225,8 @@ export function reducer(state = initState, action) {
       return {...state, lightTheme: !state.lightTheme};
     case types.APP_CONFIG.APP_INFO:
       return {...state, appInfo: !state.appInfo};
+    case types.APP_CONFIG.FONT_SIZES:
+      return {...state, fontSizes: action.payload};
     case types.APP_CONFIG.GET_LATEST:
       return {...state, listLatest: action.payload};
     case types.APP_CONFIG.GET_SEARCH:

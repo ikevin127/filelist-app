@@ -9,9 +9,6 @@ import EStyleSheet from 'react-native-extended-stylesheet';
 import FastImage from 'react-native-fast-image';
 import Accordion from 'react-native-collapsible/Accordion';
 import {
-  Dimensions,
-  PixelRatio,
-  Platform,
   View,
   Text,
   Animated,
@@ -85,6 +82,7 @@ export default function Home({navigation}) {
   const {
     appInfo,
     lightTheme,
+    fontSizes,
     listLatest,
     listSearch,
     listImdb,
@@ -226,35 +224,38 @@ export default function Home({navigation}) {
     }
     setCatNames(arrIndex.map((index) => catStrings[index]));
     setCatIndex(arrIndex.map((index) => catValues[index]));
+    dispatch(AppConfigActions.setFonts());
     const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isInternetReachable === true) {
         setIsNetReachable(true);
       } else {
         setIsNetReachable(false);
         setTimeout(() => {
-          Animated.timing(showNetworkAlert, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: false,
-          }).start();
-          Animated.timing(showNetworkAlertText, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: false,
-          }).start();
-        }, 100);
-        setTimeout(() => {
-          Animated.timing(showNetworkAlert, {
-            toValue: -StatusBar.currentHeight * 4,
-            duration: 700,
-            useNativeDriver: false,
-          }).start();
-          Animated.timing(showNetworkAlertText, {
-            toValue: 0,
-            duration: 700,
-            useNativeDriver: false,
-          }).start();
-        }, 4000);
+          setTimeout(() => {
+            Animated.timing(showNetworkAlert, {
+              toValue: 0,
+              duration: 1000,
+              useNativeDriver: true,
+            }).start();
+            Animated.timing(showNetworkAlertText, {
+              toValue: 1,
+              duration: 1000,
+              useNativeDriver: true,
+            }).start();
+          }, 100);
+          setTimeout(() => {
+            Animated.timing(showNetworkAlert, {
+              toValue: -StatusBar.currentHeight * 4,
+              duration: 700,
+              useNativeDriver: true,
+            }).start();
+            Animated.timing(showNetworkAlertText, {
+              toValue: 0,
+              duration: 700,
+              useNativeDriver: true,
+            }).start();
+          }, 4000);
+        }, 500);
       }
     });
 
@@ -347,143 +348,183 @@ export default function Home({navigation}) {
   // Functions
 
   const handleSearch = async () => {
-    if (isNetReachable) {
-      if (search !== '') {
-        setIsSearchBar(true);
-        setIsSearch(true);
-        try {
-          Keyboard.dismiss();
-          const value0 = await AsyncStorage.getItem('username');
-          const value1 = await AsyncStorage.getItem('passkey');
-          if (value0 !== null && value1 !== null) {
-            if (/\d{6,}/.test(search)) {
-              setSearchLoading(true);
-              dispatch(AppConfigActions.getImdb(value0, value1, search));
-            } else if (/tt\d+/.test(search)) {
-              setSearchLoading(true);
-              dispatch(AppConfigActions.getImdb(value0, value1, search));
-            } else {
-              setSearchLoading(true);
-              dispatch(AppConfigActions.getSearch(value0, value1, search));
+    try {
+      if (isNetReachable) {
+        if (search !== '') {
+          setIsSearchBar(true);
+          setIsSearch(true);
+          try {
+            Keyboard.dismiss();
+            const value0 = await AsyncStorage.getItem('username');
+            const value1 = await AsyncStorage.getItem('passkey');
+            if (value0 !== null && value1 !== null) {
+              if (/\d{6,}/.test(search)) {
+                setSearchLoading(true);
+                dispatch(AppConfigActions.getImdb(value0, value1, search));
+              } else if (/tt\d+/.test(search)) {
+                setSearchLoading(true);
+                dispatch(AppConfigActions.getImdb(value0, value1, search));
+              } else {
+                setSearchLoading(true);
+                dispatch(AppConfigActions.getSearch(value0, value1, search));
+              }
             }
+          } catch (e) {
+            Alert.alert(
+              'Eroare',
+              'A apărut o eroare. Încearcă din nou.',
+              [
+                {
+                  text: 'OK',
+                  onPress: () => {},
+                },
+              ],
+              {cancelable: true},
+            );
+            crashlytics().recordError(e);
           }
-        } catch (e) {
-          alert(e);
+        } else {
+          setSearchValidation(true);
+          searchValidationTimeout.current = setTimeout(() => {
+            setSearchValidation(false);
+          }, 3000);
         }
       } else {
-        setSearchValidation(true);
-        searchValidationTimeout.current = setTimeout(() => {
-          setSearchValidation(false);
-        }, 3000);
+        Alert.alert(
+          'Info',
+          'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {},
+            },
+          ],
+          {cancelable: true},
+        );
       }
-    } else {
-      Alert.alert(
-        'Info',
-        'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {},
-          },
-        ],
-        {cancelable: true},
-      );
+    } catch (error) {
+      crashlytics().recordError(error);
     }
   };
 
   const handleLatestSearch = async () => {
-    if (isNetReachable) {
-      if (
-        animes ||
-        audio ||
-        desene ||
-        diverse ||
-        doc ||
-        filme3d ||
-        filme4k ||
-        filme4kbd ||
-        filmeBD ||
-        filmeDvd ||
-        filmeDvdRo ||
-        filmeHd ||
-        filmeHdRo ||
-        filmeSd ||
-        flacs ||
-        jocConsole ||
-        jocPc ||
-        lin ||
-        mob ||
-        software ||
-        seriale4k ||
-        serialeHd ||
-        serialeSd ||
-        sports ||
-        videos ||
-        porn !== false
-      ) {
-        if (catNames.length <= 8) {
-          setCatListLatest(false);
-          setIsSearchBar(true);
-          setIsSearch(true);
-          setAdvSearchText(
-            animes ||
-              audio ||
-              desene ||
-              diverse ||
-              doc ||
-              filme3d ||
-              filme4k ||
-              filme4kbd ||
-              filmeBD ||
-              filmeDvd ||
-              filmeDvdRo ||
-              filmeHd ||
-              filmeHdRo ||
-              filmeSd ||
-              flacs ||
-              jocConsole ||
-              jocPc ||
-              lin ||
-              mob ||
-              software ||
-              seriale4k ||
-              serialeHd ||
-              serialeSd ||
-              sports ||
-              videos ||
-              porn === true
-              ? catNames !== ''
-                ? catNames.toString().split(',').join(', ')
-                : 'Categorii'
-              : 'Categorii',
-          );
-          try {
-            const value0 = await AsyncStorage.getItem('username');
-            const value1 = await AsyncStorage.getItem('passkey');
-            if (value0 !== null && value1 !== null) {
-              setSearchLoading(true);
-              dispatch(
-                AppConfigActions.getAdvSearch(
-                  value0,
-                  value1,
-                  'latest-torrents',
-                  '',
-                  '',
-                  catIndex !== null ? `&category=${catIndex}` : '',
-                  '',
-                  '',
-                  '',
-                  '',
-                ),
+    try {
+      if (isNetReachable) {
+        if (
+          animes ||
+          audio ||
+          desene ||
+          diverse ||
+          doc ||
+          filme3d ||
+          filme4k ||
+          filme4kbd ||
+          filmeBD ||
+          filmeDvd ||
+          filmeDvdRo ||
+          filmeHd ||
+          filmeHdRo ||
+          filmeSd ||
+          flacs ||
+          jocConsole ||
+          jocPc ||
+          lin ||
+          mob ||
+          software ||
+          seriale4k ||
+          serialeHd ||
+          serialeSd ||
+          sports ||
+          videos ||
+          porn !== false
+        ) {
+          if (catNames.length <= 8) {
+            setCatListLatest(false);
+            setIsSearchBar(true);
+            setIsSearch(true);
+            setAdvSearchText(
+              animes ||
+                audio ||
+                desene ||
+                diverse ||
+                doc ||
+                filme3d ||
+                filme4k ||
+                filme4kbd ||
+                filmeBD ||
+                filmeDvd ||
+                filmeDvdRo ||
+                filmeHd ||
+                filmeHdRo ||
+                filmeSd ||
+                flacs ||
+                jocConsole ||
+                jocPc ||
+                lin ||
+                mob ||
+                software ||
+                seriale4k ||
+                serialeHd ||
+                serialeSd ||
+                sports ||
+                videos ||
+                porn === true
+                ? catNames !== ''
+                  ? catNames.toString().split(',').join(', ')
+                  : 'Categorii'
+                : 'Categorii',
+            );
+            try {
+              const value0 = await AsyncStorage.getItem('username');
+              const value1 = await AsyncStorage.getItem('passkey');
+              if (value0 !== null && value1 !== null) {
+                setSearchLoading(true);
+                dispatch(
+                  AppConfigActions.getAdvSearch(
+                    value0,
+                    value1,
+                    'latest-torrents',
+                    '',
+                    '',
+                    catIndex !== null ? `&category=${catIndex}` : '',
+                    '',
+                    '',
+                    '',
+                    '',
+                  ),
+                );
+              }
+            } catch (e) {
+              Alert.alert(
+                'Eroare',
+                'A apărut o eroare. Încearcă din nou.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {},
+                  },
+                ],
+                {cancelable: true},
               );
+              crashlytics().recordError(e);
             }
-          } catch (e) {
-            alert(e);
+          } else {
+            Alert.alert(
+              'Info',
+              'Nu pot fi selectate mai mult de 8 categorii per căutare.',
+              [
+                {
+                  text: 'OK',
+                  onPress: () => {},
+                },
+              ],
+              {cancelable: true},
+            );
           }
         } else {
           Alert.alert(
             'Info',
-            'Nu pot fi selectate mai mult de 8 categorii per căutare.',
+            'Selectează cel puţin o categorie pentru a putea continua căutarea.',
             [
               {
                 text: 'OK',
@@ -496,7 +537,7 @@ export default function Home({navigation}) {
       } else {
         Alert.alert(
           'Info',
-          'Selectează cel puţin o categorie pentru a putea continua căutarea.',
+          'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare pe categorii.',
           [
             {
               text: 'OK',
@@ -506,73 +547,77 @@ export default function Home({navigation}) {
           {cancelable: true},
         );
       }
-    } else {
-      Alert.alert(
-        'Info',
-        'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare pe categorii.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {},
-          },
-        ],
-        {cancelable: true},
-      );
+    } catch (error) {
+      crashlytics().recordError(error);
     }
   };
 
   const handleAdvancedSearch = async () => {
-    if (isNetReachable) {
-      if (advSearchText.length === 0) {
-        setAdvSearchValidation(true);
-        searchValidationTimeout.current = setTimeout(() => {
-          setAdvSearchValidation(false);
-        }, 3000);
-      } else {
-        Keyboard.dismiss();
-        setAdvSearch(false);
-        setIsSearchBar(true);
-        setIsSearch(true);
-        try {
-          const value0 = await AsyncStorage.getItem('username');
-          const value1 = await AsyncStorage.getItem('passkey');
-          if (value0 !== null && value1 !== null) {
-            if (advKeyword) {
-              setSearchLoading(true);
-              dispatch(
-                AppConfigActions.getAdvSearch(
-                  value0,
-                  value1,
-                  'search-torrents',
-                  '&type=name',
-                  `&query=${advSearchText}`,
-                  catIndex !== null ? `&category=${catIndex}` : '',
-                  moderated ? '&moderated=1' : '',
-                  doubleUp ? '&doubleup=1' : '',
-                  internal ? '&internal=1' : '',
-                  freeleech ? '&freeleech=1' : '',
-                ),
-              );
-            } else if (advIMDb) {
-              setSearchLoading(true);
-              dispatch(
-                AppConfigActions.getAdvSearch(
-                  value0,
-                  value1,
-                  'search-torrents',
-                  '&type=imdb',
-                  `&query=${advSearchText}`,
-                  catIndex !== null ? `&category=${catIndex}` : '',
-                  moderated ? '&moderated=1' : '',
-                  doubleUp ? '&doubleup=1' : '',
-                  internal ? '&internal=1' : '',
-                  freeleech ? '&freeleech=1' : '',
-                ),
-              );
+    try {
+      if (isNetReachable) {
+        if (advSearchText.length === 0) {
+          setAdvSearchValidation(true);
+          searchValidationTimeout.current = setTimeout(() => {
+            setAdvSearchValidation(false);
+          }, 3000);
+        } else {
+          Keyboard.dismiss();
+          setAdvSearch(false);
+          setIsSearchBar(true);
+          setIsSearch(true);
+          try {
+            const value0 = await AsyncStorage.getItem('username');
+            const value1 = await AsyncStorage.getItem('passkey');
+            if (value0 !== null && value1 !== null) {
+              if (advKeyword) {
+                setSearchLoading(true);
+                dispatch(
+                  AppConfigActions.getAdvSearch(
+                    value0,
+                    value1,
+                    'search-torrents',
+                    '&type=name',
+                    `&query=${advSearchText}`,
+                    catIndex !== null ? `&category=${catIndex}` : '',
+                    moderated ? '&moderated=1' : '',
+                    doubleUp ? '&doubleup=1' : '',
+                    internal ? '&internal=1' : '',
+                    freeleech ? '&freeleech=1' : '',
+                  ),
+                );
+              } else if (advIMDb) {
+                setSearchLoading(true);
+                dispatch(
+                  AppConfigActions.getAdvSearch(
+                    value0,
+                    value1,
+                    'search-torrents',
+                    '&type=imdb',
+                    `&query=${advSearchText}`,
+                    catIndex !== null ? `&category=${catIndex}` : '',
+                    moderated ? '&moderated=1' : '',
+                    doubleUp ? '&doubleup=1' : '',
+                    internal ? '&internal=1' : '',
+                    freeleech ? '&freeleech=1' : '',
+                  ),
+                );
+              } else {
+                Alert.alert(
+                  'Info',
+                  'Selectează categoria căutării de la săgeata din dreapta câmpului de căutare.',
+                  [
+                    {
+                      text: 'OK',
+                      onPress: () => {},
+                    },
+                  ],
+                  {cancelable: true},
+                );
+              }
             } else {
               Alert.alert(
                 'Info',
-                'Selectează categoria căutării de la săgeata din dreapta câmpului de căutare.',
+                'Căutarea nu poate continua deoarece Numele de utilizator si Passkey-ul nu a fost salvat. Este necesară o relogare pentru a înregistra din nou datele.',
                 [
                   {
                     text: 'OK',
@@ -582,10 +627,10 @@ export default function Home({navigation}) {
                 {cancelable: true},
               );
             }
-          } else {
+          } catch (e) {
             Alert.alert(
-              'Info',
-              'Căutarea nu poate continua deoarece Numele de utilizator si Passkey-ul nu a fost salvat. Este necesară o relogare pentru a înregistra din nou datele.',
+              'Eroare',
+              'A apărut o eroare. Încearcă din nou.',
               [
                 {
                   text: 'OK',
@@ -594,98 +639,102 @@ export default function Home({navigation}) {
               ],
               {cancelable: true},
             );
+            crashlytics().recordError(e);
           }
-        } catch (e) {
-          alert(e);
         }
+      } else {
+        Alert.alert(
+          'Info',
+          'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare avansată.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {},
+            },
+          ],
+          {cancelable: true},
+        );
       }
-    } else {
-      Alert.alert(
-        'Info',
-        'Conexiune offline. Reconectează-te pentru a putea folosi funcţia de Căutare avansată.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {},
-          },
-        ],
-        {cancelable: true},
-      );
+    } catch (error) {
+      crashlytics().recordError(error);
     }
   };
 
   const clearSearch = async () => {
-    setSearchLoading(true);
     try {
-      await AsyncStorage.removeItem('search');
-      await AsyncStorage.removeItem('imdb');
-      await AsyncStorage.removeItem('searchAdv');
-    } catch (e) {
-      alert(e);
+      setSearchLoading(true);
+      try {
+        await AsyncStorage.removeItem('search');
+        await AsyncStorage.removeItem('imdb');
+        await AsyncStorage.removeItem('searchAdv');
+      } catch (e) {
+        Alert.alert(
+          'Eroare',
+          'A apărut o eroare. Încearcă din nou.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {},
+            },
+          ],
+          {cancelable: true},
+        );
+        crashlytics().recordError(e);
+      }
+      dispatch(AppConfigActions.retrieveSearch());
+      dispatch(AppConfigActions.retrieveImdb());
+      dispatch(AppConfigActions.retrieveAdvSearch());
+      dispatch(AppConfigActions.searchError());
+      dispatch(AppConfigActions.imdbError());
+      dispatch(AppConfigActions.searchAdvError());
+      setSearch('');
+      setAdvSearchText('');
+      setAnimes(false);
+      setAudio(false);
+      setDesene(false);
+      setDiverse(false);
+      setDoc(false);
+      setFilme3d(false);
+      setFilme4k(false);
+      setFilme4kBD(false);
+      setFilmeBD(false);
+      setFilmeDvd(false);
+      setFilmeDvdRo(false);
+      setFilmeHd(false);
+      setFilmeHdRo(false);
+      setFilmeSd(false);
+      setFlacs(false);
+      setJocConsole(false);
+      setJocPc(false);
+      setLin(false);
+      setMob(false);
+      setSoftware(false);
+      setSeriale4k(false);
+      setSerialeHd(false);
+      setSerialeSd(false);
+      setSports(false);
+      setVideos(false);
+      setPorn(false);
+      setDoubleUp(false);
+      setFreeleech(false);
+      setInternal(false);
+      setModerated(false);
+      setIsSearchBar(false);
+      setIsSearch(false);
+      setNoResults(false);
+      setSearchLoading(false);
+    } catch (error) {
+      crashlytics().recordError(error);
     }
-    dispatch(AppConfigActions.retrieveSearch());
-    dispatch(AppConfigActions.retrieveImdb());
-    dispatch(AppConfigActions.retrieveAdvSearch());
-    dispatch(AppConfigActions.searchError());
-    dispatch(AppConfigActions.imdbError());
-    dispatch(AppConfigActions.searchAdvError());
-    setSearch('');
-    setAdvSearchText('');
-    setAnimes(false);
-    setAudio(false);
-    setDesene(false);
-    setDiverse(false);
-    setDoc(false);
-    setFilme3d(false);
-    setFilme4k(false);
-    setFilme4kBD(false);
-    setFilmeBD(false);
-    setFilmeDvd(false);
-    setFilmeDvdRo(false);
-    setFilmeHd(false);
-    setFilmeHdRo(false);
-    setFilmeSd(false);
-    setFlacs(false);
-    setJocConsole(false);
-    setJocPc(false);
-    setLin(false);
-    setMob(false);
-    setSoftware(false);
-    setSeriale4k(false);
-    setSerialeHd(false);
-    setSerialeSd(false);
-    setSports(false);
-    setVideos(false);
-    setPorn(false);
-    setDoubleUp(false);
-    setFreeleech(false);
-    setInternal(false);
-    setModerated(false);
-    setIsSearchBar(false);
-    setIsSearch(false);
-    setNoResults(false);
-    setSearchLoading(false);
   };
-
-  const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
-  const scale = SCREEN_WIDTH / SCREEN_WIDTH;
-
-  function fontSz(size) {
-    const newSize = size * scale;
-    if (Platform.OS === 'ios') {
-      return Math.round(PixelRatio.roundToNearestPixel(newSize));
-    } else {
-      return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
-    }
-  }
 
   const _renderHeader = (section) => {
     return (
       <View style={HomePage.renderHeader}>
         <Text
           style={{
-            fontSize: Adjust(12),
-            textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+            fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
+            textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
             textShadowOffset: {width: 0.8, height: 0.8},
             textShadowRadius: 1,
             color: ACCENT_COLOR,
@@ -701,7 +750,10 @@ export default function Home({navigation}) {
     return (
       <View style={HomePage.renderContent}>
         <Text
-          style={{color: lightTheme ? 'black' : 'white', fontSize: Adjust(12)}}>
+          style={{
+            color: lightTheme ? 'black' : 'white',
+            fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
+          }}>
           {section.content}
         </Text>
       </View>
@@ -713,18 +765,22 @@ export default function Home({navigation}) {
   };
 
   const fetchIMDbInfo = async (id) => {
-    if (isNetReachable) {
-      setIMDbLoading(true);
-      await Axios.get('https://spleeter.co.uk/' + id)
-        .then((res) => {
-          setIMDbData(Array(res.data));
-          setIMDbLoading(false);
-        })
-        .catch((e) => {
-          alert(e);
-        });
-    } else {
-      setIMDbData(false);
+    try {
+      if (isNetReachable) {
+        setIMDbLoading(true);
+        await Axios.get('https://spleeter.co.uk/' + id)
+          .then((res) => {
+            setIMDbData(Array(res.data));
+            setIMDbLoading(false);
+          })
+          .catch((e) => {
+            crashlytics().recordError(e);
+          });
+      } else {
+        setIMDbData(false);
+      }
+    } catch (error) {
+      crashlytics().recordError(error);
     }
   };
 
@@ -745,24 +801,24 @@ export default function Home({navigation}) {
       Animated.timing(showClipboardStatus, {
         toValue: 1,
         duration: 200,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }).start();
       Animated.timing(textClipboardOpacity, {
         toValue: 1,
         duration: 400,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }).start();
     }, 100);
     setTimeout(() => {
       Animated.timing(showClipboardStatus, {
         toValue: 0,
         duration: 250,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }).start();
       Animated.timing(textClipboardOpacity, {
         toValue: 0,
         duration: 150,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }).start();
     }, 2500);
   };
@@ -779,12 +835,12 @@ export default function Home({navigation}) {
             Animated.timing(showStatus, {
               toValue: 1,
               duration: 400,
-              useNativeDriver: false,
+              useNativeDriver: true,
             }).start();
             Animated.timing(textOpacity, {
               toValue: 1,
               duration: 800,
-              useNativeDriver: false,
+              useNativeDriver: true,
             }).start();
             setRefreshing(false);
           }, 500);
@@ -792,18 +848,18 @@ export default function Home({navigation}) {
             Animated.timing(showStatus, {
               toValue: 0,
               duration: 250,
-              useNativeDriver: false,
+              useNativeDriver: true,
             }).start();
             Animated.timing(textOpacity, {
               toValue: 0,
               duration: 150,
-              useNativeDriver: false,
+              useNativeDriver: true,
             }).start();
           }, 4000);
         }, 3000);
       }
     } catch (e) {
-      alert(e);
+      crashlytics().recordError(e);
     }
   };
 
@@ -891,8 +947,8 @@ export default function Home({navigation}) {
               style={[
                 HomePage.itemPressableNameText,
                 {
-                  fontSize: Adjust(8),
-                  textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[1] : 8),
+                  textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                   color: lightTheme ? MAIN_DARK : 'white',
                 },
               ]}>
@@ -902,8 +958,8 @@ export default function Home({navigation}) {
               style={[
                 HomePage.itemPressableUploadText,
                 {
-                  fontSize: Adjust(6),
-                  textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
+                  textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                   color: lightTheme ? 'grey' : 'silver',
                 },
               ]}>
@@ -914,7 +970,7 @@ export default function Home({navigation}) {
                 <Text
                   style={[
                     HomePage.itemPressableDoubleUpText,
-                    {fontSize: Adjust(6)},
+                    {fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6)},
                   ]}>
                   2X UPLOAD
                 </Text>
@@ -923,7 +979,7 @@ export default function Home({navigation}) {
                 <Text
                   style={[
                     HomePage.itemPressableInternalText,
-                    {fontSize: Adjust(6)},
+                    {fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6)},
                   ]}>
                   INTERNAL
                 </Text>
@@ -932,7 +988,7 @@ export default function Home({navigation}) {
                 <Text
                   style={[
                     HomePage.itemPressableFreeleechText,
-                    {fontSize: Adjust(6)},
+                    {fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6)},
                   ]}>
                   FREELEECH
                 </Text>
@@ -1020,7 +1076,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1050,7 +1106,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1080,7 +1136,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1110,7 +1166,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1140,7 +1196,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1170,7 +1226,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1200,7 +1256,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1230,7 +1286,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1260,7 +1316,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1290,7 +1346,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1320,7 +1376,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1350,7 +1406,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1380,7 +1436,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1410,7 +1466,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1440,7 +1496,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1470,7 +1526,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1500,7 +1556,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1530,7 +1586,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1560,7 +1616,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1590,7 +1646,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1620,7 +1676,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1650,7 +1706,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1680,7 +1736,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1710,7 +1766,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1740,7 +1796,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBox}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1770,7 +1826,7 @@ export default function Home({navigation}) {
                 <CheckBox
                   containerStyle={HomePage.catCheckBoxLast}
                   textStyle={{
-                    fontSize: fontSz(16),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                   }}
                   center
@@ -1810,7 +1866,7 @@ export default function Home({navigation}) {
                 <Text
                   style={[
                     HomePage.catCheckOverlayText,
-                    {fontSize: Adjust(14)},
+                    {fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14)},
                   ]}>
                   Caută
                 </Text>
@@ -1878,7 +1934,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -1908,7 +1966,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -1938,7 +1998,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -1968,7 +2030,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -1998,7 +2062,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2028,7 +2094,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2058,7 +2126,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2088,7 +2158,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2118,7 +2190,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2148,7 +2222,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2178,7 +2254,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2208,7 +2286,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2238,7 +2318,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2268,7 +2350,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2298,7 +2382,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2328,7 +2414,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2358,7 +2446,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2388,7 +2478,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2418,7 +2510,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2448,7 +2542,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2478,7 +2574,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2508,7 +2606,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2538,7 +2638,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2568,7 +2670,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2598,7 +2702,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBox}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2628,7 +2734,9 @@ export default function Home({navigation}) {
                       <CheckBox
                         containerStyle={HomePage.catCheckBoxLast}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         }}
                         center
@@ -2668,7 +2776,11 @@ export default function Home({navigation}) {
                       <Text
                         style={[
                           HomePage.catCheckOverlayText,
-                          {fontSize: Adjust(14)},
+                          {
+                            fontSize: Adjust(
+                              fontSizes !== null ? fontSizes[6] : 14,
+                            ),
+                          },
                         ]}>
                         OK
                       </Text>
@@ -2682,7 +2794,7 @@ export default function Home({navigation}) {
                 <View>
                   <Text
                     style={{
-                      fontSize: Adjust(14),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                       fontWeight: 'bold',
                     }}>
@@ -2694,7 +2806,7 @@ export default function Home({navigation}) {
                   style={[
                     HomePage.advSearchInputStyle,
                     {
-                      fontSize: Adjust(12),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                     },
                   ]}
@@ -2743,7 +2855,9 @@ export default function Home({navigation}) {
                       style={[
                         HomePage.advSearchTypeText,
                         {
-                          fontSize: Adjust(10),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[2] : 10,
+                          ),
                           color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                         },
                       ]}>
@@ -2760,7 +2874,7 @@ export default function Home({navigation}) {
                         Keyboard.dismiss();
                         Alert.alert(
                           'Info',
-                          'Pentru informaţii suplimentare legate de diferenţa dintre cele două tipuri, ţine apăsat 2 secunde (long press) pe căsuţa nebifată şi vice-versa.',
+                          'Cuvânt cheie: această opţiune permite căutarea după Cuvinte Cheie pe modelul: titanic.1997 ori titanic 1997.\n\nCod IMDb: Această opţiune permite căutarea după codul IMDb pe modelul modelul: tt4719744 ori 4719744.',
                           [
                             {
                               text: 'OK',
@@ -2792,7 +2906,9 @@ export default function Home({navigation}) {
                           },
                         ]}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: advKeyword
                             ? 'grey'
                             : lightTheme
@@ -2861,7 +2977,9 @@ export default function Home({navigation}) {
                           },
                         ]}
                         textStyle={{
-                          fontSize: fontSz(16),
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
                           color: advIMDb
                             ? 'grey'
                             : lightTheme
@@ -2924,7 +3042,7 @@ export default function Home({navigation}) {
                       {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT},
                     ]}
                     textStyle={{
-                      fontSize: fontSz(16),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color:
                         animes ||
                         audio ||
@@ -3009,7 +3127,7 @@ export default function Home({navigation}) {
                       {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT},
                     ]}
                     textStyle={{
-                      fontSize: fontSz(16),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                     }}
                     center
@@ -3059,7 +3177,7 @@ export default function Home({navigation}) {
                       {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT},
                     ]}
                     textStyle={{
-                      fontSize: fontSz(16),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                     }}
                     center
@@ -3111,7 +3229,7 @@ export default function Home({navigation}) {
                       {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT},
                     ]}
                     textStyle={{
-                      fontSize: fontSz(16),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                     }}
                     center
@@ -3161,7 +3279,7 @@ export default function Home({navigation}) {
                       {borderColor: lightTheme ? MAIN_DARK : MAIN_LIGHT},
                     ]}
                     textStyle={{
-                      fontSize: fontSz(16),
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                       color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                     }}
                     center
@@ -3217,7 +3335,11 @@ export default function Home({navigation}) {
                     <Text
                       style={[
                         HomePage.advSearchPressableText,
-                        {fontSize: Adjust(16)},
+                        {
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[7] : 16,
+                          ),
+                        },
                       ]}>
                       Caută
                     </Text>
@@ -3317,9 +3439,11 @@ export default function Home({navigation}) {
                             style={[
                               HomePage.imdbInfoHeaderCat,
                               {
-                                fontSize: Adjust(16),
+                                fontSize: Adjust(
+                                  fontSizes !== null ? fontSizes[7] : 16,
+                                ),
                                 textShadowColor: lightTheme
-                                  ? MAIN_LIGHT
+                                  ? 'transparent'
                                   : MAIN_DARK,
                                 color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                               },
@@ -3331,9 +3455,11 @@ export default function Home({navigation}) {
                             style={[
                               HomePage.imdbInfoHeaderDesc,
                               {
-                                fontSize: Adjust(6),
+                                fontSize: Adjust(
+                                  fontSizes !== null ? fontSizes[0] : 6,
+                                ),
                                 textShadowColor: lightTheme
-                                  ? MAIN_LIGHT
+                                  ? 'transparent'
                                   : MAIN_DARK,
                               },
                             ]}>
@@ -3347,9 +3473,11 @@ export default function Home({navigation}) {
                           style={[
                             HomePage.imdbInfoTitleText,
                             {
-                              fontSize: Adjust(8),
+                              fontSize: Adjust(
+                                fontSizes !== null ? fontSizes[1] : 8,
+                              ),
                               textShadowColor: lightTheme
-                                ? MAIN_LIGHT
+                                ? 'transparent'
                                 : MAIN_DARK,
                               color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
                             },
@@ -3373,7 +3501,11 @@ export default function Home({navigation}) {
                           <Text
                             style={[
                               HomePage.imdbInfoDoubleUpBadge,
-                              {fontSize: Adjust(6)},
+                              {
+                                fontSize: Adjust(
+                                  fontSizes !== null ? fontSizes[0] : 6,
+                                ),
+                              },
                             ]}>
                             2X UPLOAD
                           </Text>
@@ -3382,7 +3514,11 @@ export default function Home({navigation}) {
                           <Text
                             style={[
                               HomePage.imdbInfoInternalBadge,
-                              {fontSize: Adjust(6)},
+                              {
+                                fontSize: Adjust(
+                                  fontSizes !== null ? fontSizes[0] : 6,
+                                ),
+                              },
                             ]}>
                             INTERNAL
                           </Text>
@@ -3391,7 +3527,11 @@ export default function Home({navigation}) {
                           <Text
                             style={[
                               HomePage.imdbInfoFreeleechBadge,
-                              {fontSize: Adjust(6)},
+                              {
+                                fontSize: Adjust(
+                                  fontSizes !== null ? fontSizes[0] : 6,
+                                ),
+                              },
                             ]}>
                             FREELEECH
                           </Text>
@@ -3466,19 +3606,27 @@ export default function Home({navigation}) {
                                                     style={[
                                                       HomePage.imdbInfoRatingText,
                                                       {
-                                                        fontSize: Adjust(14),
+                                                        fontSize: Adjust(
+                                                          fontSizes !== null
+                                                            ? fontSizes[6]
+                                                            : 14,
+                                                        ),
                                                         color: lightTheme
                                                           ? MAIN_DARK
                                                           : 'white',
                                                         textShadowColor: lightTheme
-                                                          ? 'silver'
-                                                          : 'black',
+                                                          ? 'transparent'
+                                                          : MAIN_DARK,
                                                       },
                                                     ]}>
                                                     {item.rating}
                                                   </Text>
                                                   <FontAwesomeIcon
-                                                    size={Adjust(16)}
+                                                    size={Adjust(
+                                                      fontSizes !== null
+                                                        ? fontSizes[7]
+                                                        : 16,
+                                                    )}
                                                     style={
                                                       HomePage.imdbInfoRatingIcon
                                                     }
@@ -3502,9 +3650,13 @@ export default function Home({navigation}) {
                                               style={[
                                                 HomePage.imdbInfoMainPlotTitle,
                                                 {
-                                                  fontSize: Adjust(8),
+                                                  fontSize: Adjust(
+                                                    fontSizes !== null
+                                                      ? fontSizes[1]
+                                                      : 8,
+                                                  ),
                                                   textShadowColor: lightTheme
-                                                    ? MAIN_LIGHT
+                                                    ? 'transparent'
                                                     : MAIN_DARK,
                                                 },
                                               ]}>
@@ -3515,9 +3667,13 @@ export default function Home({navigation}) {
                                               style={[
                                                 HomePage.imdbInfoMainPlotText,
                                                 {
-                                                  fontSize: Adjust(8),
+                                                  fontSize: Adjust(
+                                                    fontSizes !== null
+                                                      ? fontSizes[1]
+                                                      : 8,
+                                                  ),
                                                   textShadowColor: lightTheme
-                                                    ? MAIN_LIGHT
+                                                    ? 'transparent'
                                                     : MAIN_DARK,
                                                   color: lightTheme
                                                     ? MAIN_DARK
@@ -3539,9 +3695,13 @@ export default function Home({navigation}) {
                                                   style={[
                                                     HomePage.imdbInfoMainETATitle,
                                                     {
-                                                      fontSize: Adjust(8),
+                                                      fontSize: Adjust(
+                                                        fontSizes !== null
+                                                          ? fontSizes[1]
+                                                          : 8,
+                                                      ),
                                                       textShadowColor: lightTheme
-                                                        ? MAIN_LIGHT
+                                                        ? 'transparent'
                                                         : MAIN_DARK,
                                                     },
                                                   ]}>
@@ -3551,7 +3711,7 @@ export default function Home({navigation}) {
                                                       HomePage.imdbInfoMainETAText,
                                                       {
                                                         textShadowColor: lightTheme
-                                                          ? MAIN_LIGHT
+                                                          ? 'transparent'
                                                           : MAIN_DARK,
                                                         color: lightTheme
                                                           ? MAIN_DARK
@@ -3581,7 +3741,11 @@ export default function Home({navigation}) {
                                     }}>
                                     <Text
                                       style={{
-                                        fontSize: Adjust(10),
+                                        fontSize: Adjust(
+                                          fontSizes !== null
+                                            ? fontSizes[2]
+                                            : 10,
+                                        ),
                                         textAlign: 'center',
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3591,7 +3755,11 @@ export default function Home({navigation}) {
                                     </Text>
                                     <Text
                                       style={{
-                                        fontSize: Adjust(10),
+                                        fontSize: Adjust(
+                                          fontSizes !== null
+                                            ? fontSizes[2]
+                                            : 10,
+                                        ),
                                         textAlign: 'center',
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3639,9 +3807,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3683,9 +3853,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3728,9 +3900,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3775,9 +3949,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3820,9 +3996,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3865,9 +4043,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3917,9 +4097,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -3961,9 +4143,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -4006,9 +4190,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -4053,9 +4239,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -4098,9 +4286,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -4143,9 +4333,11 @@ export default function Home({navigation}) {
                                     style={[
                                       HomePage.imdbInfoMainFooter3rdText,
                                       {
-                                        fontSize: Adjust(8),
+                                        fontSize: Adjust(
+                                          fontSizes !== null ? fontSizes[1] : 8,
+                                        ),
                                         textShadowColor: lightTheme
-                                          ? MAIN_LIGHT
+                                          ? 'transparent'
                                           : MAIN_DARK,
                                         color: lightTheme
                                           ? MAIN_DARK
@@ -4189,9 +4381,9 @@ export default function Home({navigation}) {
               <View style={HomePage.infoTitleContainer}>
                 <Text
                   style={{
-                    fontSize: Adjust(14),
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                     color: lightTheme ? MAIN_DARK : 'white',
-                    textShadowColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                    textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                     textShadowOffset: {width: 0.8, height: 0.8},
                     textShadowRadius: 1,
                     fontWeight: 'bold',
@@ -4220,17 +4412,21 @@ export default function Home({navigation}) {
                 android_ripple={{
                   color: 'white',
                   borderless: true,
-                  radius: 16,
+                  radius: 18,
                 }}
                 onPress={() => navigation.openDrawer()}>
                 <FontAwesomeIcon
-                  size={fontSz(26)}
+                  size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
                   color={'white'}
                   icon={faCog}
                 />
               </Pressable>
             </View>
-            <Text style={[HomePage.mainHeaderText, {fontSize: Adjust(14)}]}>
+            <Text
+              style={[
+                HomePage.mainHeaderText,
+                {fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14)},
+              ]}>
               {isSearch ? 'Căutare' : 'Recent adăugate'}
             </Text>
           </View>
@@ -4258,7 +4454,10 @@ export default function Home({navigation}) {
               selectable
               style={[
                 HomePage.mainClearSearchBarText,
-                {fontSize: Adjust(10), color: lightTheme ? MAIN_DARK : 'white'},
+                {
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[2] : 10),
+                  color: lightTheme ? MAIN_DARK : 'white',
+                },
               ]}>
               Rezultatele căutării după "
               <Text
@@ -4279,7 +4478,7 @@ export default function Home({navigation}) {
           <Input
             ref={SearchBarRef}
             style={{
-              fontSize: Adjust(13),
+              fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
               color: lightTheme ? MAIN_DARK : 'white',
             }}
             containerStyle={[
@@ -4306,9 +4505,9 @@ export default function Home({navigation}) {
                 <Pressable
                   style={HomePage.searchInputRIPressable}
                   android_ripple={{
-                    color: 'grey',
+                    color: ACCENT_COLOR,
                     borderless: true,
-                    radius: 14,
+                    radius: 16,
                   }}
                   onPress={() => {
                     handleSearch();
@@ -4340,8 +4539,8 @@ export default function Home({navigation}) {
               style={[
                 HomePage.searchNoResultsTextPrimary,
                 {
-                  fontSize: Adjust(14),
-                  textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                  textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                   color: lightTheme ? MAIN_DARK : 'white',
                 },
               ]}>
@@ -4351,8 +4550,8 @@ export default function Home({navigation}) {
               style={[
                 HomePage.searchNoResultsTextSecondary,
                 {
-                  fontSize: Adjust(12),
-                  textShadowColor: lightTheme ? MAIN_LIGHT : 'black',
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
+                  textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                   color: lightTheme ? MAIN_DARK : 'white',
                 },
               ]}>
@@ -4442,7 +4641,7 @@ export default function Home({navigation}) {
             style={[
               HomePage.refreshTextPrimary,
               {
-                fontSize: fontSz(16),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
                 opacity: textOpacity,
                 color: lightTheme ? 'white' : 'black',
               },
@@ -4453,7 +4652,7 @@ export default function Home({navigation}) {
             style={[
               HomePage.refreshTextSecondary,
               {
-                fontSize: fontSz(16),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
                 opacity: textOpacity,
                 color: lightTheme ? 'white' : 'black',
               },
@@ -4479,7 +4678,7 @@ export default function Home({navigation}) {
             style={[
               HomePage.clipboardAlertText,
               {
-                fontSize: fontSz(16),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
                 opacity: textClipboardOpacity,
                 color: lightTheme ? 'white' : 'black',
               },
@@ -4501,7 +4700,7 @@ export default function Home({navigation}) {
           ]}>
           <Animated.Text
             style={{
-              fontSize: fontSz(18),
+              fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
               fontWeight: 'bold',
               opacity: showNetworkAlertText,
               color: 'white',
@@ -4703,6 +4902,7 @@ const HomePage = EStyleSheet.create({
   },
   advSearchInputStyle: {
     fontWeight: 'normal',
+    paddingLeft: '8rem',
   },
   advSearchContainerStyle: {
     height: '64rem',
@@ -5367,7 +5567,7 @@ const HomePage = EStyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    paddingBottom: '6rem',
+    paddingBottom: '4rem',
   },
   searchInputRIPressable: {
     height: '100%',
@@ -5375,6 +5575,7 @@ const HomePage = EStyleSheet.create({
     borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingBottom: '4rem',
   },
   searchLoadingContainer: {
     width: '100%',

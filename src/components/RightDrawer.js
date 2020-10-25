@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import Adjust from './AdjustText';
 import AsyncStorage from '@react-native-community/async-storage';
+import {Picker} from '@react-native-community/picker';
 import FastImage from 'react-native-fast-image';
 import EStyleSheet from 'react-native-extended-stylesheet';
 import {
@@ -22,6 +23,8 @@ import {
   faSignOutAlt,
   faInfoCircle,
   faLink,
+  faTextHeight,
+  faCaretDown,
 } from '@fortawesome/free-solid-svg-icons';
 
 const MAIN_LIGHT = '#E8E6E6';
@@ -30,7 +33,7 @@ const ACCENT_COLOR = '#15ABF4';
 
 export default function RightDrawer({navigation}) {
   const dispatch = useDispatch();
-  const {lightTheme} = useSelector((state) => state.appConfig);
+  const {lightTheme, fontSizes} = useSelector((state) => state.appConfig);
   const [darkLight] = useState(new Animated.Value(0));
   const [user, setUser] = useState('');
   const [firebasePic, setFirebasePic] = useState(false);
@@ -41,7 +44,44 @@ export default function RightDrawer({navigation}) {
 
   useEffect(() => {
     getCurrentUser();
+    dispatch(AppConfigActions.setFonts());
   }, []);
+
+  const toggleSFonts = async () => {
+    try {
+      await AsyncStorage.setItem(
+        'fontSizes',
+        JSON.stringify([4, 6, 8, 9, 10, 11, 12, 14, 20, 45]),
+      );
+      dispatch(AppConfigActions.setFonts());
+    } catch (e) {
+      crashlytics().recordError(e);
+    }
+  };
+
+  const toggleMFonts = async () => {
+    try {
+      await AsyncStorage.setItem(
+        'fontSizes',
+        JSON.stringify([6, 8, 10, 11, 12, 13, 14, 16, 22, 50]),
+      );
+      dispatch(AppConfigActions.setFonts());
+    } catch (e) {
+      crashlytics().recordError(e);
+    }
+  };
+
+  const toggleLFonts = async () => {
+    try {
+      await AsyncStorage.setItem(
+        'fontSizes',
+        JSON.stringify([8, 10, 12, 13, 14, 15, 16, 18, 24, 50]),
+      );
+      dispatch(AppConfigActions.setFonts());
+    } catch (e) {
+      crashlytics().recordError(e);
+    }
+  };
 
   const getCurrentUser = async () => {
     try {
@@ -108,7 +148,8 @@ export default function RightDrawer({navigation}) {
             style={[
               RightDrawerStyle.profilePicView,
               {
-                backgroundColor: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                borderColor: 'silver',
+                backgroundColor: lightTheme ? MAIN_DARK : '#505050',
               },
             ]}>
             {firebasePic ? (
@@ -120,8 +161,11 @@ export default function RightDrawer({navigation}) {
             ) : (
               <Text
                 style={{
-                  fontSize: Adjust(50),
-                  color: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[9] : 50),
+                  color: 'white',
+                  textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
+                  textShadowRadius: 1,
+                  textShadowOffset: {width: 0.8, height: 0.8},
                 }}>
                 {user !== '' ? user.charAt(0) : null}
               </Text>
@@ -131,9 +175,9 @@ export default function RightDrawer({navigation}) {
         <View style={RightDrawerStyle.usernameView}>
           <Text
             style={{
-              fontSize: Adjust(16),
+              fontSize: Adjust(fontSizes !== null ? fontSizes[7] : 16),
               fontWeight: 'bold',
-              color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+              color: lightTheme ? MAIN_DARK : 'white',
             }}>
             {user !== '' ? user : null}
           </Text>
@@ -149,14 +193,14 @@ export default function RightDrawer({navigation}) {
           onPress={() => dispatch(AppConfigActions.toggleAppInfo())}>
           <FontAwesomeIcon
             color={lightTheme ? MAIN_DARK : MAIN_LIGHT}
-            size={Adjust(22)}
+            size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
             icon={faInfoCircle}
           />
           <Text
             style={[
               RightDrawerStyle.settingsOverlayText,
               {
-                fontSize: Adjust(14),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                 color: lightTheme ? 'black' : 'white',
                 textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
@@ -183,7 +227,7 @@ export default function RightDrawer({navigation}) {
             }}>
             <FontAwesomeIcon
               color={lightTheme ? 'black' : MAIN_LIGHT}
-              size={Adjust(22)}
+              size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
               icon={faAdjust}
             />
           </Animated.View>
@@ -191,7 +235,7 @@ export default function RightDrawer({navigation}) {
             style={[
               RightDrawerStyle.settingsOverlayText,
               {
-                fontSize: Adjust(14),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                 color: lightTheme ? 'black' : 'white',
                 textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
@@ -214,7 +258,77 @@ export default function RightDrawer({navigation}) {
           </View>
         </Pressable>
       </View>
-      <View style={RightDrawerStyle.settingsOverlayContainer}>
+      <View style={RightDrawerStyle.settingsOverlayFont}>
+        <View
+          style={{
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            paddingHorizontal: StatusBar.currentHeight / 1.5,
+          }}>
+          <FontAwesomeIcon
+            color={lightTheme ? 'black' : MAIN_LIGHT}
+            size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+            icon={faTextHeight}
+          />
+          <Text
+            style={[
+              RightDrawerStyle.settingsOverlayText,
+              {
+                fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                color: lightTheme ? 'black' : 'white',
+                textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
+              },
+            ]}>
+            Mărime text
+          </Text>
+        </View>
+        <Picker
+          selectedValue={
+            fontSizes !== null
+              ? fontSizes[0] === 6
+                ? 'm'
+                : fontSizes[0] === 4
+                ? 's'
+                : fontSizes[0] === 8
+                ? 'l'
+                : 'm'
+              : 'm'
+          }
+          style={[
+            RightDrawerStyle.settingsPicker,
+            {
+              fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+              color: lightTheme ? 'black' : 'white',
+            },
+          ]}
+          mode="dropdown"
+          onValueChange={(itemValue) =>
+            itemValue === 's'
+              ? toggleSFonts()
+              : itemValue === 'm'
+              ? toggleMFonts()
+              : itemValue === 'l'
+              ? toggleLFonts()
+              : null
+          }>
+          <Picker.Item label="Mic" value="s" />
+          <Picker.Item label="Mediu" value="m" />
+          <Picker.Item label="Mare" value="l" />
+        </Picker>
+        <FontAwesomeIcon
+          style={[
+            RightDrawerStyle.pickerIcon,
+            {
+              color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+            },
+          ]}
+          size={Adjust(fontSizes !== null ? fontSizes[7] : 16)}
+          icon={faCaretDown}
+        />
+      </View>
+      <View style={RightDrawerStyle.settingOverlayFilelist}>
         <Pressable
           style={RightDrawerStyle.settingsOverlayPressable}
           android_ripple={{
@@ -241,14 +355,14 @@ export default function RightDrawer({navigation}) {
           }>
           <FontAwesomeIcon
             color={lightTheme ? MAIN_DARK : MAIN_LIGHT}
-            size={Adjust(22)}
+            size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
             icon={faLink}
           />
           <Text
             style={[
               RightDrawerStyle.settingsOverlayText,
               {
-                fontSize: Adjust(14),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                 color: lightTheme ? 'black' : 'white',
                 textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
@@ -284,7 +398,7 @@ export default function RightDrawer({navigation}) {
             style={[
               RightDrawerStyle.settingsOverlayText,
               {
-                fontSize: Adjust(14),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                 color: lightTheme ? 'black' : 'white',
                 textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
@@ -293,45 +407,53 @@ export default function RightDrawer({navigation}) {
           </Text>
         </Pressable>
       </View>
+      <View style={RightDrawerStyle.settingsOverlayVersion}>
+        <Text
+          style={[
+            RightDrawerStyle.settingsOverlayVersionText,
+            {
+              fontSize: Adjust(8),
+              color: 'grey',
+              opacity: 0.5,
+              textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
+            },
+          ]}>
+          Filelist App v3.0.1
+        </Text>
+      </View>
     </View>
   );
 }
 
 const RightDrawerStyle = EStyleSheet.create({
   profileContainer: {
-    width: '100%',
-    height: '200rem',
-    position: 'absolute',
-    top: StatusBar.currentHeight * 1.5,
+    flex: 1,
+    marginTop: StatusBar.currentHeight * 1.5,
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
   },
   profilePicContainer: {
-    width: '100%',
-    height: '80%',
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
   },
   profilePicView: {
-    width: '130rem',
-    height: '130rem',
+    width: '100rem',
+    height: '100rem',
     borderRadius: 100,
-    borderColor: 'grey',
     borderWidth: '2rem',
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
   },
   profilePic: {
-    width: '130rem',
-    height: '130rem',
+    width: '100rem',
+    height: '100rem',
     borderRadius: 100,
   },
   usernameView: {
-    width: '100%',
-    height: '20%',
+    marginTop: StatusBar.currentHeight / 1.5,
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
@@ -349,7 +471,6 @@ const RightDrawerStyle = EStyleSheet.create({
     height: '55rem',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: StatusBar.currentHeight / 2,
   },
   settingsOverlayPressable: {
     width: '100%',
@@ -365,4 +486,34 @@ const RightDrawerStyle = EStyleSheet.create({
     fontWeight: 'bold',
     marginLeft: StatusBar.currentHeight / 1.5,
   },
+  settingsOverlayVersion: {
+    width: '100%',
+    height: '18rem',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingsOverlayVersionText: {
+    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
+    textShadowRadius: '1rem',
+  },
+  settingsOverlayFont: {
+    width: '100%',
+    height: '75rem',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: StatusBar.currentHeight / 1.5,
+  },
+  settingOverlayFilelist: {
+    width: '100%',
+    height: '55rem',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingsPicker: {
+    width: '76%',
+    marginTop: '8rem',
+    backgroundColor: 'transparent',
+  },
+  pickerIcon: {position: 'absolute', bottom: '15rem', right: '42rem'},
 });
