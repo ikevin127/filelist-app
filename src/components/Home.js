@@ -2195,7 +2195,7 @@ export default function Home({navigation}) {
               paddingTop: 9,
               paddingBottom: 9,
               paddingLeft: 9,
-              paddingRight: 18,
+              paddingRight: width < 376 ? 22 : 18,
             }}
             ListHeaderComponent={() =>
               listSearch === null ? null : JSON.stringify(listSearch) ===

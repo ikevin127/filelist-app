@@ -4,11 +4,11 @@
   </a>
 </p>
 
-# :grey_exclamation: About
+# About Filelist App
 
 > This is a React Native mobile application based around Filelist's API. FileList is a private romanian torrent tracker that recently developed a JSON API that will allow its users to get information from the website.
 
-## :grey_question: How does the API work ?
+## How does the API work ?
 
 ```sh
 # General info
