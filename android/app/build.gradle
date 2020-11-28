@@ -139,8 +139,8 @@ android {
         applicationId "com.baderproductions.fl"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 4
-        versionName "3.0.1"
+        versionCode 5
+        versionName "3.0.2"
         multiDexEnabled true
     }
     splits {
@@ -175,8 +175,8 @@ android {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.release
-            shrinkResources true
-            minifyEnabled true
+            minifyEnabled enableProguardInReleaseBuilds
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
 

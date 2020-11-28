@@ -1,16 +1,25 @@
 import React from 'react';
-import EStyleSheet from 'react-native-extended-stylesheet';
 import {View, StatusBar, ActivityIndicator, Platform} from 'react-native';
+
+// Redux
 import {useSelector} from 'react-redux';
 
-const MAIN_LIGHT = '#E8E6E6';
-const MAIN_DARK = '#202020';
-const ACCENT_COLOR = '#15ABF4';
+// Responsiveness
+import EStyleSheet from 'react-native-extended-stylesheet';
+
+// Variables
+import {
+  MAIN_LIGHT,
+  MAIN_DARK,
+  ACCENT_COLOR,
+} from '../assets/variables';
 
 export default function Loading() {
+  // Redux
   const {
     lightTheme,
   } = useSelector((state) => state.appConfig);
+  
   return (
     <>
       <StatusBar

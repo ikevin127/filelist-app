@@ -1,9 +1,4 @@
 import React, {useState, useEffect} from 'react';
-import Adjust from './AdjustText';
-import AsyncStorage from '@react-native-community/async-storage';
-import {Picker} from '@react-native-community/picker';
-import FastImage from 'react-native-fast-image';
-import EStyleSheet from 'react-native-extended-stylesheet';
 import {
   Alert,
   Animated,
@@ -15,28 +10,51 @@ import {
   StatusBar,
   Linking,
 } from 'react-native';
+import {Picker} from '@react-native-picker/picker';
+import FastImage from 'react-native-fast-image';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Redux
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
+
+// Responsiveness
+import Adjust from './AdjustText';
+import EStyleSheet from 'react-native-extended-stylesheet';
+
+// Icons
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faAdjust,
   faSignOutAlt,
   faInfoCircle,
-  faLink,
+  faDirections,
   faTextHeight,
   faCaretDown,
 } from '@fortawesome/free-solid-svg-icons';
 
-const MAIN_LIGHT = '#E8E6E6';
-const MAIN_DARK = '#202020';
-const ACCENT_COLOR = '#15ABF4';
+// Variables
+import {
+  width,
+  height,
+  MAIN_LIGHT,
+  MAIN_DARK,
+  ACCENT_COLOR,
+  statusHeight,
+} from '../assets/variables';
 
 export default function RightDrawer({navigation}) {
+  
+  
+  const [user, setUser] = useState('');
+  const [darkLight] = useState(new Animated.Value(0));
+  const [firebasePic, setFirebasePic] = useState(false);
+
+  // Redux
   const dispatch = useDispatch();
   const {lightTheme, fontSizes} = useSelector((state) => state.appConfig);
-  const [darkLight] = useState(new Animated.Value(0));
-  const [user, setUser] = useState('');
-  const [firebasePic, setFirebasePic] = useState(false);
+
+
   const spinIt = darkLight.interpolate({
     inputRange: [0, 1, 2],
     outputRange: ['0deg', '180deg', '360deg'],
@@ -63,7 +81,7 @@ export default function RightDrawer({navigation}) {
     try {
       await AsyncStorage.setItem(
         'fontSizes',
-        JSON.stringify([6, 8, 10, 11, 12, 13, 14, 16, 22, 50]),
+        JSON.stringify([6, 9, 10, 11, 12, 13, 14, 16, 22, 50]),
       );
       dispatch(AppConfigActions.setFonts());
     } catch (e) {
@@ -145,23 +163,11 @@ export default function RightDrawer({navigation}) {
       <View style={RightDrawerStyle.profileContainer}>
         <View style={RightDrawerStyle.profilePicContainer}>
           <View
-            style={[
-              RightDrawerStyle.profilePicView,
-              {
-                borderColor: 'silver',
-                backgroundColor: lightTheme ? MAIN_DARK : '#505050',
-              },
-            ]}>
-            {firebasePic ? (
-              <FastImage
-                style={RightDrawerStyle.profilePic}
-                resizeMode={FastImage.resizeMode.contain}
-                source={require('../assets/pass.png')}
-              />
-            ) : (
-              <Text
+            style={RightDrawerStyle.profilePicView}>
+            <Text
                 style={{
-                  fontSize: Adjust(fontSizes !== null ? fontSizes[9] : 50),
+                  fontSize: Adjust(30),
+                  fontWeight: 'bold',
                   color: 'white',
                   textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                   textShadowRadius: 1,
@@ -169,7 +175,6 @@ export default function RightDrawer({navigation}) {
                 }}>
                 {user !== '' ? user.charAt(0) : null}
               </Text>
-            )}
           </View>
         </View>
         <View style={RightDrawerStyle.usernameView}>
@@ -244,9 +249,7 @@ export default function RightDrawer({navigation}) {
           </Text>
           <View
             style={{
-              position: 'absolute',
-              right: 0,
-              paddingRight: StatusBar.currentHeight,
+              paddingLeft: StatusBar.currentHeight / 2,
             }}
             pointerEvents={'none'}>
             <Switch
@@ -281,7 +284,7 @@ export default function RightDrawer({navigation}) {
                 textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
             ]}>
-            Mărime text
+            Dimensiune text
           </Text>
         </View>
         <Picker
@@ -328,35 +331,54 @@ export default function RightDrawer({navigation}) {
           icon={faCaretDown}
         />
       </View>
-      <View style={RightDrawerStyle.settingOverlayFilelist}>
+      <View style={RightDrawerStyle.settingsOverlayContainer}>
         <Pressable
           style={RightDrawerStyle.settingsOverlayPressable}
           android_ripple={{
             color: 'grey',
             borderless: false,
           }}
-          onPress={() =>
-            Alert.alert(
-              'Info',
-              'Doreşti să părăseşti aplicaţia şi să navighezi spre Filelist ?',
-              [
-                {
-                  text: 'Da',
-                  onPress: () => Linking.openURL('https://filelist.io'),
-                },
-                {
-                  text: 'Nu',
-                  onPress: () => {},
-                  style: 'cancel',
-                },
-              ],
-              {cancelable: true},
-            )
+          onPress={
+            async () => {
+              const supported = await Linking.canOpenURL('https://filelist.io');
+
+              if (supported) {
+                Alert.alert(
+                  'Info',
+                  'Doreşti să navighezi spre Filelist.io ?',
+                  [
+                    {
+                      text: 'DA',
+                      onPress: () => Linking.openURL('https://filelist.io'),
+                    },
+                    {
+                      text: 'NU',
+                      onPress: () => {},
+                      style: 'cancel',
+                    },
+                  ],
+                  {cancelable: true},
+                );
+              } else {
+               Alert.alert(
+                 'Info',
+                 'Navigarea spre Filelist.io nu a funcţionat.',
+                 [
+                   {
+                     text: 'OK',
+                     onPress: () => {},
+                     style: 'cancel',
+                   },
+                 ],
+                 {cancelable: true},
+               );
+              }
+            }
           }>
           <FontAwesomeIcon
             color={lightTheme ? MAIN_DARK : MAIN_LIGHT}
             size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-            icon={faLink}
+            icon={faDirections}
           />
           <Text
             style={[
@@ -407,58 +429,48 @@ export default function RightDrawer({navigation}) {
           </Text>
         </Pressable>
       </View>
-      <View style={RightDrawerStyle.settingsOverlayVersion}>
-        <Text
-          style={[
-            RightDrawerStyle.settingsOverlayVersionText,
-            {
-              fontSize: Adjust(8),
-              color: 'grey',
-              opacity: 0.5,
-              textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
-            },
-          ]}>
-          Filelist App v3.0.1
-        </Text>
-      </View>
     </View>
   );
 }
 
 const RightDrawerStyle = EStyleSheet.create({
   profileContainer: {
-    flex: 1,
-    marginTop: StatusBar.currentHeight * 1.5,
+    top: 0,
+    width: '100%',
+    height: StatusBar.currentHeight * 6,
+    position: 'absolute',
+    paddingTop: StatusBar.currentHeight,
     flexDirection: 'column',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-evenly',
     alignItems: 'center',
   },
   profilePicContainer: {
     flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  profilePicView: {
-    width: '100rem',
-    height: '100rem',
-    borderRadius: 100,
-    borderWidth: '2rem',
-    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  profilePicView: {
+    width: width / 5,
+    height: width / 5,
+    borderColor: 'silver',
+    backgroundColor: '#505050',
+    borderRadius: 100,
+    borderWidth: 3,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: '0.3rem',
+  },
   profilePic: {
-    width: '100rem',
-    height: '100rem',
+    width: width / 5,
+    height: width / 5,
     borderRadius: 100,
   },
   usernameView: {
-    marginTop: StatusBar.currentHeight / 1.5,
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
   },
-
   settingsOverlayMainContainer: {
     width: '100%',
     height: '100%',
@@ -468,9 +480,10 @@ const RightDrawerStyle = EStyleSheet.create({
   },
   settingsOverlayContainer: {
     width: '100%',
-    height: '55rem',
+    height: width / 7,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: '0.5rem',
   },
   settingsOverlayPressable: {
     width: '100%',
@@ -481,24 +494,13 @@ const RightDrawerStyle = EStyleSheet.create({
     paddingHorizontal: StatusBar.currentHeight / 1.5,
   },
   settingsOverlayText: {
-    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-    textShadowRadius: '1rem',
+    textShadowOffset: {width: 0.5, height: 0.5},
+    textShadowRadius: 1,
     fontWeight: 'bold',
     marginLeft: StatusBar.currentHeight / 1.5,
   },
-  settingsOverlayVersion: {
-    width: '100%',
-    height: '18rem',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingsOverlayVersionText: {
-    textShadowOffset: {width: '0.5rem', height: '0.5rem'},
-    textShadowRadius: '1rem',
-  },
   settingsOverlayFont: {
     width: '100%',
-    height: '75rem',
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
@@ -506,14 +508,20 @@ const RightDrawerStyle = EStyleSheet.create({
   },
   settingOverlayFilelist: {
     width: '100%',
-    height: '55rem',
+    height: '3.5rem',
     justifyContent: 'center',
     alignItems: 'center',
   },
   settingsPicker: {
-    width: '76%',
-    marginTop: '8rem',
+    position: 'relative',
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '70%',
+    marginTop: '1rem',
     backgroundColor: 'transparent',
   },
-  pickerIcon: {position: 'absolute', bottom: '15rem', right: '42rem'},
+  pickerIcon: {position: 'absolute', bottom: '0.9rem', right: '5rem'},
 });

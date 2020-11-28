@@ -1,25 +1,35 @@
 import React, {useEffect, useState} from 'react';
-import AsyncStorage from '@react-native-community/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Redux
+import {useDispatch, useSelector} from 'react-redux';
+import {AppConfigActions} from '../redux/actions';
+
+// Screens
 import Loading from './Loading';
 import Login from './Login';
 import Home from './Home';
 import RightDrawer from './RightDrawer';
+
+// Variables
+import {
+  MAIN_LIGHT,
+} from '../assets/variables';
+
+// Navigation
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import {
   createStackNavigator,
   CardStyleInterpolators,
 } from '@react-navigation/stack';
-import {useDispatch, useSelector} from 'react-redux';
-import {AppConfigActions} from '../redux/actions';
-
-const MAIN_LIGHT = '#E8E6E6';
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
+// Left drawer
 const RightDrawerHome = ({navigation}) => {
   return (
     <Drawer.Navigator
-      drawerPosition="right"
+      drawerPosition="left"
       backBehavior="history"
       drawerStyle={{width: '70%'}}
       drawerContent={(props) => <RightDrawer {...props} />}>
@@ -29,10 +39,13 @@ const RightDrawerHome = ({navigation}) => {
 };
 
 export default function Auth() {
-  const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
+
+  // Redux
+  const dispatch = useDispatch();
   const {listLatest} = useSelector((state) => state.appConfig);
 
+  // Component mount
   useEffect(() => {
     establishTheme();
     if (!listLatest) {
@@ -43,6 +56,7 @@ export default function Auth() {
     }
   }, []);
 
+  // Functions
   const establishTheme = async () => {
     try {
       const currentTheme = await AsyncStorage.getItem('theme');
@@ -50,7 +64,7 @@ export default function Auth() {
         if (currentTheme === 'light') {
           dispatch(AppConfigActions.toggleLightTheme());
         } else {
-          // do notin'
+          //
         }
       } else {
         await AsyncStorage.setItem('theme', 'dark');

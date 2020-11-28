@@ -1,5 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Axios from 'axios';
-import AsyncStorage from '@react-native-community/async-storage';
 import crashlytics from '@react-native-firebase/crashlytics';
 import {types} from '../types';
 
@@ -8,13 +8,9 @@ const initState = {
   appInfo: false,
   fontSizes: null,
   listLatest: null,
-  listSearch: null,
-  listImdb: null,
-  listAdvSearch: null,
   latestError: null,
+  listSearch: null,
   searchError: null,
-  imdbError: null,
-  advSearchError: null,
 };
 
 export const actions = {
@@ -83,9 +79,19 @@ export const actions = {
   latestError: () => async (dispatch) => {
     dispatch({type: types.APP_CONFIG.LATEST_ERROR, payload: null});
   },
-  getSearch: (user, pass, query) => async (dispatch) => {
+  getSearch: (
+    user,
+    pass,
+    action,
+    type,
+    query,
+    category,
+    internal,
+    freeleech,
+    doubleup,
+  ) => async (dispatch) => {
     await Axios.get(
-      `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=search-torrents&type=name&query=${query}`,
+      `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=${action}&type=${type}&query=${query}${category}${freeleech}${internal}${doubleup}`,
     )
       .then(async (res) => {
         let {data} = res;
@@ -124,99 +130,6 @@ export const actions = {
   searchError: () => async (dispatch) => {
     dispatch({type: types.APP_CONFIG.SEARCH_ERROR, payload: null});
   },
-  getImdb: (user, pass, query) => async (dispatch) => {
-    await Axios.get(
-      `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=search-torrents&type=imdb&query=${query}`,
-    )
-      .then(async (res) => {
-        let {data} = res;
-        dispatch({
-          type: types.APP_CONFIG.GET_IMDB_SEARCH,
-          payload: data,
-        });
-        try {
-          await AsyncStorage.setItem('imdb', JSON.stringify(data));
-        } catch (e) {
-          crashlytics().recordError(e);
-        }
-      })
-      .catch((err) => {
-        dispatch({type: types.APP_CONFIG.IMDB_SEARCH_ERROR, payload: err});
-      });
-  },
-  retrieveImdb: () => async (dispatch) => {
-    try {
-      const imdb = await AsyncStorage.getItem('imdb');
-      if (imdb !== null) {
-        dispatch({
-          type: types.APP_CONFIG.GET_IMDB_SEARCH,
-          payload: JSON.parse(imdb),
-        });
-      } else {
-        dispatch({
-          type: types.APP_CONFIG.GET_IMDB_SEARCH,
-          payload: null,
-        });
-      }
-    } catch (e) {
-      crashlytics().recordError(e);
-    }
-  },
-  imdbError: () => async (dispatch) => {
-    dispatch({type: types.APP_CONFIG.IMDB_SEARCH_ERROR, payload: null});
-  },
-  getAdvSearch: (
-    user,
-    pass,
-    action,
-    type,
-    query,
-    category,
-    moderated,
-    internal,
-    freeleech,
-    doubleup,
-  ) => async (dispatch) => {
-    await Axios.get(
-      `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=${action}${type}${query}${category}${moderated}${internal}${freeleech}${doubleup}`,
-    )
-      .then(async (res) => {
-        let {data} = res;
-        dispatch({
-          type: types.APP_CONFIG.GET_ADV_SEARCH,
-          payload: data,
-        });
-        try {
-          await AsyncStorage.setItem('searchAdv', JSON.stringify(data));
-        } catch (e) {
-          crashlytics().recordError(e);
-        }
-      })
-      .catch((err) => {
-        dispatch({type: types.APP_CONFIG.SEARCH_ADV_ERROR, payload: err});
-      });
-  },
-  retrieveAdvSearch: () => async (dispatch) => {
-    try {
-      const searchAdv = await AsyncStorage.getItem('searchAdv');
-      if (searchAdv !== null) {
-        dispatch({
-          type: types.APP_CONFIG.GET_ADV_SEARCH,
-          payload: JSON.parse(searchAdv),
-        });
-      } else {
-        dispatch({
-          type: types.APP_CONFIG.GET_ADV_SEARCH,
-          payload: null,
-        });
-      }
-    } catch (e) {
-      crashlytics().recordError(e);
-    }
-  },
-  searchAdvError: () => async (dispatch) => {
-    dispatch({type: types.APP_CONFIG.SEARCH_ADV_ERROR, payload: null});
-  },
 };
 
 export function reducer(state = initState, action) {
@@ -229,20 +142,12 @@ export function reducer(state = initState, action) {
       return {...state, fontSizes: action.payload};
     case types.APP_CONFIG.GET_LATEST:
       return {...state, listLatest: action.payload};
-    case types.APP_CONFIG.GET_SEARCH:
-      return {...state, listSearch: action.payload};
-    case types.APP_CONFIG.GET_IMDB_SEARCH:
-      return {...state, listImdb: action.payload};
-    case types.APP_CONFIG.GET_ADV_SEARCH:
-      return {...state, listAdvSearch: action.payload};
     case types.APP_CONFIG.LATEST_ERROR:
       return {...state, latestError: action.payload};
+    case types.APP_CONFIG.GET_SEARCH:
+      return {...state, listSearch: action.payload};
     case types.APP_CONFIG.SEARCH_ERROR:
       return {...state, searchError: action.payload};
-    case types.APP_CONFIG.IMDB_SEARCH_ERROR:
-      return {...state, imdbError: action.payload};
-    case types.APP_CONFIG.SEARCH_ADV_ERROR:
-      return {...state, advSearchError: action.payload};
     default:
       return state;
   }
