@@ -5,8 +5,10 @@ import {
   Text,
   Animated,
   Alert,
+  Easing,
   FlatList,
   RefreshControl,
+  ActivityIndicator,
   SafeAreaView,
   Pressable,
   Keyboard,
@@ -15,6 +17,7 @@ import {
   Linking,
 } from 'react-native';
 import Accordion from 'react-native-collapsible/Accordion';
+import Collapsible from 'react-native-collapsible';
 import {Input, Overlay, Badge} from 'react-native-elements';
 import {Chip} from 'react-native-paper';
 import FastImage from 'react-native-fast-image';
@@ -46,15 +49,12 @@ import {
   faCopy,
   faDownload,
   faDatabase,
-  faCalendarWeek,
-  faQuestionCircle,
-  faSearchPlus,
   faStar,
   faSearch,
-  faTasks,
   faAngleDoubleUp,
+  faFileDownload,
   faCheckSquare,
-  faCog,
+  faFilm,
   faCheck,
   faEraser,
   faFilter,
@@ -92,51 +92,51 @@ import xxx from '../assets/cat/xxx.png';
 import {catValues} from '../assets/catData';
 
 // Variables
-import {width, height, MAIN_LIGHT, MAIN_DARK, ACCENT_COLOR, statusHeight} from '../assets/variables';
+import {width, MAIN_LIGHT, ACCENT_COLOR, statusHeight} from '../assets/variables';
 
 const INFO = [
   {
-    title: '1.Pentru a descărca un un fişier torrent',
+    title: '1.Folosirea funcţiei de căutare',
+    content:
+      '* Pentru cele mai recente torrente dintr-o anumită categorie selectează cel puţin 1 categorie din lista de filtre\n\n* Pentru căutarea după cod IMDb asigură-te că selectezi Căutare după: Cod IMDb în lista de Filtre, pentru exemple legat de diferenţele dintre cele două ţine apăsat 2 secunde (long press) pe oricare dintre cele 2 opţiuni Căutare după\n\n* Opţiunea Torrente din lista cu Filtre NU are nici un efect atunci când NU se foloseşte nici un cuvânt cheie ori când se efectuează Căutare după: Cod IMDb\n\n* Opţiunile Torrente: Freeleech, Internal şi 2x Upload pot fi folosite în combinaţie cu oricare dintre Categorii şi Cuvânt cheie ori cod IMDb',
+  },
+  {
+    title: '2.Semnificaţie Freeleech, Internal şi 2x Upload',
+    content:
+      'Freeleech:\ndescărcarea torrentelor din această categorie, îţi va creşte Upload-ul fără să adăuge Download astfel nu-ţi va afecta negativ Raţia\n\nInternal:\ntorrente care fac parte din grupuri interne ale trackerului printre care se numără Play(HD|BD|SD|XD)\n\n2x Upload:\nîn caz că nu se subînţelege, aceste torrente odată descărcate şi ţinute la Seed îţi oferă de 2 ori mai mult upload',
+  },
+  {
+    title: '3.Reactualizarea listei cu torrente recent adăugate',
+    content: 'Se efectuează prin tragerea în jos (pull down) din capul listei',
+  },
+  {
+    title: '4.Pentru a descărca un fişier torrent',
     content: 'Ţine apăsat 2 secunde (long press) pe torrentul respectiv',
   },
   {
-    title: '2.Reactualizarea listei cu torrente recent adăugate',
-    content:
-      'Se efectuează prin tragerea în jos (pull down) din capul listei.',
-  },
-  {
-    title: '3.Pentru redirecţionare spre pagina IMDb',
+    title: '5.Pentru redirecţionare spre IMDb',
     content:
       'Se aplică doar în cazul torrentelor care conţin cod IMDb şi se efectuează prin atingerea posterului',
   },
   {
-    title: '4.Dacă mărimea textului este prea mică / mare',
-    content: 'Se poate schimba din meniu pe mărimile mic, mediu ori mare în funcţie de preferinţă',
+    title: '6.Dacă mărimea textului este prea mică / mare',
+    content:
+      'Se poate schimba din meniu pe mărimile mic, mediu ori mare în funcţie de preferinţă',
   },
 ];
 
 export default function Home({navigation}) {
-  const [searchText, setSearchText] = useState('');
-  const [advSearchText, setAdvSearchText] = useState('');
-  const [activeSections, setActiveSections] = useState([]);
-  const [modalData, setModalData] = useState(null);
-  const [IMDbID, setIMDbID] = useState(null);
-  const [IMDbData, setIMDbData] = useState(null);
-  const [advKeyword, setAdvKeyword] = useState(true);
-  const [advIMDb, setAdvIMDb] = useState(false);
-  const [infoModal, setInfoModal] = useState(false);
-  const [advSearch, setAdvSearch] = useState(false);
-  const [switchSearch, setSwitchSearch] = useState(false);
-  const [noResults, setNoResults] = useState(false);
-  const [catNames, setCatNames] = useState('');
   const [catIndex, setCatIndex] = useState('');
-  const [catList, setCatList] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [imdbModal, setIMDbModal] = useState(false);
+  const [IMDbData, setIMDbData] = useState(null);
   const [catListLatest, setCatListLatest] = useState(false);
-  const [isSearch, setIsSearch] = useState(false);
+  const [collItems, setCollItems] = useState([]);
+  const [activeSections, setActiveSections] = useState([]);
+  const [switchSearch, setSwitchSearch] = useState(false);
   const [imdbSearch, setImdbSearch] = useState(false);
   const [keySearch, setKeySearch] = useState(true);
   const [isNetReachable, setIsNetReachable] = useState(true);
-  // Loading
   const [refreshing, setRefreshing] = useState(false);
   const [IMDbLoading, setIMDbLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -171,7 +171,6 @@ export default function Home({navigation}) {
   const [doubleUp, setDoubleUp] = useState(false);
   const [freeleech, setFreeleech] = useState(false);
   const [internal, setInternal] = useState(false);
-  const [moderated, setModerated] = useState(false);
   // Animations
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
@@ -186,7 +185,6 @@ export default function Home({navigation}) {
     fontSizes,
     listLatest,
     listSearch,
-    searchError,
   } = useSelector((state) => state.appConfig);
 
   // Refs
@@ -194,9 +192,11 @@ export default function Home({navigation}) {
 
   // Component mount
   useEffect(() => {
-
     // Set font sizes
     dispatch(AppConfigActions.setFonts());
+
+    // Clear collapsed
+    setCollItems([]);
 
     // Net connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
@@ -213,28 +213,26 @@ export default function Home({navigation}) {
       }
     });
 
-    // Checking
-    // if (IMDbID !== null) {
-    //   fetchIMDbInfo(IMDbID);
-    // }
-
-    // Keyboard open / closed listener
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {},
-    );
-
     return () => {
       unsubscribe();
-      keyboardDidHideListener.remove();
     };
-  }, [
-    isNetReachable,
-    modalData,
-    IMDbID,
-  ]);
+  }, [isNetReachable]);
 
   // Functions
+  const setCollapsible = (id) => {
+    const newIds = [...collItems];
+    const index = newIds.indexOf(id);
+
+    if (index > -1) {
+      newIds.splice(index, 1);
+    } else {
+      newIds.shift();
+      newIds.push(id);
+    }
+
+    setCollItems(newIds);
+  };
+
   const getIndexes = () => {
     setCatIndex([
     animes,
@@ -271,107 +269,117 @@ export default function Home({navigation}) {
 
   const handleSearch = async (action, type, query) => {
     try {
-            const value0 = await AsyncStorage.getItem('username');
-            const value1 = await AsyncStorage.getItem('passkey');
-            setSearchLoading(true);
-            dispatch(
-              AppConfigActions.getSearch(
-                value0,
-                value1,
-                action,
-                type,
-                query,
-                catIndex.length < 1 ? '' : `&category=${catIndex}`,
-                freeleech ? '&freeleech=1' : '',
-                internal ? '&internal=1' : '',
-                doubleUp ? '&doubleup=1' : '',
-              ),
-            );
-            setTimeout(() => {
-              setSearchLoading(false);
-            }, 1000);
-          } catch (e) {
-            crashlytics().recordError(error);
-            Alert.alert(
-              'Eroare',
-              'A apărut o eroare. Încearcă din nou.',
-              [
-                {
-                  text: 'OK',
-                  onPress: () => {},
-                },
-              ],
-              {cancelable: true},
-            );
-            crashlytics().recordError(e);
-          }
+      const value0 = await AsyncStorage.getItem('username');
+      const value1 = await AsyncStorage.getItem('passkey');
+      setSearchLoading(true);
+      dispatch(
+        AppConfigActions.getSearch(
+          value0,
+          value1,
+          action,
+          type,
+          query,
+          catIndex.length < 1 ? '' : `&category=${catIndex}`,
+          freeleech ? '&freeleech=1' : '',
+          internal ? '&internal=1' : '',
+          doubleUp ? '&doubleup=1' : '',
+        ),
+      );
+      setTimeout(() => {
+        setSearchLoading(false);
+      }, 1000);
+    } catch (e) {
+      crashlytics().log('home -> handleSearch()');
+      crashlytics().recordError(e);
+      Alert.alert(
+        'Eroare',
+        'A apărut o eroare. Încearcă din nou.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {},
+          },
+        ],
+        {cancelable: true},
+      );
+    }
   };
 
   const SkeletonLoading = () => {
     return (
       <SkeletonContent
-                      boneColor={'#404040'}
-                      highlightColor={'#505050'}
-                      duration={900}
-                      containerStyle={HomePage.skeletonContainer}
-                      isLoading={true}>
-                      <View
-                        style={{
-                          height: 45,
-                          width: 45,
-                          borderRadius: 0,
-                          marginRight: 8,
-                        }}
-                      />
-                      <View
-                        style={{
-                          height: statusHeight / 1.8,
-                          width: width / 1.7,
-                          borderRadius: 0,
-                        }}
-                      />
-                      <View
-                        style={{
-                          marginLeft: 62,
-                          position: 'absolute',
-                          bottom: 9,
-                          height: statusHeight / 2.5,
-                          width: width / 4,
-                          borderRadius: 0,
-                        }}
-                      />
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 8,
-                          right: 9,
-                          width: 13,
-                          height: 13,
-                          borderRadius: 100,
-                        }}
-                      />
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 8,
-                          right: 27,
-                          width: 13,
-                          height: 13,
-                          borderRadius: 100,
-                        }}
-                      />
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 8,
-                          right: 45,
-                          width: 13,
-                          height: 13,
-                          borderRadius: 100,
-                        }}
-                      />
-                    </SkeletonContent>
-    )
+        boneColor={
+          lightTheme ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.04)'
+        }
+        highlightColor={lightTheme ? '#rgba(0, 0, 0, 0.05)' : '#171717'}
+        duration={700}
+        containerStyle={[
+          HomePage.skeletonContainer,
+          {
+            borderColor: lightTheme ? 'rgba(0, 0, 0, 0.1)' : '#171717',
+            backgroundColor: lightTheme
+              ? 'rgba(0, 0, 0, 0.05)'
+              : 'rgba(255, 255, 255, 0.04)',
+          },
+        ]}
+        isLoading={true}>
+        <View
+          style={{
+            height: 45,
+            width: 45,
+            borderRadius: 0,
+            marginRight: 8,
+          }}
+        />
+        <View
+          style={{
+            height: statusHeight / 1.5,
+            width: width / 1.7,
+            borderRadius: 0,
+          }}
+        />
+        <View
+          style={{
+            marginLeft: 62,
+            position: 'absolute',
+            bottom: 9,
+            height: statusHeight / 2.5,
+            width: width / 4,
+            borderRadius: 0,
+          }}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 8,
+            right: 9,
+            width: 13,
+            height: 13,
+            borderRadius: 100,
+          }}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 8,
+            right: 27,
+            width: 13,
+            height: 13,
+            borderRadius: 100,
+          }}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 8,
+            right: 45,
+            width: 13,
+            height: 13,
+            borderRadius: 100,
+          }}
+        />
+      </SkeletonContent>
+    );
   }
 
   const fetchIMDbInfo = async (id) => {
@@ -384,13 +392,17 @@ export default function Home({navigation}) {
             setIMDbLoading(false);
           })
           .catch((e) => {
+            setIMDbLoading(false);
+            crashlytics().log("home -> fetchIMDbInfo() - Axios.get('https://spleeter.co.uk/' + id)");
             crashlytics().recordError(e);
           });
       } else {
-        setIMDbData(false);
+        setIMDbLoading(false);
+        setIMDbData(null);
       }
-    } catch (error) {
-      crashlytics().recordError(error);
+    } catch (e) {
+      crashlytics().log('home -> fetchIMDbInfo()');
+      crashlytics().recordError(e);
     }
   };
 
@@ -465,9 +477,6 @@ export default function Home({navigation}) {
         <Text
           style={{
             fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
-            textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
-            textShadowOffset: {width: 0.5, height: 0.5},
-            textShadowRadius: 1,
             color: ACCENT_COLOR,
             fontWeight: 'bold',
           }}>
@@ -503,12 +512,14 @@ export default function Home({navigation}) {
         dispatch(AppConfigActions.getLatest(value0, value1));
       }
     } catch (e) {
+      crashlytics().log('home -> getRefreshData()');
       crashlytics().recordError(e);
     }
   };
 
   const onRefresh = useCallback(async () => {
     setListLatestLoading(true);
+    setCollItems([]);
     getRefreshData();
     setTimeout(() => {
       setListLatestLoading(false);
@@ -551,13 +562,21 @@ export default function Home({navigation}) {
           );
         }
       }}
-      onPress={onPress}
+      onPress={() => {setCollapsible(item.id);}}
       android_ripple={{
         color: 'grey',
         borderless: false,
       }}
       style={[HomePage.itemPressable, style]}>
-      <View style={HomePage.itemPressableContainer}>
+      <View
+        style={[
+          HomePage.itemPressableContainer,
+          {
+            borderBottomWidth: collItems.includes(item.id) ? 0 : 1,
+            borderColor: lightTheme ? 'rgba(0, 0, 0, 0.1)' : '#171717',
+            backgroundColor: lightTheme ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.04)',
+          },
+        ]}>
         <View style={HomePage.itemPressableFirst}>
           <View style={HomePage.itemPresssablePic}>
             <FastImage
@@ -626,18 +645,15 @@ export default function Home({navigation}) {
                 HomePage.itemPressableNameText,
                 {
                   fontSize: Adjust(fontSizes !== null ? fontSizes[1] : 8),
-                  textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
-                  color: lightTheme ? MAIN_DARK : 'white',
+                  color: lightTheme ? 'black' : 'white',
                 },
               ]}>
               {item.name}
             </Text>
             <Text
               style={[
-                HomePage.itemPressableUploadText,
                 {
                   fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
-                  textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
                   color: lightTheme ? 'grey' : 'silver',
                 },
               ]}>
@@ -667,7 +683,490 @@ export default function Home({navigation}) {
   );
 
   const renderItem = ({item}) => {
-    return <Item item={item} style={HomePage.renderItemStyle} />;
+    return (
+      <>
+        <Item
+          item={item}
+          style={[
+            HomePage.renderItemStyle,
+            {
+              marginTop: 3,
+              marginBottom: collItems.includes(item.id) ? 0 : 3,
+            },
+          ]}
+        />
+        <Collapsible
+          easing={Easing.bounce}
+          enablePointerEvents={true}
+          duration={400}
+          collapsed={!collItems.includes(item.id)}>
+          <View
+            style={[
+              HomePage.collContainer,
+              {
+                borderColor: lightTheme ? 'rgba(0, 0, 0, 0.1)' : '#171717',
+                backgroundColor: lightTheme
+                  ? 'rgba(0, 0, 0, 0.05)'
+                  : 'rgba(255, 255, 255, 0.04)',
+              },
+            ]}>
+            <View
+              style={{
+                width: '100%',
+                flexWrap: 'wrap',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text
+                style={[
+                  {
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[1] : 9),
+                    color: lightTheme ? 'black' : 'white',
+                  },
+                ]}>
+                {item.small_description}
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                }}>
+                {item.freeleech === 1 ? (
+                  <Text
+                    style={[
+                      HomePage.imdbInfoFreeleechBadge,
+                      {
+                        fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
+                        fontWeight: 'bold',
+                      },
+                    ]}>
+                    FREELEECH
+                  </Text>
+                ) : null}
+                {item.internal === 1 ? (
+                  <Text
+                    style={[
+                      HomePage.imdbInfoInternalBadge,
+                      {
+                        fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
+                        fontWeight: 'bold',
+                      },
+                    ]}>
+                    INTERNAL
+                  </Text>
+                ) : null}
+                {item.doubleup === 1 ? (
+                  <Text
+                    style={[
+                      HomePage.imdbInfoDoubleUpBadge,
+                      {
+                        fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
+                        fontWeight: 'bold',
+                      },
+                    ]}>
+                    2X UPLOAD
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+            <View
+              style={{
+                flex: 1,
+                flexDirection: 'column',
+              }}>
+              <View
+                style={{
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingTop: width / 16,
+                  paddingBottom: width / 16,
+                }}>
+                <View
+                  style={{
+                    width: '33.33%',
+                    height: width / 8,
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Pressable
+                    style={HomePage.imdbInfoMainFooter3rdPressable}
+                    android_ripple={{
+                      color: 'grey',
+                      borderless: false,
+                      radius: width / 10,
+                    }}
+                    onPress={async () => {
+                      const supported = await Linking.canOpenURL(
+                        item.download_link,
+                      );
+                      if (supported) {
+                        Alert.alert(
+                          'Info',
+                          'Doreşti să descarci fişierul torrent ?',
+                          [
+                            {
+                              text: 'DA',
+                              onPress: () =>
+                                Linking.openURL(item.download_link),
+                            },
+                            {
+                              text: 'NU',
+                              onPress: () => {},
+                              style: 'cancel',
+                            },
+                          ],
+                          {cancelable: true},
+                        );
+                      } else {
+                        Alert.alert(
+                          'Info',
+                          'Acest torrent nu poate fi descărcat prin intermediul aplicaţiei.',
+                          [
+                            {
+                              text: 'OK',
+                              onPress: () => {},
+                              style: 'cancel',
+                            },
+                          ],
+                          {cancelable: true},
+                        );
+                      }
+                    }}>
+                    <FontAwesomeIcon
+                      size={14}
+                      icon={faFileDownload}
+                      color={ACCENT_COLOR}
+                    />
+                    <Text
+                      style={[
+                        {
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[1] : 8,
+                          ),
+                          color: lightTheme ? 'black' : MAIN_LIGHT,
+                        },
+                      ]}>
+                      Download
+                    </Text>
+                  </Pressable>
+                </View>
+                <View
+                  style={{
+                    width: '33.33%',
+                    height: width / 8,
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Pressable
+                    style={HomePage.imdbInfoMainFooter3rdPressable}
+                    android_ripple={{
+                      color: 'grey',
+                      borderless: false,
+                      radius: width / 10,
+                    }}
+                    onPress={() =>
+                      Alert.alert(
+                        'Info',
+                        'Mărimea totală a fişierelor din torrent',
+                        [
+                          {
+                            text: 'OK',
+                            onPress: () => {},
+                          },
+                        ],
+                        {cancelable: true},
+                      )
+                    }>
+                    <FontAwesomeIcon
+                      size={14}
+                      icon={faDatabase}
+                      color={ACCENT_COLOR}
+                    />
+                    <Text
+                      style={[
+                        {
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[1] : 8,
+                          ),
+                          color: lightTheme ? 'black' : MAIN_LIGHT,
+                        },
+                      ]}>
+                      {formatBytes(item.size)}
+                    </Text>
+                  </Pressable>
+                </View>
+                <View
+                  style={{
+                    width: '33.33%',
+                    height: width / 8,
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Pressable
+                    style={HomePage.imdbInfoMainFooter3rdPressable}
+                    android_ripple={{
+                      color: 'grey',
+                      borderless: false,
+                      radius: width / 10,
+                    }}
+                    onPress={() =>
+                      Alert.alert(
+                        'Info',
+                        'Numărul de persoane care ţin torrentul la seed în acest moment',
+                        [
+                          {
+                            text: 'OK',
+                            onPress: () => {},
+                          },
+                        ],
+                        {cancelable: true},
+                      )
+                    }>
+                    <FontAwesomeIcon
+                      size={14}
+                      icon={faChevronCircleUp}
+                      color={'limegreen'}
+                    />
+                    <Text
+                      style={[
+                        {
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[1] : 8,
+                          ),
+                          color: lightTheme ? 'black' : MAIN_LIGHT,
+                        },
+                      ]}>
+                      {item.seeders}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+            <View
+              style={{
+                flex: 1,
+                flexDirection: 'column',
+              }}>
+              <View
+                style={{
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingBottom: 5,
+                }}>
+                <View
+                  style={{
+                    width: '33.33%',
+                    height: width / 8,
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Pressable
+                    style={HomePage.imdbInfoMainFooter3rdPressable}
+                    android_ripple={{
+                      color: 'grey',
+                      borderless: false,
+                      radius: width / 10,
+                    }}
+                    onPress={() =>
+                      Alert.alert(
+                        'Info',
+                        'De câte ori a fost descărcat torrentul',
+                        [
+                          {
+                            text: 'OK',
+                            onPress: () => {},
+                          },
+                        ],
+                        {cancelable: true},
+                      )
+                    }>
+                    <FontAwesomeIcon
+                      size={14}
+                      icon={faDownload}
+                      color={ACCENT_COLOR}
+                    />
+                    <Text
+                      style={[
+                        {
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[1] : 8,
+                          ),
+                          color: lightTheme ? 'black' : MAIN_LIGHT,
+                        },
+                      ]}>
+                      {item.times_completed}
+                    </Text>
+                  </Pressable>
+                </View>
+                <View
+                  style={{
+                    width: '33.33%',
+                    height: width / 8,
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Pressable
+                    style={HomePage.imdbInfoMainFooter3rdPressable}
+                    android_ripple={{
+                      color: 'grey',
+                      borderless: false,
+                      radius: width / 10,
+                    }}
+                    onPress={() =>
+                      Alert.alert(
+                        'Info',
+                        'Numărul fişierelor din torrent',
+                        [
+                          {
+                            text: 'OK',
+                          },
+                        ],
+                        {onDismiss: () => {}, cancelable: true},
+                      )
+                    }>
+                    <FontAwesomeIcon
+                      size={14}
+                      icon={faCopy}
+                      color={ACCENT_COLOR}
+                    />
+                    <Text
+                      style={[
+                        {
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[1] : 8,
+                          ),
+                          color: lightTheme ? 'black' : MAIN_LIGHT,
+                        },
+                      ]}>
+                      {item.files}
+                    </Text>
+                  </Pressable>
+                </View>
+                <View
+                  style={{
+                    width: '33.33%',
+                    height: width / 8,
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Pressable
+                    style={HomePage.imdbInfoMainFooter3rdPressable}
+                    android_ripple={{
+                      color: 'grey',
+                      borderless: false,
+                      radius: width / 10,
+                    }}
+                    onPress={() =>
+                      Alert.alert(
+                        'Info',
+                        'Numărul persoanelor care descarcă torrentul în acest moment',
+                        [
+                          {
+                            text: 'OK',
+                            onPress: () => {},
+                          },
+                        ],
+                        {cancelable: true},
+                      )
+                    }>
+                    <FontAwesomeIcon
+                      size={14}
+                      icon={faChevronCircleDown}
+                      color={'crimson'}
+                    />
+                    <Text
+                      style={[
+                        {
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[1] : 8,
+                          ),
+                          color: lightTheme ? 'black' : MAIN_LIGHT,
+                        },
+                      ]}>
+                      {item.leechers}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+            {item.imdb !== null ? (
+              <View
+                style={{
+                  flex: 1,
+                  flexDirection: 'column',
+                }}>
+                <View
+                  style={{
+                    width: '100%',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingTop: 20,
+                    paddingBottom: 10,
+                  }}>
+                  <View
+                    style={{
+                      width: width / 6.5,
+                      height: width / 6.5,
+                      borderRadius: width / 6.5 / 2,
+                      overflow: 'hidden',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: lightTheme ? 'goldenrod' : 'gold',
+                    }}>
+                    <Pressable
+                      style={{
+                        width: width / 6.5,
+                        height: width / 6.5,
+                        borderRadius: width / 6.5 / 2,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        flexDirection: 'row',
+                      }}
+                      android_ripple={{
+                        color: 'grey',
+                      }}
+                      onPress={() => {
+                        fetchIMDbInfo(item.imdb);
+                        setIMDbModal(true);
+                      }}>
+                      <FontAwesomeIcon
+                        size={14}
+                        icon={faFilm}
+                        color={'black'}
+                      />
+                      <Text
+                        style={[
+                          {
+                            fontSize: Adjust(
+                              fontSizes !== null ? fontSizes[1] : 9,
+                            ),
+                            fontWeight: 'bold',
+                            color: 'black',
+                            marginLeft: 5,
+                          },
+                        ]}>
+                        IMDb
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            ) : null}
+          </View>
+        </Collapsible>
+      </>
+    );
   };
 
   return (
@@ -682,7 +1181,7 @@ export default function Home({navigation}) {
         animationType="slide"
         overlayStyle={[
           HomePage.infoOverlay,
-          {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+          {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010'},
         ]}
         isVisible={appInfo}
         onBackdropPress={() => {
@@ -692,22 +1191,19 @@ export default function Home({navigation}) {
         <View
           style={[
             HomePage.infoOverlayCloseContainer,
-            {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+            {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010'},
           ]}>
           <ScrollView
             showsVerticalScrollIndicator={true}
             contentContainerStyle={[
               HomePage.infoOverlayScrollView,
-              {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+              {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010'},
             ]}>
             <View style={HomePage.infoTitleContainer}>
               <Text
                 style={{
                   fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
-                  color: lightTheme ? MAIN_DARK : 'white',
-                  textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
-                  textShadowOffset: {width: 0.8, height: 0.8},
-                  textShadowRadius: 1,
+                  color: lightTheme ? 'black' : 'white',
                   fontWeight: 'bold',
                 }}>
                 Informaţii folosire
@@ -729,9 +1225,243 @@ export default function Home({navigation}) {
       <Overlay
         statusBarTranslucent
         animationType="fade"
+        overlayStyle={{
+          width: '90%',
+          height: '30%',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderRadius: 0,
+          padding: 5,
+          backgroundColor: lightTheme ? MAIN_LIGHT : '#101010',
+        }}
+        isVisible={imdbModal}
+        onBackdropPress={() => {
+          setIMDbData(null);
+          setIMDbModal(false);
+        }}>
+        <View
+          style={{
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          {IMDbLoading ? (
+            <ActivityIndicator
+              style={{marginVertical: statusHeight}}
+              size="large"
+              color={ACCENT_COLOR}
+            />
+          ) : IMDbData ? (
+            IMDbData.map((item, index) => {
+              return (
+                <View
+                  style={{
+                    height: width / 2,
+                    width: '100%',
+                    flexDirection: 'row',
+                    justifyContent: 'flex-start',
+                    alignItems: 'flex-start',
+                    marginVertical: 20,
+                    paddingRight: 20,
+                  }}
+                  key={item.link}>
+                  <View
+                    style={{
+                      width: '45%',
+                      height: '100%',
+                      flexDirection: 'column',
+                      justifyContent: 'flex-start',
+                      alignItems: 'flex-start',
+                    }}>
+                    <Pressable
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-start',
+                        alignItems: 'flex-start',
+                      }}
+                      onPress={() =>
+                        typeof item.link === 'function'
+                          ? {}
+                          : Alert.alert(
+                              'Info',
+                              'Doreşti să vizitezi pagina oficială IMDb asociată torrentului ?',
+                              [
+                                {
+                                  text: 'DA',
+                                  onPress: () => Linking.openURL(item.link),
+                                },
+                                {
+                                  text: 'NU',
+                                  onPress: () => {},
+                                  style: 'cancel',
+                                },
+                              ],
+                              {cancelable: true},
+                            )
+                      }>
+                      <FastImage
+                        style={{width: '100%', height: '80%'}}
+                        resizeMode={FastImage.resizeMode.contain}
+                        source={{
+                          uri: item.poster,
+                        }}
+                      />
+                      {item.rating === '' ||
+                      item.rating === undefined ? null : (
+                        <>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              width: '100%',
+                              height: '20%',
+                            }}>
+                            <Text
+                              style={[
+                                {
+                                  fontSize: Adjust(
+                                    fontSizes !== null ? fontSizes[6] : 14,
+                                  ),
+                                  color: lightTheme ? 'black' : 'white',
+                                  fontWeight: 'bold',
+                                },
+                              ]}>
+                              {item.rating}
+                            </Text>
+                            <FontAwesomeIcon
+                              size={Adjust(
+                                fontSizes !== null ? fontSizes[6] : 14,
+                              )}
+                              style={{marginLeft: 5}}
+                              color={lightTheme ? 'goldenrod' : 'gold'}
+                              icon={faStar}
+                            />
+                          </View>
+                        </>
+                      )}
+                    </Pressable>
+                  </View>
+                  <View
+                    style={{
+                      width: '55%',
+                      height: '100%',
+                      flexDirection: 'column',
+                      justifyContent: 'flex-start',
+                      alignItems: 'flex-start',
+                    }}>
+                    <View
+                      style={{
+                        flex: 1,
+                        flexDirection: 'column',
+                        flexWrap: 'wrap',
+                        justifyContent: 'flex-start',
+                        alignItems: 'flex-start',
+                        paddingHorizontal: 10,
+                      }}>
+                      <Text
+                        style={[
+                          {
+                            fontSize: Adjust(
+                              fontSizes !== null ? fontSizes[1] : 8,
+                            ),
+                            color: lightTheme ? 'black' : 'white',
+                            fontWeight: 'bold',
+                          },
+                        ]}>
+                        Plot
+                      </Text>
+                      <Text
+                        selectable
+                        style={[
+                          {
+                            fontSize: Adjust(
+                              fontSizes !== null ? fontSizes[1] : 8,
+                            ),
+                            color: lightTheme ? 'black' : MAIN_LIGHT,
+                            flexWrap: 'wrap',
+                            marginBottom: 3,
+                          },
+                        ]}>
+                        {item.plot === undefined
+                          ? 'Acest material nu are plot.'
+                          : item.plot.split('\n')[0]}
+                      </Text>
+                      {item.duration === '' ? null : (
+                        <>
+                          <View style={{width: '100%', flexDirection: 'row'}}>
+                            <Text
+                              style={[
+                                {
+                                  fontSize: Adjust(
+                                    fontSizes !== null ? fontSizes[1] : 8,
+                                  ),
+                                  color: lightTheme ? 'black' : 'white',
+                                  fontWeight: 'bold',
+                                },
+                              ]}>
+                              Durată:
+                            </Text>
+                            <Text
+                              style={[
+                                {
+                                  fontSize: Adjust(
+                                    fontSizes !== null ? fontSizes[1] : 8,
+                                  ),
+                                  color: lightTheme ? 'black' : MAIN_LIGHT,
+                                },
+                              ]}>
+                              {' '}
+                              {item.duration === undefined
+                                ? '∞'
+                                : item.duration}
+                            </Text>
+                          </View>
+                        </>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              );
+            })
+          ) : (
+            <View
+              style={{
+                width: '80%',
+                height: '100%',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <Text
+                style={{
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[2] : 10),
+                  textAlign: 'center',
+                  color: lightTheme ? 'black' : MAIN_LIGHT,
+                }}>
+                Conexiune offline.
+              </Text>
+              <Text
+                style={{
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[2] : 10),
+                  textAlign: 'center',
+                  color: lightTheme ? 'black' : MAIN_LIGHT,
+                }}>
+                Reconectează-te pentru a putea vedea informaţii despre acest
+                torrent.
+              </Text>
+            </View>
+          )}
+        </View>
+      </Overlay>
+      <Overlay
+        statusBarTranslucent
+        animationType="fade"
         overlayStyle={[
           HomePage.catCheckOverlay,
-          {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+          {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010'},
         ]}
         isVisible={catListLatest}
         onBackdropPress={() => {
@@ -750,7 +1480,7 @@ export default function Home({navigation}) {
             showsVerticalScrollIndicator={true}
             style={[
               HomePage.catCheckScrollView,
-              {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+              {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010'},
             ]}>
             <View style={HomePage.catCheckOverlayErase}>
               <Pressable
@@ -815,11 +1545,19 @@ export default function Home({navigation}) {
             <View style={HomePage.catCheckScrollContainer}>
               <Chip
                 style={{
-                  backgroundColor: keySearch ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? keySearch
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : keySearch
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (keySearch ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   keySearch ? (
                     <FontAwesomeIcon
@@ -861,11 +1599,23 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: imdbSearch ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? imdbSearch
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : imdbSearch
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme
+                    ? imdbSearch
+                      ? 'white'
+                      : 'black'
+                    : 'white',
+                }}
                 icon={() =>
                   imdbSearch ? (
                     <FontAwesomeIcon
@@ -926,11 +1676,19 @@ export default function Home({navigation}) {
             <View style={HomePage.catCheckScrollContainer}>
               <Chip
                 style={{
-                  backgroundColor: animes ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? animes
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : animes
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (animes ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   animes ? (
                     <FontAwesomeIcon
@@ -956,11 +1714,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: audio ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? audio
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : audio
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (audio ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   audio ? (
                     <FontAwesomeIcon
@@ -986,11 +1752,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: desene ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? desene
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : desene
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (desene ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   desene ? (
                     <FontAwesomeIcon
@@ -1016,11 +1790,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: diverse ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? diverse
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : diverse
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (diverse ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   diverse ? (
                     <FontAwesomeIcon
@@ -1046,11 +1828,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: doc ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? doc
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : doc
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (doc ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   doc ? (
                     <FontAwesomeIcon
@@ -1076,11 +1866,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: filme3d ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? filme3d
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : filme3d
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (filme3d ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   filme3d ? (
                     <FontAwesomeIcon
@@ -1106,11 +1904,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: filme4k ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? filme4k
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : filme4k
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (filme4k ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   filme4k ? (
                     <FontAwesomeIcon
@@ -1136,11 +1942,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: filme4kbd ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? filme4kbd
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : filme4kbd
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (filme4kbd ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   filme4kbd ? (
                     <FontAwesomeIcon
@@ -1166,11 +1980,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: filmeBD ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? filmeBD
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : filmeBD
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (filmeBD ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   filmeBD ? (
                     <FontAwesomeIcon
@@ -1196,11 +2018,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: filmeDvd ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? filmeDvd
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : filmeDvd
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (filmeDvd ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   filmeDvd ? (
                     <FontAwesomeIcon
@@ -1226,11 +2056,23 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: filmeDvdRo ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? filmeDvdRo
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : filmeDvdRo
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme
+                    ? filmeDvdRo
+                      ? 'white'
+                      : 'black'
+                    : 'white',
+                }}
                 icon={() =>
                   filmeDvdRo ? (
                     <FontAwesomeIcon
@@ -1256,11 +2098,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: filmeHd ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? filmeHd
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : filmeHd
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (filmeHd ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   filmeHd ? (
                     <FontAwesomeIcon
@@ -1286,11 +2136,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: filmeHdRo ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? filmeHdRo
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : filmeHdRo
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (filmeHdRo ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   filmeHdRo ? (
                     <FontAwesomeIcon
@@ -1316,11 +2174,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: filmeSd ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? filmeSd
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : filmeSd
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (filmeSd ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   filmeSd ? (
                     <FontAwesomeIcon
@@ -1346,11 +2212,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: flacs ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? flacs
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : flacs
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (flacs ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   flacs ? (
                     <FontAwesomeIcon
@@ -1376,11 +2250,23 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: jocConsole ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? jocConsole
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : jocConsole
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme
+                    ? jocConsole
+                      ? 'white'
+                      : 'black'
+                    : 'white',
+                }}
                 icon={() =>
                   jocConsole ? (
                     <FontAwesomeIcon
@@ -1406,11 +2292,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: jocPc ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? jocPc
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : jocPc
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (jocPc ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   jocPc ? (
                     <FontAwesomeIcon
@@ -1436,11 +2330,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: lin ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? lin
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : lin
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (lin ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   lin ? (
                     <FontAwesomeIcon
@@ -1466,11 +2368,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: mob ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? mob
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : mob
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (mob ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   mob ? (
                     <FontAwesomeIcon
@@ -1496,11 +2406,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: software ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? software
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : software
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (software ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   software ? (
                     <FontAwesomeIcon
@@ -1526,11 +2444,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: seriale4k ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? seriale4k
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : seriale4k
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (seriale4k ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   seriale4k ? (
                     <FontAwesomeIcon
@@ -1556,11 +2482,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: serialeHd ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? serialeHd
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : serialeHd
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (serialeHd ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   serialeHd ? (
                     <FontAwesomeIcon
@@ -1586,11 +2520,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: serialeSd ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? serialeSd
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : serialeSd
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (serialeSd ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   serialeSd ? (
                     <FontAwesomeIcon
@@ -1616,11 +2558,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: sports ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? sports
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : sports
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (sports ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   sports ? (
                     <FontAwesomeIcon
@@ -1646,11 +2596,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: videos ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? videos
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : videos
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (videos ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   videos ? (
                     <FontAwesomeIcon
@@ -1676,11 +2634,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: porn ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? porn
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : porn
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (porn ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   porn ? (
                     <FontAwesomeIcon
@@ -1732,11 +2698,19 @@ export default function Home({navigation}) {
               }}>
               <Chip
                 style={{
-                  backgroundColor: freeleech ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? freeleech
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : freeleech
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (freeleech ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   freeleech ? (
                     <FontAwesomeIcon
@@ -1762,11 +2736,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: internal ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? internal
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : internal
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (internal ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   internal ? (
                     <FontAwesomeIcon
@@ -1792,11 +2774,19 @@ export default function Home({navigation}) {
               </Chip>
               <Chip
                 style={{
-                  backgroundColor: doubleUp ? '#155778' : '#505050',
+                  backgroundColor: lightTheme
+                    ? doubleUp
+                      ? '#155778'
+                      : '#d4d2d2'
+                    : doubleUp
+                    ? '#155778'
+                    : '#202020',
                   marginRight: 5,
                   marginBottom: 5,
                 }}
-                textStyle={{color: 'white'}}
+                textStyle={{
+                  color: lightTheme ? (doubleUp ? 'white' : 'black') : 'white',
+                }}
                 icon={() =>
                   doubleUp ? (
                     <FontAwesomeIcon
@@ -1818,7 +2808,7 @@ export default function Home({navigation}) {
                   )
                 }
                 onPress={() => setDoubleUp(!doubleUp)}>
-                2X Upload
+                2x Upload
               </Chip>
             </View>
           </ScrollView>
@@ -1842,7 +2832,7 @@ export default function Home({navigation}) {
         style={[
           HomePage.mainSafeAreaView,
           {
-            backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+            backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
           },
         ]}>
         <View style={HomePage.mainHeader}>
@@ -1868,7 +2858,9 @@ export default function Home({navigation}) {
                     );
                   } else {
                     if (values.search.length > 0) {
-                      const currentSearch = await AsyncStorage.getItem('search');
+                      const currentSearch = await AsyncStorage.getItem(
+                        'search',
+                      );
                       if (currentSearch !== null) {
                         await AsyncStorage.removeItem('search');
                         dispatch(AppConfigActions.retrieveSearch());
@@ -1886,7 +2878,7 @@ export default function Home({navigation}) {
                       );
                     }
                   }
-              } else {
+                } else {
                   netOff();
                   Alert.alert(
                     'Info',
@@ -1954,6 +2946,7 @@ export default function Home({navigation}) {
                         radius: width / 18,
                       }}
                       onPress={async () => {
+                        setCollItems([]);
                         setSwitchSearch(!switchSearch);
                         setKeySearch(true);
                         setImdbSearch(false);
@@ -2022,7 +3015,42 @@ export default function Home({navigation}) {
                       containerStyle={HomePage.mainHeaderSearch3Badge}
                       badgeStyle={{
                         borderWidth: 0,
-                        backgroundColor: ACCENT_COLOR,
+                        backgroundColor:
+                          [
+                            animes ? 1 : 0,
+                            audio ? 1 : 0,
+                            desene ? 1 : 0,
+                            diverse ? 1 : 0,
+                            doc ? 1 : 0,
+                            filme3d ? 1 : 0,
+                            filme4k ? 1 : 0,
+                            filme4kbd ? 1 : 0,
+                            filmeBD ? 1 : 0,
+                            filmeDvd ? 1 : 0,
+                            filmeDvdRo ? 1 : 0,
+                            filmeHd ? 1 : 0,
+                            filmeHdRo ? 1 : 0,
+                            filmeSd ? 1 : 0,
+                            flacs ? 1 : 0,
+                            jocConsole ? 1 : 0,
+                            jocPc ? 1 : 0,
+                            lin ? 1 : 0,
+                            mob ? 1 : 0,
+                            software ? 1 : 0,
+                            seriale4k ? 1 : 0,
+                            serialeHd ? 1 : 0,
+                            serialeSd ? 1 : 0,
+                            sports ? 1 : 0,
+                            videos ? 1 : 0,
+                            porn ? 1 : 0,
+                            doubleUp ? 1 : 0,
+                            freeleech ? 1 : 0,
+                            internal ? 1 : 0,
+                          ]
+                            .reduce((a, b) => a + b, 0)
+                            .toString() === '0'
+                            ? 'transparent'
+                            : 'black',
                       }}
                       textStyle={{
                         color:
@@ -2059,8 +3087,8 @@ export default function Home({navigation}) {
                           ]
                             .reduce((a, b) => a + b, 0)
                             .toString() === '0'
-                            ? 'white'
-                            : 'black',
+                            ? 'transparent'
+                            : 'white',
                         fontWeight: 'bold',
                       }}
                       value={[
@@ -2127,7 +3155,10 @@ export default function Home({navigation}) {
                     borderless: true,
                     radius: width / 18,
                   }}
-                  onPress={() => navigation.openDrawer()}>
+                  onPress={() => {
+                    navigation.openDrawer();
+                    setCollItems([]);
+                  }}>
                   <FontAwesomeIcon
                     size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
                     color={'white'}
@@ -2143,7 +3174,10 @@ export default function Home({navigation}) {
                     borderless: true,
                     radius: width / 18,
                   }}
-                  onPress={() => {setSwitchSearch(!switchSearch);}}>
+                  onPress={() => {
+                    setSwitchSearch(!switchSearch);
+                    setCollItems([]);
+                  }}>
                   <FontAwesomeIcon
                     size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
                     color={'white'}
@@ -2181,21 +3215,14 @@ export default function Home({navigation}) {
                     {id: '13'},
                     {id: '14'},
                     {id: '15'},
-                    {id: '16'},
-                    {id: '17'},
-                    {id: '18'},
-                    {id: '19'},
-                    {id: '20'},
                   ]
                 : listSearch
             }
             renderItem={searchLoading ? () => <SkeletonLoading /> : renderItem}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
-              paddingTop: 9,
-              paddingBottom: 9,
-              paddingLeft: 9,
-              paddingRight: width < 376 ? 22 : 18,
+              padding: 9,
+              width: width,
             }}
             ListHeaderComponent={() =>
               listSearch === null ? null : JSON.stringify(listSearch) ===
@@ -2261,7 +3288,10 @@ export default function Home({navigation}) {
               />
             }
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={HomePage.flatListsContentContainer}
+            contentContainerStyle={{
+              padding: 9,
+              width: width,
+            }}
             data={
               listLatestLoading
                 ? [
@@ -2280,17 +3310,13 @@ export default function Home({navigation}) {
                     {id: '13'},
                     {id: '14'},
                     {id: '15'},
-                    {id: '16'},
-                    {id: '17'},
-                    {id: '18'},
-                    {id: '19'},
-                    {id: '20'},
                   ]
                 : listLatest
             }
             renderItem={
               listLatestLoading ? () => <SkeletonLoading /> : renderItem
             }
+            extraData={collItems}
             keyExtractor={(item) => item.id.toString()}
           />
         )}
@@ -2350,21 +3376,18 @@ const HomePage = EStyleSheet.create({
   itemPressable: {
     elevation: 7,
     zIndex: 7,
-    marginVertical: '0.2rem',
   },
   itemPressableContainer: {
     flex: 1,
     width: '100%',
-    borderColor: '#181818',
     borderWidth: 1,
     padding: '0.5rem',
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   itemPressableFirst: {
-    height: '100%',
+    flex: 1,
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'flex-start',
@@ -2385,15 +3408,6 @@ const HomePage = EStyleSheet.create({
     paddingHorizontal: '0.5rem',
     height: '100%',
     width: '90%',
-  },
-  itemPressableNameText: {
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-  },
-  itemPressableUploadText: {
-    color: 'silver',
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
   },
   itemPressableUploadContainer: {
     position: 'absolute',
@@ -2439,21 +3453,6 @@ const HomePage = EStyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
   },
-  advSearchOverlay: {
-    width: '90%',
-    height: '70%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 0,
-  },
-  advSearchContainer: {
-    width: '100%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 5,
-  },
   catCheckOverlay: {
     width: '90%',
     height: '75%',
@@ -2470,34 +3469,14 @@ const HomePage = EStyleSheet.create({
   catCheckScrollView: {
     width: '100%',
     height: '100%',
-    marginBottom: statusHeight / 2
+    marginBottom: statusHeight / 2,
   },
   catCheckScrollContainer: {
-    flex:1,
+    flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
-  },
-  catCheckBox: {
-    width: '100%',
-    backgroundColor: 'transparent',
-    borderColor: 'grey',
-    borderBottomWidth: 1,
-    borderTopWidth: 0,
-    borderRightWidth: 0,
-    borderLeftWidth: 0,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  catCheckBoxLast: {
-    width: '100%',
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
   },
   catCheckOverlayFooter: {
     width: '100%',
@@ -2530,21 +3509,6 @@ const HomePage = EStyleSheet.create({
     backgroundColor: ACCENT_COLOR,
     borderRadius: 100,
   },
-  catCheckOverlayText: {
-    textShadowColor: 'black',
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  advSearchScrollView: {
-    width: '100%',
-    paddingBottom: StatusBar.currentHeight,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   inputContainerInner: {
     borderBottomColor: MAIN_LIGHT,
     position: 'absolute',
@@ -2554,456 +3518,7 @@ const HomePage = EStyleSheet.create({
   },
   inputStyle: {
     paddingLeft: '2.5rem',
-    paddingRight: '5rem'
-  },
-  advSearchInputStyle: {
-    fontWeight: 'normal',
-    paddingLeft: 1,
-  },
-  advSearchContainerStyle: {
-    height: 30,
-    width: '100%',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  advSearchInputContainerStyle: {
-    height: '80%',
-    width: '100%',
-    paddingTop: 10,
-    paddingLeft: 5,
-    paddingRight: 2,
-    borderBottomWidth: 1,
-  },
-  advSearchTypeViewContainer: {
-    height: 30,
-    width: '100%',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  advSearchTypeView: {
-    height: '25%',
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingHorizontal: '2%',
-  },
-  advSearchTypeText: {
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  advSearchTypePressable: {
-    height: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: '3%',
-  },
-  // error: {
-  //   position: 'absolute',
-  //   bottom: 0,
-  //   width: '100%',
-  //   fontSize: '0.6rem',
-  //   paddingLeft: '1rem',
-  //   paddingBottom: '0.1rem',
-  //   textAlign: 'left',
-  //   color: 'black',
-  // },
-  advSearchTypeCheckView: {
-    height: '75%',
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  advSearchTypeViewHalf: {
-    width: '50%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  advSearchTypeCheckBox1: {
-    width: '93%',
-    backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderTopWidth: 0,
-    borderRightWidth: 0,
-    borderLeftWidth: 0,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  advSearchTypeCheckBox2: {
-    width: '92%',
-    backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderTopWidth: 0,
-    borderRightWidth: 0,
-    borderLeftWidth: 0,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  advSearchTypeChecked: {
-    color: 'grey',
-  },
-  advSearchTypeUnchecked: {
-    borderRadius: 1,
-    borderWidth: 1,
-  },
-  advSearchCatContainer: {
-    width: '96%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 2,
-    marginBottom: 10,
-  },
-  advSearchCatCheck: {
-    width: '100%',
-    backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderTopWidth: 0,
-    borderRightWidth: 0,
-    borderLeftWidth: 0,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  advSearchOptions: {
-    width: '96%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  advSearchOptionsCheck: {
-    width: '47%',
-    backgroundColor: 'transparent',
-    borderBottomWidth: 1,
-    borderTopWidth: 0,
-    borderRightWidth: 0,
-    borderLeftWidth: 0,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  advSearchOptionsChecked: {
-    color: ACCENT_COLOR,
-  },
-  advSearchOptionsUnchecked: {
-    borderRadius: 1,
-    borderWidth: 1,
-  },
-  advSearchPressableContainer: {
-    width: StatusBar.currentHeight * 6,
-    height: StatusBar.currentHeight * 1.5,
-    backgroundColor: ACCENT_COLOR,
-    overflow: 'hidden',
-    borderRadius: 34,
-    marginTop: StatusBar.currentHeight,
-    marginBottom: 5,
-  },
-  advSearchPressable: {
-    width: '100%',
-    height: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 34,
-  },
-  advSearchPressableIcon: {
-    color: 'white',
-    marginRight: 10,
-  },
-  advSearchPressableText: {
-    textShadowColor: 'black',
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  imdbOverlayStyle: {
-    width: '87%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 0,
-  },
-  imdbInfoContainer: {
-    width: '100%',
-    paddingBottom: StatusBar.currentHeight,
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  imdbInfoContainerStyle: {
-    width: '100%',
-  },
-  imdbInfoView: {
-    width: '100%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  imdbInfoHeader: {
-    width: '100%',
-    height: '45rem',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginBottom: '8rem',
-  },
-  imdbInfoHeaderFastImage: {
-    position: 'absolute',
-    left: 0,
-    height: '45rem',
-    width: '45rem',
-  },
-  imdbInfoHeaderText: {
-    width: '85%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    paddingLeft: '2%',
-  },
-  imdbInfoHeaderCat: {
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-  },
-  imdbInfoHeaderDesc: {
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    color: 'grey',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  imdbInfoTitleSection: {
-    width: '100%',
-    height: '60rem',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    borderTopWidth: '0.5rem',
-    borderTopColor: '#303030',
-    paddingTop: '6rem',
-  },
-  imdbInfoTitleText: {
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    fontWeight: 'bold',
-  },
-  imdbInfoTitleBadges: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginBottom: '6rem',
-  },
-  imdbInfoFreeleechBadge: {
-    textShadowColor: 'black',
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    borderColor: '#1ec621',
-    borderWidth: '0.5rem',
-    color: 'aliceblue',
-    marginRight: '4rem',
-    backgroundColor: '#09580a',
-  },
-  imdbInfoDoubleUpBadge: {
-    textShadowColor: 'black',
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    borderColor: '#7c00ff',
-    borderWidth: '0.5rem',
-    color: 'aliceblue',
-    marginRight: '4rem',
-    backgroundColor: '#370f61',
-  },
-  imdbInfoInternalBadge: {
-    textShadowColor: 'black',
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    borderColor: '#1e87c6',
-    borderWidth: '0.5rem',
-    color: 'aliceblue',
-    marginRight: '4rem',
-    backgroundColor: '#093b58',
-  },
-  imdbInfoDataContainer: {
-    borderTopColor: '#303030',
-    borderTopWidth: '0.5rem',
-    paddingTop: '12rem',
-    width: '100%',
-    height: '250rem',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: '15rem',
-  },
-  imdbInfoActivityIndicator: {
-    width: '100%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  imdbInfoMainView: {
-    width: '100%',
-    height: '100%',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  imdbInfoMainPoster: {
-    width: '50%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  imdbInfoPosterPressable: {
-    width: '100%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  imdbInfoMainPosterFastImage: {
-    width: '90%',
-    height: '79%',
-  },
-  imdbInfoRatingView: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '90%',
-    height: '21%',
-  },
-  imdbInfoRatingText: {
-    textShadowOffset: {
-      width: 0.5,
-      height: 0.5,
-    },
-    textShadowRadius: 1,
-    fontWeight: 'bold',
-  },
-  imdbInfoRatingIcon: {marginLeft: '8rem'},
-  imdbInfoMainPlotView: {
-    width: '50%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingRight: '2%',
-  },
-  imdbInfoMainPlot: {
-    width: '100%',
-    height: '80%',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  imdbInfoMainPlotTitle: {
-    textShadowOffset: {
-      width: 0.5,
-      height: 0.5,
-    },
-    textShadowRadius: 1,
-    color: 'grey',
-    fontWeight: 'bold',
-  },
-  imdbInfoMainPlotText: {
-    textShadowOffset: {
-      width: 0.5,
-      height: 0.5,
-    },
-    textShadowRadius: 1,
-    paddingTop: '3%',
-  },
-  imdbInfoMainSeparator: {
-    position: 'relative',
-    top: 0,
-    left: 0,
-    marginVertical: '5rem',
-    width: '100%',
-    height: '0.5rem',
-    backgroundColor: '#303030',
-  },
-  imdbInfoMainETATitle: {
-    textShadowOffset: {
-      width: 0.5,
-      height: 0.5,
-    },
-    textShadowRadius: 1,
-    color: 'grey',
-    fontWeight: 'bold',
-  },
-  imdbInfoMainETAText: {
-    textShadowOffset: {
-      width: 0.5,
-      height: 0.5,
-    },
-    textShadowRadius: 1,
-  },
-  imdbInfoMainFooter: {
-    borderTopWidth: '0.5rem',
-    borderTopColor: '#303030',
-    width: '100%',
-    paddingTop: '12rem',
-    height: '80rem',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imdbInfoMainFooterView: {
-    width: '100%',
-    height: '50%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imdbInfoMainFooterView2: {
-    width: '100%',
-    height: '50%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: '10rem',
-  },
-  imdbInfoMainFooter3rd: {
-    width: '33.33%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imdbInfoMainFooter3rdPressable: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  imdbInfoMainFooter3rdText: {
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-  },
-  imdbInfoMainFooterTall: {
-    width: '100%',
-    height: '200rem',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imdbInfoMainFooterTallView: {
-    width: '100%',
-    height: '30%',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingRight: '5rem',
   },
   infoOverlay: {
     width: '90%',
@@ -3043,91 +3558,6 @@ const HomePage = EStyleSheet.create({
     justifyContent: 'flex-start',
     paddingHorizontal: '1rem',
   },
-  infoOverlayClosePressable: {
-    position: 'absolute',
-    right: 0,
-    width: '15%',
-    height: '25%',
-    bottom: '75%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingsOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    height: '20%',
-    flexDirection: 'column',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    borderRadius: 0,
-    padding: 0,
-    margin: 0,
-  },
-  settingsOverlayCloseContainer: {
-    width: '100%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  settingsOverlayClosePressable: {
-    position: 'absolute',
-    right: 0,
-    width: '15%',
-    height: '25%',
-    bottom: '75%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingsOverlayThemeContainer: {
-    width: '100%',
-    height: '33.33%',
-    paddingHorizontal: 5,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  settingsOverlayThemeText: {
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    fontWeight: 'bold',
-  },
-  settingsOverlayUseContainer: {
-    width: '100%',
-    height: '33.33%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: ACCENT_COLOR,
-  },
-  settingsOverlayUsePressable: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: ACCENT_COLOR,
-  },
-  settingsOverlayLogoutContainer: {
-    width: '100%',
-    height: '33.33%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'crimson',
-  },
-  settingsOverlayLogoutPressable: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'crimson',
-  },
-  settingsOverlayLogoutText: {
-    textShadowColor: 'black',
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    color: 'white',
-    fontWeight: 'bold',
-  },
   mainHeader: {
     height: statusHeight * 4,
     width: width,
@@ -3145,17 +3575,14 @@ const HomePage = EStyleSheet.create({
     alignItems: 'center',
   },
   mainHeaderText: {
-    textShadowColor: 'black',
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
     color: 'white',
     fontWeight: 'bold',
-    paddingBottom: '1.8rem',
+    paddingBottom: '1.35rem',
   },
   mainHeaderSearchContainer: {
     position: 'absolute',
     right: '0.3rem',
-    bottom: '1.2rem',
+    bottom: '1rem',
     width: '3rem',
     height: '2.5rem',
     justifyContent: 'center',
@@ -3198,7 +3625,7 @@ const HomePage = EStyleSheet.create({
   mainHeaderCogContainer: {
     position: 'absolute',
     left: '0.3rem',
-    bottom: '1.2rem',
+    bottom: '1rem',
     width: '3rem',
     height: '2.5rem',
     justifyContent: 'center',
@@ -3210,165 +3637,7 @@ const HomePage = EStyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  mainClearSearchBar: {
-    zIndex: 8,
-    elevation: 8,
-    height: 30,
-    width: '100%',
-    paddingHorizontal: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  mainClearSearchBarContainer: {
-    height: 20,
-    width: 20,
-    overflow: 'hidden',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 100,
-    backgroundColor: ACCENT_COLOR,
-  },
-  mainClearSearchBarPressable: {
-    height: '100%',
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 100,
-    backgroundColor: ACCENT_COLOR,
-    padding: 5,
-  },
-  mainClearSearchBarText: {
-    fontWeight: 'normal',
-    paddingHorizontal: 20,
-    width: '94%',
-  },
-  mainClearSearchBarTextSecond: {
-    fontWeight: 'bold',
-  },
-  searchInputContainerStyle: {
-    zIndex: 8,
-    elevation: 8,
-    height: 50,
-    width: '100%',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  searchInContainerStyle: {
-    borderBottomWidth: 1,
-    height: '80%',
-    width: '100%',
-    paddingTop: 15,
-    paddingLeft: 5,
-    paddingRight: 1,
-  },
-  searchInputRIContainer: {
-    height: 20,
-    width: 20,
-    borderRadius: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    paddingBottom: 2,
-  },
-  searchInputRIPressable: {
-    height: '100%',
-    width: '100%',
-    borderRadius: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 2,
-  },
-  searchLoadingContainer: {
-    width: '100%',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  searchLoadingAI: {
-    marginTop: StatusBar.currentHeight * 5,
-  },
-  searchNoResults: {
-    width: '100%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: StatusBar.currentHeight * 1.5,
-    paddingBottom: StatusBar.currentHeight * 2,
-  },
-  searchNoResultsTextPrimary: {
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  searchNoResultsTextSecondary: {
-    marginTop: 2,
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
-    textAlign: 'center',
-  },
-  flatListsContentContainer: {
-    padding: '0.5rem',
-  },
-  advSearchBtnContainer: {
-    width: 40,
-    height: 40,
-    zIndex: 5,
-    elevation: 5,
-    overflow: 'hidden',
-    bottom: 15,
-    right: 20,
-    borderRadius: 100,
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: ACCENT_COLOR,
-  },
-  advSearchBtnPressable: {
-    width: 40,
-    height: 40,
-    borderRadius: 100,
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: ACCENT_COLOR,
-  },
-  refreshContainer: {
-    height: StatusBar.currentHeight * 2,
-    width: '93%',
-    elevation: 9,
-    zIndex: 9,
-    position: 'absolute',
-    top: '50%',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 34,
-  },
-  refreshTextPrimary: {
-    fontWeight: 'bold',
-  },
-  refreshTextSecondary: {
-    paddingBottom: 2,
-  },
-  profilePicContainer: {
-    height: height,
-    width: width,
-    paddingBottom: height / 4,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  picture: {
-    width: width / 1.5,
-    height: width / 1.5,
-    justifyContent: 'center',
-    opacity: 0.3
-  },
-  skeletonContainer:{
+  skeletonContainer: {
     flex: 1,
     paddingVertical: 9,
     paddingHorizontal: 9,
@@ -3377,9 +3646,52 @@ const HomePage = EStyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
-    borderColor: '#181818',
     borderWidth: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  collContainer: {
+    flex: 1,
+    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    padding: 9,
+    marginBottom: 3,
+    flexDirection: 'column',
+  },
+  imdbInfoFreeleechBadge: {
+    paddingLeft: 4,
+    paddingTop: 2,
+    paddingRight: 2,
+    borderColor: '#1ec621',
+    borderWidth: 1,
+    color: 'white',
+    marginRight: 4,
+    backgroundColor: '#09580a',
+  },
+  imdbInfoInternalBadge: {
+    paddingLeft: 4,
+    paddingTop: 2,
+    paddingRight: 2,
+    borderColor: '#1e87c6',
+    borderWidth: 1,
+    color: 'white',
+    marginRight: 4,
+    backgroundColor: '#093b58',
+  },
+  imdbInfoDoubleUpBadge: {
+    paddingLeft: 4,
+    paddingTop: 2,
+    paddingRight: 2,
+    borderColor: '#7c00ff',
+    borderWidth: 1,
+    color: 'white',
+    backgroundColor: '#370f61',
+  },
+  imdbInfoMainFooter3rdPressable: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'space-around',
+    alignItems: 'center',
   },
   networkAlertContainer: {
     elevation: 10,

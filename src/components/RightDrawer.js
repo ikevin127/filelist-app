@@ -11,7 +11,7 @@ import {
   Linking,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import FastImage from 'react-native-fast-image';
+import crashlytics from '@react-native-firebase/crashlytics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Redux
@@ -36,19 +36,12 @@ import {
 // Variables
 import {
   width,
-  height,
   MAIN_LIGHT,
-  MAIN_DARK,
-  ACCENT_COLOR,
-  statusHeight,
 } from '../assets/variables';
 
 export default function RightDrawer({navigation}) {
-  
-  
   const [user, setUser] = useState('');
   const [darkLight] = useState(new Animated.Value(0));
-  const [firebasePic, setFirebasePic] = useState(false);
 
   // Redux
   const dispatch = useDispatch();
@@ -73,6 +66,7 @@ export default function RightDrawer({navigation}) {
       );
       dispatch(AppConfigActions.setFonts());
     } catch (e) {
+      crashlytics().log('rightdrawer -> toggleSFonts()');
       crashlytics().recordError(e);
     }
   };
@@ -85,6 +79,7 @@ export default function RightDrawer({navigation}) {
       );
       dispatch(AppConfigActions.setFonts());
     } catch (e) {
+      crashlytics().log('rightdrawer -> toggleMFonts()');
       crashlytics().recordError(e);
     }
   };
@@ -97,6 +92,7 @@ export default function RightDrawer({navigation}) {
       );
       dispatch(AppConfigActions.setFonts());
     } catch (e) {
+      crashlytics().log('rightdrawer -> toggleLFonts()');
       crashlytics().recordError(e);
     }
   };
@@ -158,23 +154,23 @@ export default function RightDrawer({navigation}) {
     <View
       style={[
         RightDrawerStyle.settingsOverlayMainContainer,
-        {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK},
+        {backgroundColor: lightTheme ? MAIN_LIGHT : 'black'},
       ]}>
       <View style={RightDrawerStyle.profileContainer}>
         <View style={RightDrawerStyle.profilePicContainer}>
           <View
-            style={RightDrawerStyle.profilePicView}>
+            style={[
+              RightDrawerStyle.profilePicView,
+              {borderColor: lightTheme ? 'black' : MAIN_LIGHT},
+            ]}>
             <Text
-                style={{
-                  fontSize: Adjust(30),
-                  fontWeight: 'bold',
-                  color: 'white',
-                  textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
-                  textShadowRadius: 1,
-                  textShadowOffset: {width: 0.8, height: 0.8},
-                }}>
-                {user !== '' ? user.charAt(0) : null}
-              </Text>
+              style={{
+                fontSize: Adjust(30),
+                fontWeight: 'bold',
+                color: lightTheme ? 'black' : 'white',
+              }}>
+              {user !== '' ? user.charAt(0) : null}
+            </Text>
           </View>
         </View>
         <View style={RightDrawerStyle.usernameView}>
@@ -182,7 +178,7 @@ export default function RightDrawer({navigation}) {
             style={{
               fontSize: Adjust(fontSizes !== null ? fontSizes[7] : 16),
               fontWeight: 'bold',
-              color: lightTheme ? MAIN_DARK : 'white',
+              color: lightTheme ? 'black' : 'white',
             }}>
             {user !== '' ? user : null}
           </Text>
@@ -197,7 +193,7 @@ export default function RightDrawer({navigation}) {
           }}
           onPress={() => dispatch(AppConfigActions.toggleAppInfo())}>
           <FontAwesomeIcon
-            color={lightTheme ? MAIN_DARK : MAIN_LIGHT}
+            color={lightTheme ? 'black' : MAIN_LIGHT}
             size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
             icon={faInfoCircle}
           />
@@ -207,7 +203,6 @@ export default function RightDrawer({navigation}) {
               {
                 fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                 color: lightTheme ? 'black' : 'white',
-                textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
             ]}>
             Informaţii folosire
@@ -242,19 +237,18 @@ export default function RightDrawer({navigation}) {
               {
                 fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                 color: lightTheme ? 'black' : 'white',
-                textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
             ]}>
             Temă culori
           </Text>
           <View
             style={{
-              paddingLeft: StatusBar.currentHeight / 2,
+              paddingLeft: StatusBar.currentHeight,
             }}
             pointerEvents={'none'}>
             <Switch
-              trackColor={{false: 'grey', true: MAIN_LIGHT}}
-              thumbColor={lightTheme ? 'white' : 'black'}
+              trackColor={{false: 'black', true: '#505050'}}
+              thumbColor={lightTheme ? 'white' : MAIN_LIGHT}
               ios_backgroundColor="#909090"
               value={!lightTheme}
             />
@@ -281,7 +275,6 @@ export default function RightDrawer({navigation}) {
               {
                 fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                 color: lightTheme ? 'black' : 'white',
-                textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
             ]}>
             Dimensiune text
@@ -324,7 +317,7 @@ export default function RightDrawer({navigation}) {
           style={[
             RightDrawerStyle.pickerIcon,
             {
-              color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+              color: lightTheme ? 'black' : MAIN_LIGHT,
             },
           ]}
           size={Adjust(fontSizes !== null ? fontSizes[7] : 16)}
@@ -338,45 +331,42 @@ export default function RightDrawer({navigation}) {
             color: 'grey',
             borderless: false,
           }}
-          onPress={
-            async () => {
-              const supported = await Linking.canOpenURL('https://filelist.io');
-
-              if (supported) {
-                Alert.alert(
-                  'Info',
-                  'Doreşti să navighezi spre Filelist.io ?',
-                  [
-                    {
-                      text: 'DA',
-                      onPress: () => Linking.openURL('https://filelist.io'),
-                    },
-                    {
-                      text: 'NU',
-                      onPress: () => {},
-                      style: 'cancel',
-                    },
-                  ],
-                  {cancelable: true},
-                );
-              } else {
-               Alert.alert(
-                 'Info',
-                 'Navigarea spre Filelist.io nu a funcţionat.',
-                 [
-                   {
-                     text: 'OK',
-                     onPress: () => {},
-                     style: 'cancel',
-                   },
-                 ],
-                 {cancelable: true},
-               );
-              }
+          onPress={async () => {
+            const supported = await Linking.canOpenURL('https://filelist.io');
+            if (supported) {
+              Alert.alert(
+                'Info',
+                'Doreşti să navighezi spre Filelist.io ?',
+                [
+                  {
+                    text: 'DA',
+                    onPress: () => Linking.openURL('https://filelist.io'),
+                  },
+                  {
+                    text: 'NU',
+                    onPress: () => {},
+                    style: 'cancel',
+                  },
+                ],
+                {cancelable: true},
+              );
+            } else {
+              Alert.alert(
+                'Info',
+                'Navigarea spre Filelist.io nu a funcţionat.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {},
+                    style: 'cancel',
+                  },
+                ],
+                {cancelable: true},
+              );
             }
-          }>
+          }}>
           <FontAwesomeIcon
-            color={lightTheme ? MAIN_DARK : MAIN_LIGHT}
+            color={lightTheme ? 'black' : MAIN_LIGHT}
             size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
             icon={faDirections}
           />
@@ -386,7 +376,6 @@ export default function RightDrawer({navigation}) {
               {
                 fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                 color: lightTheme ? 'black' : 'white',
-                textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
             ]}>
             Filelist.io
@@ -422,7 +411,6 @@ export default function RightDrawer({navigation}) {
               {
                 fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
                 color: lightTheme ? 'black' : 'white',
-                textShadowColor: lightTheme ? 'transparent' : MAIN_DARK,
               },
             ]}>
             Logout
@@ -437,7 +425,7 @@ const RightDrawerStyle = EStyleSheet.create({
   profileContainer: {
     top: 0,
     width: '100%',
-    height: StatusBar.currentHeight * 6,
+    height: width / 2,
     position: 'absolute',
     paddingTop: StatusBar.currentHeight,
     flexDirection: 'column',
@@ -452,19 +440,13 @@ const RightDrawerStyle = EStyleSheet.create({
   profilePicView: {
     width: width / 5,
     height: width / 5,
-    borderColor: 'silver',
-    backgroundColor: '#505050',
+    backgroundColor: 'transparent',
     borderRadius: 100,
-    borderWidth: 3,
+    borderWidth: 1.5,
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: '0.3rem',
-  },
-  profilePic: {
-    width: width / 5,
-    height: width / 5,
-    borderRadius: 100,
   },
   usernameView: {
     flexDirection: 'column',
@@ -494,8 +476,6 @@ const RightDrawerStyle = EStyleSheet.create({
     paddingHorizontal: StatusBar.currentHeight / 1.5,
   },
   settingsOverlayText: {
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
     fontWeight: 'bold',
     marginLeft: StatusBar.currentHeight / 1.5,
   },
@@ -505,12 +485,6 @@ const RightDrawerStyle = EStyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: StatusBar.currentHeight / 1.5,
-  },
-  settingOverlayFilelist: {
-    width: '100%',
-    height: '3.5rem',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   settingsPicker: {
     position: 'relative',

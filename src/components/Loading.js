@@ -10,7 +10,6 @@ import EStyleSheet from 'react-native-extended-stylesheet';
 // Variables
 import {
   MAIN_LIGHT,
-  MAIN_DARK,
   ACCENT_COLOR,
 } from '../assets/variables';
 
@@ -24,10 +23,10 @@ export default function Loading() {
     <>
       <StatusBar
         barStyle={lightTheme ? 'dark-content':'light-content'}
-        backgroundColor={lightTheme ? Platform.Version < 23 ? MAIN_DARK : 'transparent' : 'transparent'}
+        backgroundColor={lightTheme ? Platform.Version < 23 ? "black" : 'transparent' : 'transparent'}
         translucent={true}
       />
-      <View style={[LoadingPage.container, {backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK}]}>
+      <View style={[LoadingPage.container, {backgroundColor: lightTheme ? MAIN_LIGHT : "black"}]}>
         <ActivityIndicator
           style={LoadingPage.indicator}
           size="large"

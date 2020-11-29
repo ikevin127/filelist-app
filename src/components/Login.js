@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Text,
-  Dimensions,
   Platform,
 } from 'react-native';
 import {Input} from 'react-native-elements';
@@ -47,7 +46,6 @@ import {
   width,
   height,
   MAIN_LIGHT,
-  MAIN_DARK,
   ACCENT_COLOR,
   statusHeight,
 } from '../assets/variables';
@@ -122,10 +120,11 @@ export default function Login() {
       if (fonts === null) {
         await AsyncStorage.setItem(
           'fontSizes',
-          JSON.stringify([6, 8, 10, 11, 12, 13, 14, 16, 22, 50]),
+          JSON.stringify([6, 9, 10, 11, 12, 13, 14, 16, 22, 50]),
         );
       }
     } catch (e) {
+      crashlytics().log('login -> storeData()');
       crashlytics().recordError(e);
     }
   };
@@ -140,8 +139,9 @@ export default function Login() {
       } else {
         netOff();
       }
-    } catch (error) {
-      crashlytics().recordError(error);
+    } catch (e) {
+      crashlytics().log('login -> handleLogin()');
+      crashlytics().recordError(e);
     }
   };
 
@@ -206,7 +206,7 @@ export default function Login() {
         backgroundColor={
           Platform.Version < 23
             ? lightTheme
-              ? MAIN_DARK
+              ? "black"
               : 'transparent'
             : 'transparent'
         }
@@ -227,7 +227,7 @@ export default function Login() {
                 style={[
                   LoginPage.container,
                   {
-                    backgroundColor: lightTheme ? MAIN_LIGHT : MAIN_DARK,
+                    backgroundColor: lightTheme ? MAIN_LIGHT : "black",
                     paddingBottom: isKeyboard ? 0 : height / 7,
                   },
                 ]}>
@@ -271,16 +271,16 @@ export default function Login() {
                             LoginPage.inputStyle,
                             {
                               fontSize: Adjust(
-                                fontSizes !== null ? fontSizes[3] : 11,
+                                fontSizes !== null ? fontSizes[4] : 12,
                               ),
-                              color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              color: lightTheme ? "black" : MAIN_LIGHT,
                             },
                           ]}
                           inputContainerStyle={[
                             LoginPage.inputContainer,
                             {
                               borderBottomColor: lightTheme
-                                ? MAIN_DARK
+                                ? "black"
                                 : MAIN_LIGHT,
                             },
                           ]}
@@ -293,7 +293,7 @@ export default function Login() {
                           leftIcon={
                             <FontAwesomeIcon
                               size={22}
-                              color={lightTheme ? MAIN_DARK : 'white'}
+                              color={lightTheme ? "black" : 'white'}
                               icon={faUserLock}
                             />
                           }
@@ -310,16 +310,16 @@ export default function Login() {
                             LoginPage.inputStyle,
                             {
                               fontSize: Adjust(
-                                fontSizes !== null ? fontSizes[3] : 11,
+                                fontSizes !== null ? fontSizes[4] : 12,
                               ),
-                              color: lightTheme ? MAIN_DARK : MAIN_LIGHT,
+                              color: lightTheme ? "black" : MAIN_LIGHT,
                             },
                           ]}
                           inputContainerStyle={[
                             LoginPage.inputContainer,
                             {
                               borderBottomColor: lightTheme
-                                ? MAIN_DARK
+                                ? "black"
                                 : MAIN_LIGHT,
                             },
                           ]}
@@ -331,7 +331,7 @@ export default function Login() {
                           leftIcon={
                             <FontAwesomeIcon
                               size={22}
-                              color={lightTheme ? MAIN_DARK : 'white'}
+                              color={lightTheme ? "black" : 'white'}
                               icon={faKey}
                             />
                           }
@@ -386,7 +386,7 @@ export default function Login() {
           ]}>
           <Animated.Text
             style={{
-              fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+              fontSize: Adjust(fontSizes !== null ? fontSizes[7] : 16),
               fontWeight: 'bold',
               opacity: showNetworkAlertTextOn,
               color: 'white',
@@ -409,7 +409,7 @@ export default function Login() {
           ]}>
           <Animated.Text
             style={{
-              fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+              fontSize: Adjust(fontSizes !== null ? fontSizes[7] : 16),
               fontWeight: 'bold',
               opacity: showNetworkAlertTextOff,
               color: 'white',
@@ -459,28 +459,25 @@ const LoginPage = EStyleSheet.create({
     alignItems: 'center',
     paddingLeft: '0.5rem',
   },
-  inputContainerInner: {
-    borderBottomWidth: 0,
-  },
   inputStyle: {
     paddingLeft: '1rem',
   },
   btnContainer: {
-    elevation: 5,
-    zIndex: 5,
-    width: statusHeight * 2.3,
-    height: statusHeight * 2.3,
-    borderRadius: (statusHeight * 2.3) / 2,
+    elevation: 2,
+    zIndex: 2,
+    width: width / 6,
+    height: width / 6,
+    borderRadius: (width / 6) / 2,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: '3rem',
   },
   btn: {
-    width: statusHeight * 2.3,
-    height: statusHeight * 2.3,
+    width: width / 6,
+    height: width / 6,
     backgroundColor: ACCENT_COLOR,
-    borderRadius: (statusHeight * 2.3) / 2,
+    borderRadius: (width / 6) / 2,
     justifyContent: 'center',
     alignItems: 'center',
   },

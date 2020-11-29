@@ -1,15 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 // Redux
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
 
 // Screens
+import RightDrawer from './RightDrawer';
 import Loading from './Loading';
 import Login from './Login';
 import Home from './Home';
-import RightDrawer from './RightDrawer';
 
 // Variables
 import {
@@ -61,16 +62,15 @@ export default function Auth() {
     try {
       const currentTheme = await AsyncStorage.getItem('theme');
       if (currentTheme !== null) {
-        if (currentTheme === 'light') {
-          dispatch(AppConfigActions.toggleLightTheme());
-        } else {
-          //
-        }
+         if (currentTheme === 'light') {
+           dispatch(AppConfigActions.toggleLightTheme());
+         }
       } else {
         await AsyncStorage.setItem('theme', 'dark');
       }
     } catch (e) {
-      alert(e);
+      crashlytics().log('auth -> establishTheme()');
+      crashlytics().recordError(e);
     }
   };
 

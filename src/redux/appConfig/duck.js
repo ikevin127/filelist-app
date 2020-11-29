@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Axios from 'axios';
 import crashlytics from '@react-native-firebase/crashlytics';
 import {types} from '../types';
+import Axios from 'axios';
 
 const initState = {
   lightTheme: false,
@@ -29,10 +29,11 @@ export const actions = {
           payload: JSON.parse(fonts),
         });
       } else {
-        crashlytics().log('FontSizes not found in AsyncStorage.');
+        crashlytics().log('Font sizes not found in async storage.');
       }
-    } catch (error) {
-      crashlytics().recordError(error);
+    } catch (e) {
+      crashlytics().log('ducks -> setFonts()');
+      crashlytics().recordError(e);
     }
   },
   getLatest: (user, pass) => async (dispatch) => {
@@ -48,6 +49,7 @@ export const actions = {
         try {
           await AsyncStorage.setItem('latest', JSON.stringify(data));
         } catch (e) {
+          crashlytics().log('ducks -> getLatest()');
           crashlytics().recordError(e);
         }
       })
@@ -73,6 +75,7 @@ export const actions = {
         });
       }
     } catch (e) {
+      crashlytics().log('ducks -> retrieveLatest()');
       crashlytics().recordError(e);
     }
   },
@@ -102,6 +105,7 @@ export const actions = {
         try {
           await AsyncStorage.setItem('search', JSON.stringify(data));
         } catch (e) {
+          crashlytics().log('ducks -> getSearch()');
           crashlytics().recordError(e);
         }
       })
@@ -124,6 +128,7 @@ export const actions = {
         });
       }
     } catch (e) {
+      crashlytics().log('ducks -> retrieveSearch()');
       crashlytics().recordError(e);
     }
   },
