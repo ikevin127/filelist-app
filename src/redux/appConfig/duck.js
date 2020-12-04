@@ -6,6 +6,7 @@ import Axios from 'axios';
 const initState = {
   lightTheme: false,
   appInfo: false,
+  collItems: [],
   fontSizes: null,
   listLatest: null,
   latestError: null,
@@ -36,9 +37,12 @@ export const actions = {
       crashlytics().recordError(e);
     }
   },
-  getLatest: (user, pass) => async (dispatch) => {
+  setCollItems: (data) => async (dispatch) => {
+    dispatch({type: types.APP_CONFIG.COLL_ITEMS, payload: data});
+  },
+  getLatest: (user, pass, limit) => async (dispatch) => {
     await Axios.get(
-      `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=latest-torrents&limit=50`,
+      `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=latest-torrents&limit=${limit}`,
     )
       .then(async (res) => {
         let {data} = res;
@@ -145,6 +149,8 @@ export function reducer(state = initState, action) {
       return {...state, appInfo: !state.appInfo};
     case types.APP_CONFIG.FONT_SIZES:
       return {...state, fontSizes: action.payload};
+    case types.APP_CONFIG.COLL_ITEMS:
+      return {...state, collItems: action.payload};
     case types.APP_CONFIG.GET_LATEST:
       return {...state, listLatest: action.payload};
     case types.APP_CONFIG.LATEST_ERROR:

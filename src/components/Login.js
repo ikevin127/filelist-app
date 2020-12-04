@@ -135,7 +135,7 @@ export default function Login() {
       if (isNetReachable) {
         setLoginLoading(true);
         await storeData(user, pass);
-        dispatch(AppConfigActions.getLatest(user, pass));
+        dispatch(AppConfigActions.getLatest(user, pass, 20));
       } else {
         netOff();
       }

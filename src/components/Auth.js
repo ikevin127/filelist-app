@@ -9,6 +9,7 @@ import {AppConfigActions} from '../redux/actions';
 // Screens
 import RightDrawer from './RightDrawer';
 import Loading from './Loading';
+import Search from './Search';
 import Login from './Login';
 import Home from './Home';
 
@@ -23,18 +24,37 @@ import {
   createStackNavigator,
   CardStyleInterpolators,
 } from '@react-navigation/stack';
-const Stack = createStackNavigator();
+import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 const Drawer = createDrawerNavigator();
+const Stack = createStackNavigator();
+const Tab = createMaterialTopTabNavigator();
+
+function MyTabs() {
+  return (
+    <Tab.Navigator
+      initialRouteName="Home"
+      animationEnabled={true}
+      lazy={true}
+      tabBarOptions={{
+        showLabel: false,
+        showIcon: false,
+        style: {height: 0},
+      }}>
+      <Tab.Screen name="Home" component={Home} />
+      <Tab.Screen name="Search" component={Search} />
+    </Tab.Navigator>
+  );
+}
 
 // Left drawer
-const RightDrawerHome = ({navigation}) => {
+const RightDrawerHome = () => {
   return (
     <Drawer.Navigator
       drawerPosition="left"
       backBehavior="history"
       drawerStyle={{width: '70%'}}
       drawerContent={(props) => <RightDrawer {...props} />}>
-      <Drawer.Screen name="Home" component={Home} />
+      <Drawer.Screen name="Tabs" component={MyTabs} />
     </Drawer.Navigator>
   );
 };
