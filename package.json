@@ -27,6 +27,7 @@
     "@react-navigation/native": "^5.7.3",
     "@react-navigation/stack": "^5.9.0",
     "axios": "^0.20.0",
+    "core-js": "^3.8.1",
     "cosmiconfig": "^6.0.0",
     "dedent": "^0.7.0",
     "formik": "^2.2.5",
