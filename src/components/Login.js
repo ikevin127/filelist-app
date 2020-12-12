@@ -6,7 +6,6 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Keyboard,
-  SafeAreaView,
   StatusBar,
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -72,7 +71,7 @@ export default function Login() {
   // Component mount
   useEffect(() => {
     dispatch(AppConfigActions.setFonts());
-    if (latestError !== null) {
+    if (latestError) {
       setLoginLoading(false);
       netOff();
     }
@@ -117,7 +116,7 @@ export default function Login() {
       await AsyncStorage.setItem('username', value0);
       await AsyncStorage.setItem('passkey', value1);
       const fonts = await AsyncStorage.getItem('fontSizes');
-      if (fonts === null) {
+      if (fonts !== null) {
         await AsyncStorage.setItem(
           'fontSizes',
           JSON.stringify([6, 9, 10, 11, 12, 13, 14, 16, 22, 50]),
@@ -134,7 +133,7 @@ export default function Login() {
       Keyboard.dismiss();
       if (isNetReachable) {
         setLoginLoading(true);
-        await storeData(user, pass);
+        storeData(user, pass);
         dispatch(AppConfigActions.getLatest(user, pass, 20));
       } else {
         netOff();
@@ -160,7 +159,7 @@ export default function Login() {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: statusHeight,
+        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -187,7 +186,7 @@ export default function Login() {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: statusHeight,
+        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -213,22 +212,24 @@ export default function Login() {
         translucent={Platform.Version < 23 ? false : true}
       />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <SafeAreaView styles={{flex: 1}}>
           <ScrollView
             showsVerticalScrollIndicator={false}
             overScrollMode={'never'}
+            bounces={false}
             ref={scrollRef}
             keyboardShouldPersistTaps={'always'}>
             <KeyboardAvoidingView
               style={{flex: 1}}
               enabled={false}
-              behavior={'position'}>
+              behavior={'position'}
+              >
               <View
                 style={[
                   LoginPage.container,
                   {
                     backgroundColor: lightTheme ? MAIN_LIGHT : "black",
-                    paddingBottom: isKeyboard ? 0 : height / 7,
+                    height: Platform.OS === 'ios' ? height : height + statusHeight,
+                    paddingBottom: isKeyboard ? height / 8 : 0,
                   },
                 ]}>
                 <View style={LoginPage.profilePicContainer}>
@@ -285,6 +286,7 @@ export default function Login() {
                             },
                           ]}
                           onSubmitEditing={handleSubmit}
+                          returnKeyType={'go'}
                           selectionColor="grey"
                           autoCapitalize="none"
                           placeholder="Utilizator"
@@ -324,6 +326,7 @@ export default function Login() {
                             },
                           ]}
                           onSubmitEditing={handleSubmit}
+                          returnKeyType={'go'}
                           selectionColor="grey"
                           autoCapitalize="none"
                           placeholder="Passkey"
@@ -343,7 +346,7 @@ export default function Login() {
                           <Text style={LoginPage.error}>{errors.pass}</Text>
                         )}
                         <View style={LoginPage.btnContainer}>
-                          <Pressable
+                          {loginLoading ? <ActivityIndicator size={Platform.OS === 'ios' ? "small" : "large" } color={ACCENT_COLOR} /> : <Pressable
                             disabled={loginLoading}
                             onPress={handleSubmit}
                             android_ripple={{
@@ -351,16 +354,13 @@ export default function Login() {
                               borderless: false,
                             }}
                             style={LoginPage.btn}>
-                            {loginLoading ? (
-                              <ActivityIndicator size="large" color={'white'} />
-                            ) : (
+                            
                               <FontAwesomeIcon
                                 size={26}
                                 color={'white'}
                                 icon={faArrowRight}
                               />
-                            )}
-                          </Pressable>
+                          </Pressable> }
                         </View>
                       </>
                     )}
@@ -369,13 +369,13 @@ export default function Login() {
               </View>
             </KeyboardAvoidingView>
           </ScrollView>
-        </SafeAreaView>
       </TouchableWithoutFeedback>
       {isNetReachable ? (
         <Animated.View
           style={[
             LoginPage.networkAlertContainer,
             {
+              height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
               backgroundColor: 'limegreen',
               transform: [
                 {
@@ -399,6 +399,7 @@ export default function Login() {
           style={[
             LoginPage.networkAlertContainer,
             {
+              height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
               backgroundColor: 'crimson',
               transform: [
                 {
@@ -425,7 +426,6 @@ export default function Login() {
 const LoginPage = EStyleSheet.create({
   container: {
     width: width,
-    height: height + statusHeight,
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
@@ -487,7 +487,6 @@ const LoginPage = EStyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    height: statusHeight,
     justifyContent: 'center',
     alignItems: 'center',
   },

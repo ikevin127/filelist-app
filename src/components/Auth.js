@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import crashlytics from '@react-native-firebase/crashlytics';
 
 // Redux
 import {useDispatch, useSelector} from 'react-redux';
@@ -79,18 +78,13 @@ export default function Auth() {
 
   // Functions
   const establishTheme = async () => {
-    try {
-      const currentTheme = await AsyncStorage.getItem('theme');
-      if (currentTheme !== null) {
-         if (currentTheme === 'light') {
-           dispatch(AppConfigActions.toggleLightTheme());
-         }
-      } else {
-        await AsyncStorage.setItem('theme', 'dark');
+    const currentTheme = await AsyncStorage.getItem('theme');
+    if (currentTheme !== null) {
+      if (currentTheme === 'light') {
+        dispatch(AppConfigActions.toggleLightTheme());
       }
-    } catch (e) {
-      crashlytics().log('auth -> establishTheme()');
-      crashlytics().recordError(e);
+    } else {
+      await AsyncStorage.setItem('theme', 'dark');
     }
   };
 

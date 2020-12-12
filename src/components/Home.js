@@ -8,9 +8,9 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
-  SafeAreaView,
   Pressable,
-  StatusBar,
+  Platform,
+  Keyboard,
   Linking,
 } from 'react-native';
 import Collapsible from 'react-native-collapsible';
@@ -113,6 +113,12 @@ export default function Home({navigation}) {
     // Set font sizes
     dispatch(AppConfigActions.setFonts());
 
+    // Screen focus listener
+    const screenFocusListener = navigation.addListener('focus', () => {
+      // Dismiss keyboard everytime screen gets focus
+      Keyboard.dismiss();
+    });
+
     // Connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isInternetReachable === true) {
@@ -129,6 +135,7 @@ export default function Home({navigation}) {
     });
 
     return () => {
+      screenFocusListener();
       unsubscribe();
     };
   }, [isNetReachable]);
@@ -237,7 +244,7 @@ export default function Home({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: statusHeight,
+        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -264,7 +271,7 @@ export default function Home({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: statusHeight,
+        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -342,7 +349,7 @@ export default function Home({navigation}) {
         />
         <View
           style={{
-            height: statusHeight / 1.5,
+            height: statusHeight / 2,
             width: width / 1.7,
             borderRadius: 0,
           }}
@@ -973,18 +980,15 @@ export default function Home({navigation}) {
 
   return (
     <>
-      <StatusBar
-        barStyle={'light-content'}
-        backgroundColor={'transparent'}
-        translucent={true}
-      />
-      <SafeAreaView
-        style={[
+      <View
+        style={
+          [
           HomePage.mainSafeAreaView,
           {
             backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
           },
-        ]}>
+        ]
+        }>
         <Overlay
           statusBarTranslucent
           animationType="fade"
@@ -1265,6 +1269,7 @@ export default function Home({navigation}) {
         <FlatList
           refreshControl={
             <RefreshControl
+              tintColor={ACCENT_COLOR}
               progressViewOffset={55}
               refreshing={refreshing}
               onRefresh={onRefresh}
@@ -1331,6 +1336,7 @@ export default function Home({navigation}) {
             style={[
               HomePage.networkAlertContainer,
               {
+                height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'limegreen',
                 transform: [
                   {
@@ -1354,6 +1360,7 @@ export default function Home({navigation}) {
             style={[
               HomePage.networkAlertContainer,
               {
+                height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'crimson',
                 transform: [
                   {
@@ -1373,7 +1380,7 @@ export default function Home({navigation}) {
             </Animated.Text>
           </Animated.View>
         )}
-      </SafeAreaView>
+      </View>
     </>
   );
 }
@@ -1563,7 +1570,6 @@ const HomePage = EStyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    height: statusHeight,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -6,13 +6,12 @@ import {
   View,
   Easing,
   ScrollView,
-  SafeAreaView,
   Switch,
   Pressable,
-  StatusBar,
+  Platform,
   Linking,
 } from 'react-native';
-import {Picker} from '@react-native-picker/picker';
+import {Picker, PickerIOS} from '@react-native-picker/picker';
 import Accordion from 'react-native-collapsible/Accordion';
 import {Overlay} from 'react-native-elements';
 import crashlytics from '@react-native-firebase/crashlytics';
@@ -154,6 +153,43 @@ export default function RightDrawer({navigation}) {
     }
   };
 
+  const openFilelist = async () => {
+    const supported = await Linking.canOpenURL(
+      'https://filelist.io',
+    );
+    if (supported) {
+      Alert.alert(
+        'Info',
+        'Doreşti să navighezi spre Filelist.io ?',
+        [
+          {
+            text: 'DA',
+            onPress: () => Linking.openURL('https://filelist.io'),
+          },
+          {
+            text: 'NU',
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+        {cancelable: true},
+      );
+    } else {
+      Alert.alert(
+        'Info',
+        'Navigarea spre Filelist.io nu a funcţionat.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+        {cancelable: true},
+      );
+    }
+  }
+
   const switchTheme = async () => {
     dispatch(AppConfigActions.setCollItems([]));
     try {
@@ -234,13 +270,13 @@ export default function RightDrawer({navigation}) {
 
   return (
     <>
-      <SafeAreaView styles={{flex: 1}}>
         <Overlay
           statusBarTranslucent
           animationType="slide"
           overlayStyle={[
             RightDrawerStyle.infoOverlay,
-            {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010'},
+            {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010',
+            paddingTop: Platform.OS === 'android' ? statusHeight : statusHeight * 2},
           ]}
           isVisible={appInfo}
           onBackdropPress={() => {
@@ -258,7 +294,8 @@ export default function RightDrawer({navigation}) {
               bounces={false}
               contentContainerStyle={[
                 RightDrawerStyle.infoOverlayScrollView,
-                {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010'},
+                {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010',
+              paddingBottom: Platform.OS === 'android' ? statusHeight : statusHeight * 1.5},
               ]}>
               <View style={RightDrawerStyle.infoTitleContainer}>
                 <Text
@@ -391,7 +428,7 @@ export default function RightDrawer({navigation}) {
               </Text>
               <View
                 style={{
-                  paddingLeft: StatusBar.currentHeight,
+                  paddingLeft: statusHeight / 1.5,
                 }}
                 pointerEvents={'none'}>
                 <Switch
@@ -403,14 +440,14 @@ export default function RightDrawer({navigation}) {
               </View>
             </Pressable>
           </View>
-          <View style={RightDrawerStyle.settingsOverlayFont}>
+          <View style={[RightDrawerStyle.settingsOverlayFont, {marginTop: statusHeight / 2.5,}]}>
             <View
               style={{
                 width: '100%',
                 flexDirection: 'row',
                 justifyContent: 'flex-start',
                 alignItems: 'center',
-                paddingHorizontal: StatusBar.currentHeight / 1.5,
+                paddingHorizontal: statusHeight / 1.5,
               }}>
               <FontAwesomeIcon
                 color={lightTheme ? 'black' : MAIN_LIGHT}
@@ -428,7 +465,7 @@ export default function RightDrawer({navigation}) {
                 Dimensiune text
               </Text>
             </View>
-            <Picker
+            {Platform.OS === 'android' ? <Picker
               selectedValue={
                 fontSizes !== null
                   ? fontSizes[0] === 6
@@ -460,17 +497,39 @@ export default function RightDrawer({navigation}) {
               <Picker.Item label="Mic" value="s" />
               <Picker.Item label="Mediu" value="m" />
               <Picker.Item label="Mare" value="l" />
-            </Picker>
-            <FontAwesomeIcon
-              style={[
-                RightDrawerStyle.pickerIcon,
-                {
-                  color: lightTheme ? 'black' : MAIN_LIGHT,
-                },
-              ]}
-              size={Adjust(fontSizes !== null ? fontSizes[7] : 16)}
-              icon={faCaretDown}
-            />
+            </Picker> : <PickerIOS
+              selectedValue={
+                fontSizes !== null
+                  ? fontSizes[0] === 6
+                    ? 'm'
+                    : fontSizes[0] === 4
+                    ? 's'
+                    : fontSizes[0] === 8
+                    ? 'l'
+                    : 'm'
+                  : 'm'
+              }
+              style={RightDrawerStyle.settingsPicker}
+              itemStyle={{
+                  color: 'white',
+                  backgroundColor: lightTheme ? 'black' : 'transparent',
+                  height: statusHeight,
+                  width: width / 2,
+                  borderRadius: 10,
+                }}
+              onValueChange={(itemValue) =>
+                itemValue === 's'
+                  ? toggleSFonts()
+                  : itemValue === 'm'
+                  ? toggleMFonts()
+                  : itemValue === 'l'
+                  ? toggleLFonts()
+                  : null
+              }>
+              <PickerIOS.Item label="Mic" value="s" />
+              <PickerIOS.Item label="Mediu" value="m" />
+              <PickerIOS.Item label="Mare" value="l" />
+            </PickerIOS>}
           </View>
           <View style={RightDrawerStyle.settingsOverlayContainer}>
             <Pressable
@@ -479,42 +538,7 @@ export default function RightDrawer({navigation}) {
                 color: 'grey',
                 borderless: false,
               }}
-              onPress={async () => {
-                const supported = await Linking.canOpenURL(
-                  'https://filelist.io',
-                );
-                if (supported) {
-                  Alert.alert(
-                    'Info',
-                    'Doreşti să navighezi spre Filelist.io ?',
-                    [
-                      {
-                        text: 'DA',
-                        onPress: () => Linking.openURL('https://filelist.io'),
-                      },
-                      {
-                        text: 'NU',
-                        onPress: () => {},
-                        style: 'cancel',
-                      },
-                    ],
-                    {cancelable: true},
-                  );
-                } else {
-                  Alert.alert(
-                    'Info',
-                    'Navigarea spre Filelist.io nu a funcţionat.',
-                    [
-                      {
-                        text: 'OK',
-                        onPress: () => {},
-                        style: 'cancel',
-                      },
-                    ],
-                    {cancelable: true},
-                  );
-                }
-              }}>
+              onPress={openFilelist}>
               <FontAwesomeIcon
                 color={lightTheme ? 'black' : MAIN_LIGHT}
                 size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
@@ -568,7 +592,6 @@ export default function RightDrawer({navigation}) {
             </Pressable>
           </View>
         </View>
-      </SafeAreaView>
     </>
   );
 }
@@ -625,18 +648,18 @@ const RightDrawerStyle = EStyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingHorizontal: StatusBar.currentHeight / 1.5,
+    paddingHorizontal: statusHeight / 1.5,
   },
   settingsOverlayText: {
     fontWeight: 'bold',
-    marginLeft: StatusBar.currentHeight / 1.5,
+    marginLeft: statusHeight / 1.5,
   },
   settingsOverlayFont: {
     width: '100%',
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: StatusBar.currentHeight / 1.5,
+    marginTop: statusHeight / 1.5,
   },
   settingsPicker: {
     position: 'relative',
@@ -646,14 +669,13 @@ const RightDrawerStyle = EStyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '70%',
-    marginTop: '1rem',
-    backgroundColor: 'transparent',
+    marginTop: Platform.OS === 'android' ? '1rem' : '1.5rem',
+    marginBottom: Platform.OS === 'android' ? 0 : '1rem'
   },
   pickerIcon: {position: 'absolute', bottom: '0.9rem', right: '5rem'},
   infoOverlay: {
     width: width,
     height: height + statusHeight,
-    paddingTop: statusHeight,
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
@@ -661,15 +683,14 @@ const RightDrawerStyle = EStyleSheet.create({
     padding: 5,
   },
   infoOverlayCloseContainer: {
-    width: '100%',
+    width: width,
     height: '100%',
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
   },
   infoOverlayScrollView: {
-    width: '100%',
-    paddingBottom: StatusBar.currentHeight,
+    width: width,
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',

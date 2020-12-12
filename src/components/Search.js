@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Pressable,
+  Platform,
   Keyboard,
   ScrollView,
   StatusBar,
@@ -314,7 +315,9 @@ export default function Search({navigation}) {
   }
 
   const goBack = () => {
-    Keyboard.dismiss();
+    setTimeout(() => {
+      Keyboard.dismiss();
+    }, 100);
     resetFilters();
     navigation.navigate('Home');
   }
@@ -354,7 +357,7 @@ export default function Search({navigation}) {
     }
   }
 
-  const resetFilters = async () => {
+  const resetFilters = () => {
     setKeySearch(true);
     setImdbSearch(false);
     setAnimes(false);
@@ -474,7 +477,7 @@ export default function Search({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: statusHeight,
+        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -501,7 +504,7 @@ export default function Search({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: statusHeight,
+        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -579,7 +582,7 @@ export default function Search({navigation}) {
         />
         <View
           style={{
-            height: statusHeight / 1.5,
+            height: statusHeight / 2,
             width: width / 1.7,
             borderRadius: 0,
           }}
@@ -1213,11 +1216,11 @@ export default function Search({navigation}) {
   return (
     <>
       <StatusBar
-        barStyle={'light-content'}
+        barStyle={catListLatest ? lightTheme ? 'dark-content' : 'light-content' : 'light-content'}
         backgroundColor={'transparent'}
         translucent={true}
       />
-      <SafeAreaView
+      <View
         style={[
           SearchPage.mainSafeAreaView,
           {
@@ -1465,7 +1468,8 @@ export default function Search({navigation}) {
             SearchPage.catCheckOverlay,
             {
               height: height,
-              paddingTop: statusHeight,
+              paddingTop: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+              paddingBottom: Platform.OS === 'ios' ? statusHeight / 2 : 0,
               backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
             },
           ]}
@@ -1475,7 +1479,7 @@ export default function Search({navigation}) {
             <View
               style={[
                 SearchPage.catCheckOverlayErase,
-                {marginTop: statusHeight},
+                {marginTop: Platform.OS === 'ios' ? statusHeight * 1.3 : statusHeight * 1.5},
               ]}>
               <Pressable
                 style={SearchPage.catCheckOverlayPressableErase}
@@ -1483,7 +1487,7 @@ export default function Search({navigation}) {
                   color: 'white',
                   borderless: false,
                 }}
-                onPress={() => resetFilters()}>
+                onPress={resetFilters}>
                 <FontAwesomeIcon color={'white'} size={20} icon={faEraser} />
               </Pressable>
             </View>
@@ -1510,6 +1514,8 @@ export default function Search({navigation}) {
               </View>
               <ScrollView
                 showsVerticalScrollIndicator={true}
+                overScrollMode={'never'}
+                bounces={false}
                 style={[
                   SearchPage.catCheckScrollView,
                   {backgroundColor: lightTheme ? MAIN_LIGHT : 'black'},
@@ -3114,6 +3120,7 @@ export default function Search({navigation}) {
             style={[
               SearchPage.networkAlertContainer,
               {
+                height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'limegreen',
                 transform: [
                   {
@@ -3137,6 +3144,7 @@ export default function Search({navigation}) {
             style={[
               SearchPage.networkAlertContainer,
               {
+                height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'crimson',
                 transform: [
                   {
@@ -3156,7 +3164,7 @@ export default function Search({navigation}) {
             </Animated.Text>
           </Animated.View>
         )}
-      </SafeAreaView>
+      </View>
     </>
   );
 }
@@ -3283,9 +3291,7 @@ const SearchPage = EStyleSheet.create({
   catCheckOverlayErase: {
     position: 'absolute',
     top: 0,
-    right: 0,
-    marginTop: statusHeight * 1.5,
-    marginRight: 15,
+    right: 15,
     width: width / 8,
     height: width / 8,
     borderRadius: 100,
@@ -3489,7 +3495,6 @@ const SearchPage = EStyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    height: statusHeight,
     justifyContent: 'center',
     alignItems: 'center',
   },

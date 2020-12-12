@@ -22,14 +22,24 @@ export default function Loading() {
   return (
     <>
       <StatusBar
-        barStyle={lightTheme ? 'dark-content':'light-content'}
-        backgroundColor={lightTheme ? Platform.Version < 23 ? "black" : 'transparent' : 'transparent'}
+        barStyle={lightTheme ? 'dark-content' : 'light-content'}
+        backgroundColor={
+          lightTheme
+            ? Platform.Version < 23
+              ? 'black'
+              : 'transparent'
+            : 'transparent'
+        }
         translucent={true}
       />
-      <View style={[LoadingPage.container, {backgroundColor: lightTheme ? MAIN_LIGHT : "black"}]}>
+      <View
+        style={[
+          LoadingPage.container,
+          {backgroundColor: lightTheme ? MAIN_LIGHT : 'black'},
+        ]}>
         <ActivityIndicator
           style={LoadingPage.indicator}
-          size="large"
+          size={Platform.OS === 'ios' ? 'small' : 'large'}
           color={ACCENT_COLOR}
         />
       </View>
