@@ -3019,10 +3019,7 @@ export default function Search({navigation}) {
                   selectionColor="grey"
                   ref={searchRef}
                   autoFocus
-                  onFocus={() => {
-                    resetForm({});
-                    resetSearch();
-                  }}
+                  onFocus={() => resetForm({})}
                   placeholder="Caută după cuvânt cheie, IMDb..."
                   placeholderTextColor={'rgba(255,255,255,0.7)'}
                   value={values.search}
