@@ -60,7 +60,7 @@ export const actions = {
       .catch((err) => {
         dispatch({
           type: types.APP_CONFIG.LATEST_ERROR,
-          payload: err.response.status,
+          payload: err,
         });
       });
   },

@@ -34,7 +34,6 @@ import {
   faInfoCircle,
   faDirections,
   faTextHeight,
-  faCaretDown,
 } from '@fortawesome/free-solid-svg-icons';
 
 // Variables
@@ -270,202 +269,213 @@ export default function RightDrawer({navigation}) {
 
   return (
     <>
-        <Overlay
-          statusBarTranslucent
-          animationType="slide"
-          overlayStyle={[
-            RightDrawerStyle.infoOverlay,
-            {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010',
-            paddingTop: Platform.OS === 'android' ? statusHeight : statusHeight * 2},
-          ]}
-          isVisible={appInfo}
-          onBackdropPress={() => {
-            setActiveSections([]);
-            dispatch(AppConfigActions.toggleAppInfo());
-          }}>
-          <View
-            style={[
-              RightDrawerStyle.infoOverlayCloseContainer,
-              {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010'},
-            ]}>
-            <ScrollView
-              showsVerticalScrollIndicator={true}
-              overScrollMode={'never'}
-              bounces={false}
-              contentContainerStyle={[
-                RightDrawerStyle.infoOverlayScrollView,
-                {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010',
-              paddingBottom: Platform.OS === 'android' ? statusHeight : statusHeight * 1.5},
-              ]}>
-              <View style={RightDrawerStyle.infoTitleContainer}>
-                <Text
-                  style={{
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
-                    color: lightTheme ? 'black' : 'white',
-                    fontWeight: 'bold',
-                  }}>
-                  Informaţii folosire
-                </Text>
-              </View>
-              <Accordion
-                sections={INFO}
-                containerStyle={RightDrawerStyle.accordionContainer}
-                expandMultiple
-                underlayColor={lightTheme ? MAIN_LIGHT : '#303030'}
-                activeSections={activeSections}
-                renderHeader={_renderHeader}
-                renderContent={_renderContent}
-                onChange={_updateSections}
-              />
-              <View style={RightDrawerStyle.btnMainContainer}>
-                <View style={RightDrawerStyle.btnContainer}>
-                  <Pressable
-                    onPress={() => {
-                      setActiveSections([]);
-                      dispatch(AppConfigActions.toggleAppInfo());
-                    }}
-                    android_ripple={{
-                      color: 'white',
-                      borderless: false,
-                    }}
-                    style={RightDrawerStyle.btn}>
-                    <FontAwesomeIcon size={20} color={'white'} icon={faCheck} />
-                  </Pressable>
-                </View>
-              </View>
-            </ScrollView>
-          </View>
-        </Overlay>
+      <Overlay
+        statusBarTranslucent
+        animationType="slide"
+        overlayStyle={[
+          RightDrawerStyle.infoOverlay,
+          {
+            backgroundColor: lightTheme ? MAIN_LIGHT : '#101010',
+            paddingTop:
+              Platform.OS === 'android' ? statusHeight : statusHeight * 2,
+          },
+        ]}
+        isVisible={appInfo}
+        onBackdropPress={() => {
+          setActiveSections([]);
+          dispatch(AppConfigActions.toggleAppInfo());
+        }}>
         <View
           style={[
-            RightDrawerStyle.settingsOverlayMainContainer,
-            {backgroundColor: lightTheme ? MAIN_LIGHT : 'black'},
+            RightDrawerStyle.infoOverlayCloseContainer,
+            {backgroundColor: lightTheme ? MAIN_LIGHT : '#101010'},
           ]}>
-          <View style={RightDrawerStyle.profileContainer}>
-            <View style={RightDrawerStyle.profilePicContainer}>
-              <View
-                style={[
-                  RightDrawerStyle.profilePicView,
-                  {borderColor: lightTheme ? 'black' : MAIN_LIGHT},
-                ]}>
-                <Text
-                  style={{
-                    fontSize: Adjust(30),
-                    fontWeight: 'bold',
-                    color: lightTheme ? 'black' : 'white',
-                  }}>
-                  {user !== '' ? user.charAt(0) : null}
-                </Text>
-              </View>
-            </View>
-            <View style={RightDrawerStyle.usernameView}>
+          <ScrollView
+            showsVerticalScrollIndicator={true}
+            overScrollMode={'never'}
+            bounces={false}
+            contentContainerStyle={[
+              RightDrawerStyle.infoOverlayScrollView,
+              {
+                backgroundColor: lightTheme ? MAIN_LIGHT : '#101010',
+                paddingBottom:
+                  Platform.OS === 'android' ? statusHeight : statusHeight * 1.5,
+              },
+            ]}>
+            <View style={RightDrawerStyle.infoTitleContainer}>
               <Text
                 style={{
-                  fontSize: Adjust(fontSizes !== null ? fontSizes[7] : 16),
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                  color: lightTheme ? 'black' : 'white',
+                  fontWeight: 'bold',
+                }}>
+                Informaţii folosire
+              </Text>
+            </View>
+            <Accordion
+              sections={INFO}
+              containerStyle={RightDrawerStyle.accordionContainer}
+              expandMultiple
+              underlayColor={lightTheme ? MAIN_LIGHT : '#303030'}
+              activeSections={activeSections}
+              renderHeader={_renderHeader}
+              renderContent={_renderContent}
+              onChange={_updateSections}
+            />
+            <View style={RightDrawerStyle.btnMainContainer}>
+              <View style={RightDrawerStyle.btnContainer}>
+                <Pressable
+                  onPress={() => {
+                    setActiveSections([]);
+                    dispatch(AppConfigActions.toggleAppInfo());
+                  }}
+                  android_ripple={{
+                    color: 'white',
+                    borderless: false,
+                  }}
+                  style={RightDrawerStyle.btn}>
+                  <FontAwesomeIcon size={20} color={'white'} icon={faCheck} />
+                </Pressable>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </Overlay>
+      <View
+        style={[
+          RightDrawerStyle.settingsOverlayMainContainer,
+          {backgroundColor: lightTheme ? MAIN_LIGHT : 'black'},
+        ]}>
+        <View style={RightDrawerStyle.profileContainer}>
+          <View style={RightDrawerStyle.profilePicContainer}>
+            <View
+              style={[
+                RightDrawerStyle.profilePicView,
+                {borderColor: lightTheme ? 'black' : MAIN_LIGHT},
+              ]}>
+              <Text
+                style={{
+                  fontSize: Adjust(30),
                   fontWeight: 'bold',
                   color: lightTheme ? 'black' : 'white',
                 }}>
-                {user !== '' ? user : null}
+                {user !== '' ? user.charAt(0) : null}
               </Text>
             </View>
           </View>
-          <View style={RightDrawerStyle.settingsOverlayContainer}>
-            <Pressable
-              style={RightDrawerStyle.settingsOverlayPressable}
-              android_ripple={{
-                color: 'grey',
-                borderless: false,
-              }}
-              onPress={() => dispatch(AppConfigActions.toggleAppInfo())}>
-              <FontAwesomeIcon
-                color={lightTheme ? 'black' : MAIN_LIGHT}
-                size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                icon={faInfoCircle}
-              />
-              <Text
-                style={[
-                  RightDrawerStyle.settingsOverlayText,
-                  {
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
-                    color: lightTheme ? 'black' : 'white',
-                  },
-                ]}>
-                Informaţii folosire
-              </Text>
-            </Pressable>
-          </View>
-          <View style={RightDrawerStyle.settingsOverlayContainer}>
-            <Pressable
-              style={RightDrawerStyle.settingsOverlayPressable}
-              android_ripple={{
-                color: 'grey',
-                borderless: false,
-              }}
-              onPress={() => switchTheme()}>
-              <Animated.View
-                style={{
-                  transform: [
-                    {
-                      rotate: spinIt,
-                    },
-                  ],
-                }}>
-                <FontAwesomeIcon
-                  color={lightTheme ? 'black' : MAIN_LIGHT}
-                  size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                  icon={faAdjust}
-                />
-              </Animated.View>
-              <Text
-                style={[
-                  RightDrawerStyle.settingsOverlayText,
-                  {
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
-                    color: lightTheme ? 'black' : 'white',
-                  },
-                ]}>
-                Temă culori
-              </Text>
-              <View
-                style={{
-                  paddingLeft: statusHeight / 1.5,
-                }}
-                pointerEvents={'none'}>
-                <Switch
-                  trackColor={{false: 'black', true: '#505050'}}
-                  thumbColor={lightTheme ? 'white' : MAIN_LIGHT}
-                  ios_backgroundColor="#909090"
-                  value={!lightTheme}
-                />
-              </View>
-            </Pressable>
-          </View>
-          <View style={[RightDrawerStyle.settingsOverlayFont, {marginTop: statusHeight / 2.5,}]}>
-            <View
+          <View style={RightDrawerStyle.usernameView}>
+            <Text
               style={{
-                width: '100%',
-                flexDirection: 'row',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                paddingHorizontal: statusHeight / 1.5,
+                fontSize: Adjust(fontSizes !== null ? fontSizes[7] : 16),
+                fontWeight: 'bold',
+                color: lightTheme ? 'black' : 'white',
+              }}>
+              {user !== '' ? user : null}
+            </Text>
+          </View>
+        </View>
+        <View style={RightDrawerStyle.settingsOverlayContainer}>
+          <Pressable
+            style={RightDrawerStyle.settingsOverlayPressable}
+            android_ripple={{
+              color: 'grey',
+              borderless: false,
+            }}
+            onPress={() => dispatch(AppConfigActions.toggleAppInfo())}>
+            <FontAwesomeIcon
+              color={lightTheme ? 'black' : MAIN_LIGHT}
+              size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+              icon={faInfoCircle}
+            />
+            <Text
+              style={[
+                RightDrawerStyle.settingsOverlayText,
+                {
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                  color: lightTheme ? 'black' : 'white',
+                },
+              ]}>
+              Informaţii folosire
+            </Text>
+          </Pressable>
+        </View>
+        <View style={RightDrawerStyle.settingsOverlayContainer}>
+          <Pressable
+            style={RightDrawerStyle.settingsOverlayPressable}
+            android_ripple={{
+              color: 'grey',
+              borderless: false,
+            }}
+            onPress={() => switchTheme()}>
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    rotate: spinIt,
+                  },
+                ],
               }}>
               <FontAwesomeIcon
                 color={lightTheme ? 'black' : MAIN_LIGHT}
                 size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                icon={faTextHeight}
+                icon={faAdjust}
               />
-              <Text
-                style={[
-                  RightDrawerStyle.settingsOverlayText,
-                  {
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
-                    color: lightTheme ? 'black' : 'white',
-                  },
-                ]}>
-                Dimensiune text
-              </Text>
+            </Animated.View>
+            <Text
+              style={[
+                RightDrawerStyle.settingsOverlayText,
+                {
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                  color: lightTheme ? 'black' : 'white',
+                },
+              ]}>
+              Temă culori
+            </Text>
+            <View
+              style={{
+                paddingLeft: statusHeight / 1.5,
+              }}
+              pointerEvents={'none'}>
+              <Switch
+                trackColor={{false: 'black', true: '#505050'}}
+                thumbColor={lightTheme ? 'white' : MAIN_LIGHT}
+                ios_backgroundColor="#909090"
+                value={!lightTheme}
+              />
             </View>
-            {Platform.OS === 'android' ? <Picker
+          </Pressable>
+        </View>
+        <View
+          style={[
+            RightDrawerStyle.settingsOverlayFont,
+            {marginTop: statusHeight / 2.5},
+          ]}>
+          <View
+            style={{
+              width: '100%',
+              flexDirection: 'row',
+              justifyContent: 'flex-start',
+              alignItems: 'center',
+              paddingHorizontal: statusHeight / 1.5,
+            }}>
+            <FontAwesomeIcon
+              color={lightTheme ? 'black' : MAIN_LIGHT}
+              size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+              icon={faTextHeight}
+            />
+            <Text
+              style={[
+                RightDrawerStyle.settingsOverlayText,
+                {
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                  color: lightTheme ? 'black' : 'white',
+                },
+              ]}>
+              Dimensiune text
+            </Text>
+          </View>
+          {Platform.OS === 'android' ? (
+            <Picker
               selectedValue={
                 fontSizes !== null
                   ? fontSizes[0] === 6
@@ -477,6 +487,7 @@ export default function RightDrawer({navigation}) {
                     : 'm'
                   : 'm'
               }
+              dropdownIconColor={lightTheme ? '#000000': '#FFFFFF'}
               style={[
                 RightDrawerStyle.settingsPicker,
                 {
@@ -497,7 +508,9 @@ export default function RightDrawer({navigation}) {
               <Picker.Item label="Mic" value="s" />
               <Picker.Item label="Mediu" value="m" />
               <Picker.Item label="Mare" value="l" />
-            </Picker> : <PickerIOS
+            </Picker>
+          ) : (
+            <PickerIOS
               selectedValue={
                 fontSizes !== null
                   ? fontSizes[0] === 6
@@ -511,12 +524,12 @@ export default function RightDrawer({navigation}) {
               }
               style={RightDrawerStyle.settingsPicker}
               itemStyle={{
-                  color: 'white',
-                  backgroundColor: lightTheme ? 'black' : 'transparent',
-                  height: statusHeight,
-                  width: width / 2,
-                  borderRadius: 10,
-                }}
+                color: 'white',
+                backgroundColor: lightTheme ? 'black' : 'transparent',
+                height: statusHeight,
+                width: width / 2,
+                borderRadius: 10,
+              }}
               onValueChange={(itemValue) =>
                 itemValue === 's'
                   ? toggleSFonts()
@@ -529,69 +542,70 @@ export default function RightDrawer({navigation}) {
               <PickerIOS.Item label="Mic" value="s" />
               <PickerIOS.Item label="Mediu" value="m" />
               <PickerIOS.Item label="Mare" value="l" />
-            </PickerIOS>}
-          </View>
-          <View style={RightDrawerStyle.settingsOverlayContainer}>
-            <Pressable
-              style={RightDrawerStyle.settingsOverlayPressable}
-              android_ripple={{
-                color: 'grey',
-                borderless: false,
-              }}
-              onPress={openFilelist}>
-              <FontAwesomeIcon
-                color={lightTheme ? 'black' : MAIN_LIGHT}
-                size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                icon={faDirections}
-              />
-              <Text
-                style={[
-                  RightDrawerStyle.settingsOverlayText,
-                  {
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
-                    color: lightTheme ? 'black' : 'white',
-                  },
-                ]}>
-                Filelist.io
-              </Text>
-            </Pressable>
-          </View>
-          <View style={RightDrawerStyle.settingsOverlayContainer}>
-            <Pressable
-              style={RightDrawerStyle.settingsOverlayPressable}
-              android_ripple={{
-                color: 'grey',
-                borderless: false,
-              }}
-              onPress={() => {
-                navigation.closeDrawer();
-                handleLogout();
-              }}>
-              <FontAwesomeIcon
-                style={{
-                  transform: [
-                    {
-                      rotate: darkLight === 0 ? '0deg' : '0deg',
-                    },
-                  ],
-                }}
-                color={'crimson'}
-                size={Adjust(25)}
-                icon={faSignOutAlt}
-              />
-              <Text
-                style={[
-                  RightDrawerStyle.settingsOverlayText,
-                  {
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
-                    color: lightTheme ? 'black' : 'white',
-                  },
-                ]}>
-                Logout
-              </Text>
-            </Pressable>
-          </View>
+            </PickerIOS>
+          )}
         </View>
+        <View style={RightDrawerStyle.settingsOverlayContainer}>
+          <Pressable
+            style={RightDrawerStyle.settingsOverlayPressable}
+            android_ripple={{
+              color: 'grey',
+              borderless: false,
+            }}
+            onPress={openFilelist}>
+            <FontAwesomeIcon
+              color={lightTheme ? 'black' : MAIN_LIGHT}
+              size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+              icon={faDirections}
+            />
+            <Text
+              style={[
+                RightDrawerStyle.settingsOverlayText,
+                {
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                  color: lightTheme ? 'black' : 'white',
+                },
+              ]}>
+              Filelist.io
+            </Text>
+          </Pressable>
+        </View>
+        <View style={RightDrawerStyle.settingsOverlayContainer}>
+          <Pressable
+            style={RightDrawerStyle.settingsOverlayPressable}
+            android_ripple={{
+              color: 'grey',
+              borderless: false,
+            }}
+            onPress={() => {
+              navigation.closeDrawer();
+              handleLogout();
+            }}>
+            <FontAwesomeIcon
+              style={{
+                transform: [
+                  {
+                    rotate: darkLight === 0 ? '0deg' : '0deg',
+                  },
+                ],
+              }}
+              color={'crimson'}
+              size={Adjust(25)}
+              icon={faSignOutAlt}
+            />
+            <Text
+              style={[
+                RightDrawerStyle.settingsOverlayText,
+                {
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                  color: lightTheme ? 'black' : 'white',
+                },
+              ]}>
+              Logout
+            </Text>
+          </Pressable>
+        </View>
+      </View>
     </>
   );
 }
@@ -658,21 +672,18 @@ const RightDrawerStyle = EStyleSheet.create({
     width: '100%',
     flexDirection: 'column',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginTop: statusHeight / 1.5,
   },
   settingsPicker: {
-    position: 'relative',
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    width: '70%',
+    width: '54%',
+    marginLeft: width / 6,
     marginTop: Platform.OS === 'android' ? '1rem' : '1.5rem',
-    marginBottom: Platform.OS === 'android' ? 0 : '1rem'
+    marginBottom: Platform.OS === 'android' ? 0 : '1rem',
   },
-  pickerIcon: {position: 'absolute', bottom: '0.9rem', right: '5rem'},
   infoOverlay: {
     width: width,
     height: height + statusHeight,

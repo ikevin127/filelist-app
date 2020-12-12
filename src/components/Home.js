@@ -7,6 +7,7 @@ import {
   Easing,
   FlatList,
   RefreshControl,
+  StatusBar,
   ActivityIndicator,
   Pressable,
   Platform,
@@ -102,6 +103,7 @@ export default function Home({navigation}) {
     fontSizes,
     collItems,
     listLatest,
+    latestError,
   } = useSelector((state) => state.appConfig);
 
   // Refs
@@ -109,9 +111,20 @@ export default function Home({navigation}) {
 
   // Component mount
   useEffect(() => {
-
     // Set font sizes
     dispatch(AppConfigActions.setFonts());
+
+    // API error handling
+    if (latestError !== null) {
+      switch (latestError.response.status) {
+        case 429:
+          return setLimitReached;
+        case 503:
+          return setAPIDown;
+        default:
+          return setError;
+      }
+    }
 
     // Screen focus listener
     const screenFocusListener = navigation.addListener('focus', () => {
@@ -138,9 +151,57 @@ export default function Home({navigation}) {
       screenFocusListener();
       unsubscribe();
     };
-  }, [isNetReachable]);
+  }, [isNetReachable, latestError]);
 
   // Functions
+
+  const setLimitReached = () => {
+    setListLatestLoading(false);
+    Alert.alert(
+      'Info',
+      'API: Ai atins limita de 150 de cereri pe oră.\n\nPentru ca lista să se reactualizeze din nou cu cele mai recente torrente va trebui să aştepţi 1 oră.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+  }
+
+  const setAPIDown = () => {
+    setListLatestLoading(false);
+    Alert.alert(
+      'Info',
+      'API: Momentan serviciul Filelist API nu funcţionează.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+  }
+
+  const setError = () => {
+    setListLatestLoading(false);
+    Alert.alert(
+      'Info',
+      'API: Momentan serviciul Filelist API nu funcţionează.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+  };
 
   const onRefresh = useCallback(async () => {
     dispatch(AppConfigActions.setCollItems([]));
@@ -244,7 +305,7 @@ export default function Home({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -271,7 +332,7 @@ export default function Home({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -980,6 +1041,11 @@ export default function Home({navigation}) {
 
   return (
     <>
+    <StatusBar
+        barStyle={'light-content'}
+        backgroundColor={'transparent'}
+        translucent={true}
+      />
       <View
         style={
           [
@@ -1299,7 +1365,7 @@ export default function Home({navigation}) {
             ) : null
           }
           onEndReachedThreshold={0.02}
-          onEndReached={() => get50()}
+          onEndReached={latestError !== null ? null : get50}
           contentContainerStyle={{
             padding: 9,
             width: width,
@@ -1336,7 +1402,7 @@ export default function Home({navigation}) {
             style={[
               HomePage.networkAlertContainer,
               {
-                height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+                height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'limegreen',
                 transform: [
                   {
@@ -1347,12 +1413,12 @@ export default function Home({navigation}) {
             ]}>
             <Animated.Text
               style={{
-                fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
                 fontWeight: 'bold',
                 opacity: showNetworkAlertTextOn,
                 color: 'white',
               }}>
-              Online
+              ONLINE
             </Animated.Text>
           </Animated.View>
         ) : (
@@ -1360,7 +1426,7 @@ export default function Home({navigation}) {
             style={[
               HomePage.networkAlertContainer,
               {
-                height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+                height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'crimson',
                 transform: [
                   {
@@ -1371,12 +1437,12 @@ export default function Home({navigation}) {
             ]}>
             <Animated.Text
               style={{
-                fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
                 fontWeight: 'bold',
                 opacity: showNetworkAlertTextOff,
                 color: 'white',
               }}>
-              Offline
+              OFFLINE
             </Animated.Text>
           </Animated.View>
         )}

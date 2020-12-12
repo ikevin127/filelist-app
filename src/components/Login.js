@@ -50,6 +50,7 @@ import {
 } from '../assets/variables';
 
 export default function Login() {
+  const [errorMsg, setErrorMsg] = useState(null);
   const [isKeyboard, setIsKeyboard] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [isNetReachable, setIsNetReachable] = useState(true);
@@ -70,11 +71,23 @@ export default function Login() {
 
   // Component mount
   useEffect(() => {
+
+    // Set font size
     dispatch(AppConfigActions.setFonts());
-    if (latestError) {
-      setLoginLoading(false);
-      netOff();
+
+    // API error handling
+    if (latestError !== null) {
+      switch (latestError.response.status) {
+        case 429:
+          return setLimitReached;
+        case 503:
+          return setAPIDown;
+        default:
+          return setError;
+      }
     }
+
+    // Network connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isInternetReachable === true) {
         if (!netRef.current) {
@@ -111,6 +124,22 @@ export default function Login() {
   }, [listLatest, latestError, isNetReachable]);
 
   // Functions
+  
+  const setLimitReached = () => {
+    setLoginLoading(false);
+    setErrorMsg('API: Ai atins limita de 150 de cereri pe oră, revino peste o oră pentru a te putea conecta din nou');
+  }
+
+  const setAPIDown = () => {
+    setLoginLoading(false);
+    setErrorMsg('API: Momentan serviciul Filelist API nu funcţionează');
+  }
+
+  const setError = () => {
+    setLoginLoading(false);
+    setErrorMsg('API: Momentan serviciul Filelist API nu funcţionează');
+  };
+
   const storeData = async (value0, value1) => {
     try {
       await AsyncStorage.setItem('username', value0);
@@ -159,7 +188,7 @@ export default function Login() {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -186,7 +215,7 @@ export default function Login() {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -205,148 +234,160 @@ export default function Login() {
         backgroundColor={
           Platform.Version < 23
             ? lightTheme
-              ? "black"
+              ? 'black'
               : 'transparent'
             : 'transparent'
         }
         translucent={Platform.Version < 23 ? false : true}
       />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            overScrollMode={'never'}
-            bounces={false}
-            ref={scrollRef}
-            keyboardShouldPersistTaps={'always'}>
-            <KeyboardAvoidingView
-              style={{flex: 1}}
-              enabled={false}
-              behavior={'position'}
-              >
-              <View
-                style={[
-                  LoginPage.container,
-                  {
-                    backgroundColor: lightTheme ? MAIN_LIGHT : "black",
-                    height: Platform.OS === 'ios' ? height : height + statusHeight,
-                    paddingBottom: isKeyboard ? height / 8 : 0,
-                  },
-                ]}>
-                <View style={LoginPage.profilePicContainer}>
-                  <FastImage
-                    style={LoginPage.picture}
-                    resizeMode={FastImage.resizeMode.contain}
-                    source={require('../assets/logo.png')}
-                  />
-                </View>
-                <View style={LoginPage.form}>
-                  <Formik
-                    initialValues={{user: '', pass: ''}}
-                    onSubmit={(values) => handleLogin(values.user, values.pass)}
-                    validationSchema={yup.object().shape({
-                      user: yup
-                        .string()
-                        .min(1)
-                        .required('Numele de utilizator lipseşte'),
-                      pass: yup
-                        .string()
-                        .min(
-                          32,
-                          'Codul passkey conţine 32 de caractere şi este diferit de parola contului\nAcest cod se află în zona Profil a contului tău filelist',
-                        )
-                        .required('Codul passkey lipseşte'),
-                    })}>
-                    {({
-                      values,
-                      handleChange,
-                      errors,
-                      setFieldTouched,
-                      resetForm,
-                      touched,
-                      isValid,
-                      handleSubmit,
-                    }) => (
-                      <>
-                        <Input
-                          style={[
-                            LoginPage.inputStyle,
-                            {
-                              fontSize: Adjust(
-                                fontSizes !== null ? fontSizes[4] : 12,
-                              ),
-                              color: lightTheme ? "black" : MAIN_LIGHT,
-                            },
-                          ]}
-                          inputContainerStyle={[
-                            LoginPage.inputContainer,
-                            {
-                              borderBottomColor: lightTheme
-                                ? "black"
-                                : MAIN_LIGHT,
-                            },
-                          ]}
-                          onSubmitEditing={handleSubmit}
-                          returnKeyType={'go'}
-                          selectionColor="grey"
-                          autoCapitalize="none"
-                          placeholder="Utilizator"
-                          placeholderTextColor={'grey'}
-                          blurOnSubmit={false}
-                          leftIcon={
-                            <FontAwesomeIcon
-                              size={22}
-                              color={lightTheme ? "black" : 'white'}
-                              icon={faUserLock}
-                            />
-                          }
-                          defaultValue=""
-                          value={values.user}
-                          onChangeText={handleChange('user')}
-                          onBlur={() => setFieldTouched('user')}
-                        />
-                        {touched.user && errors.user && (
-                          <Text style={LoginPage.error}>{errors.user}</Text>
-                        )}
-                        <Input
-                          style={[
-                            LoginPage.inputStyle,
-                            {
-                              fontSize: Adjust(
-                                fontSizes !== null ? fontSizes[4] : 12,
-                              ),
-                              color: lightTheme ? "black" : MAIN_LIGHT,
-                            },
-                          ]}
-                          inputContainerStyle={[
-                            LoginPage.inputContainer,
-                            {
-                              borderBottomColor: lightTheme
-                                ? "black"
-                                : MAIN_LIGHT,
-                            },
-                          ]}
-                          onSubmitEditing={handleSubmit}
-                          returnKeyType={'go'}
-                          selectionColor="grey"
-                          autoCapitalize="none"
-                          placeholder="Passkey"
-                          placeholderTextColor={'grey'}
-                          leftIcon={
-                            <FontAwesomeIcon
-                              size={22}
-                              color={lightTheme ? "black" : 'white'}
-                              icon={faKey}
-                            />
-                          }
-                          value={values.pass}
-                          onChangeText={handleChange('pass')}
-                          onBlur={() => setFieldTouched('pass')}
-                        />
-                        {touched.pass && errors.pass && (
-                          <Text style={LoginPage.error}>{errors.pass}</Text>
-                        )}
-                        <View style={LoginPage.btnContainer}>
-                          {loginLoading ? <ActivityIndicator size={Platform.OS === 'ios' ? "small" : "large" } color={ACCENT_COLOR} /> : <Pressable
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          overScrollMode={'never'}
+          bounces={false}
+          ref={scrollRef}
+          keyboardShouldPersistTaps={'always'}>
+          <KeyboardAvoidingView
+            style={{flex: 1}}
+            enabled={false}
+            behavior={'position'}>
+            <View
+              style={[
+                LoginPage.container,
+                {
+                  backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
+                  height:
+                    Platform.OS === 'ios' ? height : height + statusHeight,
+                },
+              ]}>
+              <View style={LoginPage.profilePicContainer}>
+                <FastImage
+                  style={LoginPage.picture}
+                  resizeMode={FastImage.resizeMode.contain}
+                  source={require('../assets/logo.png')}
+                />
+              </View>
+              <View style={LoginPage.form}>
+                <Formik
+                  initialValues={{user: '', pass: ''}}
+                  onSubmit={(values) => handleLogin(values.user, values.pass)}
+                  validationSchema={yup.object().shape({
+                    user: yup
+                      .string()
+                      .min(1)
+                      .required('Numele de utilizator lipseşte'),
+                    pass: yup
+                      .string()
+                      .min(
+                        32,
+                        'Codul passkey conţine 32 de caractere şi este diferit de parola contului\nAcest cod se află în zona Profil a contului tău filelist',
+                      )
+                      .required('Codul passkey lipseşte'),
+                  })}>
+                  {({
+                    values,
+                    handleChange,
+                    errors,
+                    setFieldTouched,
+                    resetForm,
+                    touched,
+                    isValid,
+                    handleSubmit,
+                  }) => (
+                    <>
+                      <Input
+                        style={[
+                          LoginPage.inputStyle,
+                          {
+                            fontSize: Adjust(
+                              fontSizes !== null ? fontSizes[4] : 12,
+                            ),
+                            color: lightTheme ? 'black' : MAIN_LIGHT,
+                          },
+                        ]}
+                        inputContainerStyle={[
+                          LoginPage.inputContainer,
+                          {
+                            borderBottomColor: lightTheme
+                              ? 'black'
+                              : MAIN_LIGHT,
+                          },
+                        ]}
+                        onSubmitEditing={handleSubmit}
+                        returnKeyType={'go'}
+                        selectionColor="grey"
+                        autoCapitalize="none"
+                        placeholder="Utilizator"
+                        placeholderTextColor={'grey'}
+                        blurOnSubmit={false}
+                        leftIcon={
+                          <FontAwesomeIcon
+                            size={22}
+                            color={lightTheme ? 'black' : 'white'}
+                            icon={faUserLock}
+                          />
+                        }
+                        defaultValue=""
+                        value={values.user}
+                        onChangeText={handleChange('user')}
+                        onBlur={() => setFieldTouched('user')}
+                      />
+                      {touched.user && errors.user && (
+                        <Text style={LoginPage.error}>{errors.user}</Text>
+                      )}
+                      <Input
+                        style={[
+                          LoginPage.inputStyle,
+                          {
+                            fontSize: Adjust(
+                              fontSizes !== null ? fontSizes[4] : 12,
+                            ),
+                            color: lightTheme ? 'black' : MAIN_LIGHT,
+                          },
+                        ]}
+                        inputContainerStyle={[
+                          LoginPage.inputContainer,
+                          {
+                            borderBottomColor: lightTheme
+                              ? 'black'
+                              : MAIN_LIGHT,
+                          },
+                        ]}
+                        onSubmitEditing={handleSubmit}
+                        returnKeyType={'go'}
+                        selectionColor="grey"
+                        autoCapitalize="none"
+                        placeholder="Passkey"
+                        placeholderTextColor={'grey'}
+                        leftIcon={
+                          <FontAwesomeIcon
+                            size={22}
+                            color={lightTheme ? 'black' : 'white'}
+                            icon={faKey}
+                          />
+                        }
+                        value={values.pass}
+                        onChangeText={handleChange('pass')}
+                        onBlur={() => setFieldTouched('pass')}
+                      />
+                      {touched.pass && errors.pass && (
+                        <Text style={LoginPage.error}>{errors.pass}</Text>
+                      )}
+                      {errorMsg && (
+                        <Text style={LoginPage.error}>{errorMsg}</Text>
+                      )}
+                      <View
+                        style={[
+                          LoginPage.btnContainer,
+                          {elevation: loginLoading ? 0 : 2, zIndex: loginLoading ? 0 : 2},
+                        ]}>
+                        {loginLoading ? (
+                          <ActivityIndicator
+                            size={Platform.OS === 'ios' ? 'small' : 'large'}
+                            color={ACCENT_COLOR}
+                          />
+                        ) : (
+                          <Pressable
                             disabled={loginLoading}
                             onPress={handleSubmit}
                             android_ripple={{
@@ -354,28 +395,28 @@ export default function Login() {
                               borderless: false,
                             }}
                             style={LoginPage.btn}>
-                            
-                              <FontAwesomeIcon
-                                size={26}
-                                color={'white'}
-                                icon={faArrowRight}
-                              />
-                          </Pressable> }
-                        </View>
-                      </>
-                    )}
-                  </Formik>
-                </View>
+                            <FontAwesomeIcon
+                              size={26}
+                              color={'white'}
+                              icon={faArrowRight}
+                            />
+                          </Pressable>
+                        )}
+                      </View>
+                    </>
+                  )}
+                </Formik>
               </View>
-            </KeyboardAvoidingView>
-          </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </ScrollView>
       </TouchableWithoutFeedback>
       {isNetReachable ? (
         <Animated.View
           style={[
             LoginPage.networkAlertContainer,
             {
-              height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+              height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
               backgroundColor: 'limegreen',
               transform: [
                 {
@@ -386,12 +427,12 @@ export default function Login() {
           ]}>
           <Animated.Text
             style={{
-              fontSize: Adjust(fontSizes !== null ? fontSizes[7] : 16),
+              fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
               fontWeight: 'bold',
               opacity: showNetworkAlertTextOn,
               color: 'white',
             }}>
-            Online
+            ONLINE
           </Animated.Text>
         </Animated.View>
       ) : (
@@ -399,7 +440,7 @@ export default function Login() {
           style={[
             LoginPage.networkAlertContainer,
             {
-              height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+              height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
               backgroundColor: 'crimson',
               transform: [
                 {
@@ -410,12 +451,12 @@ export default function Login() {
           ]}>
           <Animated.Text
             style={{
-              fontSize: Adjust(fontSizes !== null ? fontSizes[7] : 16),
+              fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
               fontWeight: 'bold',
               opacity: showNetworkAlertTextOff,
               color: 'white',
             }}>
-            Offline
+            OFFLINE
           </Animated.Text>
         </Animated.View>
       )}
@@ -463,8 +504,6 @@ const LoginPage = EStyleSheet.create({
     paddingLeft: '1rem',
   },
   btnContainer: {
-    elevation: 2,
-    zIndex: 2,
     width: width / 6,
     height: width / 6,
     borderRadius: (width / 6) / 2,

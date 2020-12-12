@@ -144,7 +144,8 @@ export default function Search({navigation}) {
     lightTheme,
     fontSizes,
     collItems,
-    listSearch
+    listSearch,
+    searchError
   } = useSelector((state) => state.appConfig);
 
   // Refs
@@ -187,6 +188,18 @@ export default function Search({navigation}) {
   // Component mount
   useEffect(() => {
 
+    // API error handling
+    if (searchError !== null) {
+      switch (searchError.response.status) {
+        case 429:
+          return setLimitReached;
+        case 503:
+          return setAPIDown;
+        default:
+          return setError;
+      }
+    }
+
     // Screen focus listener
     const screenFocusListener = navigation.addListener('focus', () => {
       // Focus search input everytime screen gets focus
@@ -212,9 +225,57 @@ export default function Search({navigation}) {
       screenFocusListener();
       netListener();
     };
-  }, [isNetReachable]);
+  }, [isNetReachable, searchError]);
 
   // Functions
+
+  const setLimitReached = () => {
+    setSearchLoading(false);
+    Alert.alert(
+      'Info',
+      'API: Ai atins limita de 150 de cereri pe oră.\n\nPentru ca funcţia de căutare să funcţioneze din nou va trebui să aştepţi 1 oră.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+  }
+
+  const setAPIDown = () => {
+    setSearchLoading(false);
+    Alert.alert(
+      'Info',
+      'API: Momentan serviciul Filelist API nu funcţionează.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+  }
+
+  const setError = () => {
+    setSearchLoading(false);
+    Alert.alert(
+      'Info',
+      'API: Momentan serviciul Filelist API nu funcţionează.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+  };
 
   const handleSearchType = async (action, type, query) => {
     try {
@@ -477,7 +538,7 @@ export default function Search({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -504,7 +565,7 @@ export default function Search({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -1216,7 +1277,7 @@ export default function Search({navigation}) {
   return (
     <>
       <StatusBar
-        barStyle={catListLatest ? lightTheme ? 'dark-content' : 'light-content' : 'light-content'}
+        barStyle={'light-content'}
         backgroundColor={'transparent'}
         translucent={true}
       />
@@ -1469,7 +1530,7 @@ export default function Search({navigation}) {
             {
               height: height,
               paddingTop: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
-              paddingBottom: Platform.OS === 'ios' ? statusHeight / 2 : 0,
+              paddingBottom: statusHeight / 2,
               backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
             },
           ]}
@@ -1479,7 +1540,7 @@ export default function Search({navigation}) {
             <View
               style={[
                 SearchPage.catCheckOverlayErase,
-                {marginTop: Platform.OS === 'ios' ? statusHeight * 1.3 : statusHeight * 1.5},
+                {marginTop: Platform.OS === 'ios' ? statusHeight * 1.3 : statusHeight},
               ]}>
               <Pressable
                 style={SearchPage.catCheckOverlayPressableErase}
@@ -2958,7 +3019,10 @@ export default function Search({navigation}) {
                   selectionColor="grey"
                   ref={searchRef}
                   autoFocus
-                  onFocus={() => resetForm({})}
+                  onFocus={() => {
+                    resetForm({});
+                    resetSearch();
+                  }}
                   placeholder="Caută după cuvânt cheie, IMDb..."
                   placeholderTextColor={'rgba(255,255,255,0.7)'}
                   value={values.search}
@@ -3113,6 +3177,14 @@ export default function Search({navigation}) {
               </View>
             ) : null
           }
+          ListFooterComponent={() =>
+            listSearch === null ? <View
+                style={{
+                  width: width,
+                  height: height - (statusHeight * 4),
+                  justifyContent: 'flex-end',
+                  alignItems: 'center'
+                }}><Text style={{color: lightTheme ? 'rgba(0,0,0, 0.2)' : 'rgba(255,255,255, 0.2)'}}>Filelist App v3.0.3</Text></View> : null}
           keyExtractor={(item) => item.id.toString()}
         />
         {isNetReachable ? (
@@ -3120,7 +3192,7 @@ export default function Search({navigation}) {
             style={[
               SearchPage.networkAlertContainer,
               {
-                height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+                height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'limegreen',
                 transform: [
                   {
@@ -3131,12 +3203,12 @@ export default function Search({navigation}) {
             ]}>
             <Animated.Text
               style={{
-                fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
                 fontWeight: 'bold',
                 opacity: showNetworkAlertTextOn,
                 color: 'white',
               }}>
-              Online
+              ONLINE
             </Animated.Text>
           </Animated.View>
         ) : (
@@ -3144,7 +3216,7 @@ export default function Search({navigation}) {
             style={[
               SearchPage.networkAlertContainer,
               {
-                height: Platform.OS = 'ios' ? statusHeight * 1.5 : statusHeight,
+                height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'crimson',
                 transform: [
                   {
@@ -3155,12 +3227,12 @@ export default function Search({navigation}) {
             ]}>
             <Animated.Text
               style={{
-                fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
                 fontWeight: 'bold',
                 opacity: showNetworkAlertTextOff,
                 color: 'white',
               }}>
-              Offline
+              OFFLINE
             </Animated.Text>
           </Animated.View>
         )}
@@ -3334,7 +3406,7 @@ const SearchPage = EStyleSheet.create({
   },
   infoOverlayScrollView: {
     width: '100%',
-    paddingBottom: StatusBar.currentHeight,
+    paddingBottom: statusHeight,
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
