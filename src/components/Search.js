@@ -3184,7 +3184,7 @@ export default function Search({navigation}) {
                   height: height - (statusHeight * 4),
                   justifyContent: 'flex-end',
                   alignItems: 'center'
-                }}><Text style={{color: lightTheme ? 'rgba(0,0,0, 0.2)' : 'rgba(255,255,255, 0.2)'}}>Filelist App v3.0.3</Text></View> : null}
+                }}><Text style={{color: lightTheme ? 'rgba(0,0,0, 0.2)' : 'rgba(255,255,255, 0.2)'}}>Filelist App v3.0.4</Text></View> : null}
           keyExtractor={(item) => item.id.toString()}
         />
         {isNetReachable ? (
