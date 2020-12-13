@@ -379,6 +379,7 @@ export default function Search({navigation}) {
       Keyboard.dismiss();
     }, 100);
     resetFilters();
+    resetSearch();
     navigation.navigate('Home');
   }
 
@@ -1276,8 +1277,8 @@ export default function Search({navigation}) {
   return (
     <>
       <StatusBar
-        barStyle={Platform.OS === 'android' ? 'light-content' : catListLatest ? 'dark-content' : 'light-content'}
-        backgroundColor={'transparent'}
+        barStyle={'light-content'}
+        backgroundColor={catListLatest ? ACCENT_COLOR : 'transparent'}
         translucent={true}
       />
       <View
@@ -1522,13 +1523,13 @@ export default function Search({navigation}) {
           </View>
         </Overlay>
         <Overlay
-          statusBarTranslucent
+          statusBarTranslucent={false}
           animationType="slide"
           overlayStyle={[
             SearchPage.catCheckOverlay,
             {
               height: height,
-              paddingTop: Platform.OS === 'android' ? statusHeight : statusHeight * 2,
+              paddingTop: Platform.OS === 'android' ? statusHeight / 1.5 : statusHeight * 2,
               paddingBottom: statusHeight / 2,
               backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
             },
@@ -1560,7 +1561,7 @@ export default function Search({navigation}) {
                 <View
               style={[
                 SearchPage.catCheckOverlayErase,
-                {bottom: 10}]}>
+                {bottom: Platform.OS === 'android' ? 0 : 10}]}>
               <Pressable
                 style={SearchPage.catCheckOverlayPressableErase}
                 android_ripple={{

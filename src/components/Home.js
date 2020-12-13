@@ -99,6 +99,7 @@ export default function Home({navigation}) {
   // Redux
   const dispatch = useDispatch();
   const {
+    appInfo,
     lightTheme,
     fontSizes,
     collItems,
