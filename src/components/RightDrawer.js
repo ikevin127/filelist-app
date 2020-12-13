@@ -8,6 +8,7 @@ import {
   ScrollView,
   Switch,
   Pressable,
+  StatusBar,
   Platform,
   Linking,
 } from 'react-native';
@@ -269,6 +270,11 @@ export default function RightDrawer({navigation}) {
 
   return (
     <>
+    <StatusBar
+        barStyle={appInfo ? 'dark-content' : 'light-content'}
+        backgroundColor={'transparent'}
+        translucent={true}
+      />
       <Overlay
         statusBarTranslucent
         animationType="slide"
@@ -522,7 +528,7 @@ export default function RightDrawer({navigation}) {
                     : 'm'
                   : 'm'
               }
-              style={RightDrawerStyle.settingsPicker}
+              style={RightDrawerStyle.settingsPickerIOS}
               itemStyle={{
                 color: 'white',
                 backgroundColor: lightTheme ? 'black' : 'transparent',
@@ -648,6 +654,7 @@ const RightDrawerStyle = EStyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-end',
     alignItems: 'center',
+    paddingBottom: Platform.OS === 'ios' ? statusHeight / 3 : 0
   },
   settingsOverlayContainer: {
     width: '100%',
@@ -681,8 +688,16 @@ const RightDrawerStyle = EStyleSheet.create({
     alignItems: 'center',
     width: '54%',
     marginLeft: width / 6,
-    marginTop: Platform.OS === 'android' ? '1rem' : '1.5rem',
-    marginBottom: Platform.OS === 'android' ? 0 : '1rem',
+    marginTop: '1rem',
+  },
+  settingsPickerIOS: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '70%',
+    marginLeft: width / 8.5,
+    marginTop: '1.5rem',
+    marginBottom: '1rem',
   },
   infoOverlay: {
     width: width,

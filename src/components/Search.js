@@ -7,7 +7,6 @@ import {
   Easing,
   FlatList,
   ActivityIndicator,
-  SafeAreaView,
   Pressable,
   Platform,
   Keyboard,
@@ -1277,7 +1276,7 @@ export default function Search({navigation}) {
   return (
     <>
       <StatusBar
-        barStyle={'light-content'}
+        barStyle={Platform.OS === 'android' ? 'light-content' : catListLatest ? 'dark-content' : 'light-content'}
         backgroundColor={'transparent'}
         translucent={true}
       />
@@ -1523,13 +1522,13 @@ export default function Search({navigation}) {
           </View>
         </Overlay>
         <Overlay
-          statusBarTranslucent={false}
+          statusBarTranslucent
           animationType="slide"
           overlayStyle={[
             SearchPage.catCheckOverlay,
             {
               height: height,
-              paddingTop: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+              paddingTop: Platform.OS === 'android' ? statusHeight : statusHeight * 2,
               paddingBottom: statusHeight / 2,
               backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
             },
@@ -1537,21 +1536,6 @@ export default function Search({navigation}) {
           isVisible={catListLatest}
           onBackdropPress={() => closeCatCheck()}>
           <>
-            <View
-              style={[
-                SearchPage.catCheckOverlayErase,
-                {marginTop: Platform.OS === 'ios' ? statusHeight * 1.3 : statusHeight},
-              ]}>
-              <Pressable
-                style={SearchPage.catCheckOverlayPressableErase}
-                android_ripple={{
-                  color: 'white',
-                  borderless: false,
-                }}
-                onPress={resetFilters}>
-                <FontAwesomeIcon color={'white'} size={20} icon={faEraser} />
-              </Pressable>
-            </View>
             <View style={SearchPage.catCheckContainer}>
               <View
                 style={{
@@ -1559,8 +1543,9 @@ export default function Search({navigation}) {
                   height: width / 8,
                   flexDirection: 'row',
                   left: 10,
+                  paddingRight: 25,
                   paddingBottom: 10,
-                  justifyContent: 'flex-start',
+                  justifyContent: 'space-between',
                   alignItems: 'flex-start',
                 }}>
                 <Text
@@ -1572,6 +1557,20 @@ export default function Search({navigation}) {
                   }}>
                   Filtre
                 </Text>
+                <View
+              style={[
+                SearchPage.catCheckOverlayErase,
+                {bottom: 10}]}>
+              <Pressable
+                style={SearchPage.catCheckOverlayPressableErase}
+                android_ripple={{
+                  color: 'white',
+                  borderless: false,
+                }}
+                onPress={resetFilters}>
+                <FontAwesomeIcon color={'white'} size={20} icon={faEraser} />
+              </Pressable>
+            </View>
               </View>
               <ScrollView
                 showsVerticalScrollIndicator={true}
@@ -3174,14 +3173,6 @@ export default function Search({navigation}) {
               </View>
             ) : null
           }
-          ListFooterComponent={() =>
-            listSearch === null ? <View
-                style={{
-                  width: width,
-                  height: height - (statusHeight * 4),
-                  justifyContent: 'flex-end',
-                  alignItems: 'center'
-                }}><Text style={{color: lightTheme ? 'rgba(0,0,0, 0.2)' : 'rgba(255,255,255, 0.2)'}}>Filelist App v3.0.4</Text></View> : null}
           keyExtractor={(item) => item.id.toString()}
         />
         {isNetReachable ? (
@@ -3358,9 +3349,6 @@ const SearchPage = EStyleSheet.create({
     borderRadius: 34,
   },
   catCheckOverlayErase: {
-    position: 'absolute',
-    top: 0,
-    right: 15,
     width: width / 8,
     height: width / 8,
     borderRadius: 100,

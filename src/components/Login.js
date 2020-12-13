@@ -258,6 +258,7 @@ export default function Login() {
                   backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
                   height:
                     Platform.OS === 'ios' ? height : height + statusHeight,
+                  paddingBottom: Platform.OS === 'ios' ? isKeyboard ? height / 5.5 : 0 : 0
                 },
               ]}>
               <View style={LoginPage.profilePicContainer}>
