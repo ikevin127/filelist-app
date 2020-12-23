@@ -14,6 +14,7 @@ import {
   Keyboard,
   Linking,
 } from 'react-native';
+import { useIsDrawerOpen } from '@react-navigation/drawer';
 import Collapsible from 'react-native-collapsible';
 import {Overlay} from 'react-native-elements';
 import FastImage from 'react-native-fast-image';
@@ -79,6 +80,7 @@ import xxx from '../assets/cat/xxx.png';
 
 // Variables
 import {width, height, MAIN_LIGHT, ACCENT_COLOR, statusHeight} from '../assets/variables';
+import {RO, EN} from '../assets/lang';
 
 export default function Home({navigation}) {
   const [imdbModal, setIMDbModal] = useState(false);
@@ -99,31 +101,33 @@ export default function Home({navigation}) {
   // Redux
   const dispatch = useDispatch();
   const {
-    appInfo,
     lightTheme,
     fontSizes,
     collItems,
     listLatest,
     latestError,
+    enLang,
   } = useSelector((state) => state.appConfig);
 
   // Refs
   const netRef = useRef(false);
 
+  // Check drawer open/closed
+  let isDrawerOpen = useIsDrawerOpen();
+
   // Component mount
   useEffect(() => {
+
     // Set font sizes
     dispatch(AppConfigActions.setFonts());
 
     // API error handling
     if (latestError !== null) {
-      switch (latestError.response.status) {
-        case 429:
-          return setLimitReached;
-        case 503:
-          return setAPIDown;
-        default:
-          return setError;
+      if (latestError.response.status === 429) {
+        setLimitReached();
+      }
+      if (latestError.response.status === 503) {
+        setAPIDown();
       }
     }
 
@@ -160,7 +164,7 @@ export default function Home({navigation}) {
     setListLatestLoading(false);
     Alert.alert(
       'Info',
-      'API: Ai atins limita de 150 de cereri pe oră.\n\nPentru ca lista să se reactualizeze din nou cu cele mai recente torrente va trebui să aştepţi 1 oră.',
+      enLang ? EN.alert150 : RO.alert150,
       [
         {
           text: 'OK',
@@ -176,7 +180,7 @@ export default function Home({navigation}) {
     setListLatestLoading(false);
     Alert.alert(
       'Info',
-      'API: Momentan serviciul Filelist API nu funcţionează.',
+      enLang ? EN.alertAPI : RO.alertAPI,
       [
         {
           text: 'OK',
@@ -188,24 +192,8 @@ export default function Home({navigation}) {
     );
   }
 
-  const setError = () => {
-    setListLatestLoading(false);
-    Alert.alert(
-      'Info',
-      'API: Momentan serviciul Filelist API nu funcţionează.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-          style: 'cancel',
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
   const onRefresh = useCallback(async () => {
-    dispatch(AppConfigActions.setCollItems([]));
+      dispatch(AppConfigActions.setCollItems([]));
     setListLatestLoading(true);
     try {
       const value0 = await AsyncStorage.getItem('username');
@@ -266,7 +254,7 @@ export default function Home({navigation}) {
           .catch((e) => {
             setIMDbLoading(false);
             crashlytics().log(
-              "home -> fetchIMDbInfo() - Axios.get('https://spleeter.co.uk/' + id)",
+              `home -> fetchIMDbInfo() - Axios.get('https://spleeter.co.uk/' + ${id})`,
             );
             crashlytics().recordError(e);
           });
@@ -352,15 +340,14 @@ export default function Home({navigation}) {
     if (supported) {
       Alert.alert(
         'Info',
-        'Doreşti să descarci fişierul torrent ?',
+        enLang ? EN.download : RO.download,
         [
           {
-            text: 'DA',
-            onPress: () =>
-              Linking.openURL(link),
+            text: enLang ? EN.yes : RO.yes,
+            onPress: () => Linking.openURL(link),
           },
           {
-            text: 'NU',
+            text: enLang ? EN.no : RO.no,
             onPress: () => {},
             style: 'cancel',
           },
@@ -370,7 +357,7 @@ export default function Home({navigation}) {
     } else {
       Alert.alert(
         'Info',
-        'Acest torrent nu poate fi descărcat prin intermediul aplicaţiei.',
+        enLang ? EN.downloadErr : RO.downloadErr,
         [
           {
             text: 'OK',
@@ -593,15 +580,13 @@ export default function Home({navigation}) {
         <Item
           item={item}
           style={{
-              marginTop: 3,
-              backgroundColor: 'transparent',
-              marginBottom: collItems.includes(item.id) ? 0 : 3,
-            }}
+            marginTop: 3,
+            backgroundColor: 'transparent',
+            marginBottom: collItems.includes(item.id) ? 0 : 3,
+          }}
         />
         <Collapsible
-          easing={Easing.bounce}
           enablePointerEvents={true}
-          duration={500}
           collapsed={!collItems.includes(item.id)}>
           <View
             style={[
@@ -640,6 +625,12 @@ export default function Home({navigation}) {
                       {
                         fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
                         fontWeight: 'bold',
+                        marginRight:
+                          item.freeleech === 1 &&
+                          item.internal === 0 &&
+                          item.doubleup === 0
+                            ? 0
+                            : 4,
                       },
                     ]}>
                     FREELEECH
@@ -652,6 +643,12 @@ export default function Home({navigation}) {
                       {
                         fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
                         fontWeight: 'bold',
+                        marginRight:
+                          item.freeleech === 1 &&
+                          item.internal === 1 &&
+                          item.doubleup === 0
+                            ? 0
+                            : 4,
                       },
                     ]}>
                     INTERNAL
@@ -664,6 +661,12 @@ export default function Home({navigation}) {
                       {
                         fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
                         fontWeight: 'bold',
+                        marginRight:
+                          item.freeleech === 1 &&
+                          item.internal === 1 &&
+                          item.doubleup === 1
+                            ? 0
+                            : 4,
                       },
                     ]}>
                     2X UPLOAD
@@ -739,7 +742,7 @@ export default function Home({navigation}) {
                     onPress={() =>
                       Alert.alert(
                         'Info',
-                        'Mărimea totală a fişierelor din torrent',
+                        enLang ? EN.torrSize : RO.torrSize,
                         [
                           {
                             text: 'OK',
@@ -785,7 +788,7 @@ export default function Home({navigation}) {
                     onPress={() =>
                       Alert.alert(
                         'Info',
-                        'Numărul de persoane care ţin torrentul la seed în acest moment',
+                        enLang ? EN.torrSeeds : RO.torrSeeds,
                         [
                           {
                             text: 'OK',
@@ -846,7 +849,7 @@ export default function Home({navigation}) {
                     onPress={() =>
                       Alert.alert(
                         'Info',
-                        'De câte ori a fost descărcat torrentul',
+                        enLang ? EN.torrDown : RO.torrDown,
                         [
                           {
                             text: 'OK',
@@ -892,7 +895,7 @@ export default function Home({navigation}) {
                     onPress={() =>
                       Alert.alert(
                         'Info',
-                        'Numărul fişierelor din torrent',
+                        enLang ? EN.torrFiles : RO.torrFiles,
                         [
                           {
                             text: 'OK',
@@ -937,7 +940,7 @@ export default function Home({navigation}) {
                     onPress={() =>
                       Alert.alert(
                         'Info',
-                        'Numărul persoanelor care descarcă torrentul în acest moment',
+                        enLang ? EN.torrLeech : RO.torrLeech,
                         [
                           {
                             text: 'OK',
@@ -1042,20 +1045,24 @@ export default function Home({navigation}) {
 
   return (
     <>
-    <StatusBar
-        barStyle={'light-content'}
+      <StatusBar
+        barStyle={
+          isDrawerOpen
+            ? lightTheme
+              ? 'dark-content'
+              : 'light-content'
+            : 'light-content'
+        }
         backgroundColor={'transparent'}
         translucent={true}
       />
       <View
-        style={
-          [
+        style={[
           HomePage.mainSafeAreaView,
           {
             backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
           },
-        ]
-        }>
+        ]}>
         <Overlay
           statusBarTranslucent
           animationType="fade"
@@ -1087,7 +1094,7 @@ export default function Home({navigation}) {
                 color={ACCENT_COLOR}
               />
             ) : IMDbData ? (
-              IMDbData.map((item, index) => {
+              IMDbData.map((item) => {
                 return (
                   <View
                     style={{
@@ -1121,14 +1128,14 @@ export default function Home({navigation}) {
                             ? {}
                             : Alert.alert(
                                 'Info',
-                                'Doreşti să vizitezi pagina oficială IMDb asociată torrentului ?',
+                                enLang ? EN.imdbNav : RO.imdbNav,
                                 [
                                   {
-                                    text: 'DA',
+                                    text: enLang ? EN.yes : RO.yes,
                                     onPress: () => Linking.openURL(item.link),
                                   },
                                   {
-                                    text: 'NU',
+                                    text: enLang ? EN.no : RO.no,
                                     onPress: () => {},
                                     style: 'cancel',
                                   },
@@ -1221,7 +1228,9 @@ export default function Home({navigation}) {
                             },
                           ]}>
                           {item.plot === undefined
-                            ? 'Acest material nu are plot.'
+                            ? enLang
+                              ? EN.imdbNoPlot
+                              : RO.imdbNoPlot
                             : item.plot.split('\n')[0]}
                         </Text>
                         {item.duration === '' ? null : (
@@ -1237,7 +1246,7 @@ export default function Home({navigation}) {
                                     fontWeight: 'bold',
                                   },
                                 ]}>
-                                Durată:
+                                {enLang ? EN.imdbETA : RO.imdbETA}
                               </Text>
                               <Text
                                 style={[
@@ -1275,7 +1284,7 @@ export default function Home({navigation}) {
                     textAlign: 'center',
                     color: lightTheme ? 'black' : MAIN_LIGHT,
                   }}>
-                  Conexiune offline.
+                  {enLang ? EN.imdbNetErrH : RO.imdbNetErrH}
                 </Text>
                 <Text
                   style={{
@@ -1283,8 +1292,7 @@ export default function Home({navigation}) {
                     textAlign: 'center',
                     color: lightTheme ? 'black' : MAIN_LIGHT,
                   }}>
-                  Reconectează-te pentru a putea vedea informaţii despre acest
-                  torrent.
+                  {enLang ? EN.imdbNetErrP : RO.imdbNetErrP}
                 </Text>
               </View>
             )}
@@ -1329,7 +1337,7 @@ export default function Home({navigation}) {
                 HomePage.mainHeaderText,
                 {fontSize: Adjust(fontSizes !== null ? fontSizes[7] : 16)},
               ]}>
-              Recent adăugate
+              {enLang ? EN.latest : RO.latest}
             </Text>
           </View>
         </View>
@@ -1339,7 +1347,7 @@ export default function Home({navigation}) {
               tintColor={ACCENT_COLOR}
               progressViewOffset={55}
               refreshing={refreshing}
-              onRefresh={onRefresh}
+              onRefresh={isNetReachable ? onRefresh : netOff}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -1403,7 +1411,8 @@ export default function Home({navigation}) {
             style={[
               HomePage.networkAlertContainer,
               {
-                height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+                height:
+                  Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'limegreen',
                 transform: [
                   {
@@ -1427,7 +1436,8 @@ export default function Home({navigation}) {
             style={[
               HomePage.networkAlertContainer,
               {
-                height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+                height:
+                  Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'crimson',
                 transform: [
                   {
@@ -1531,7 +1541,7 @@ const HomePage = EStyleSheet.create({
     alignItems: 'center',
   },
   mainHeader: {
-    height: statusHeight * 4,
+    height: statusHeight * 4.5,
     width: width,
     display: 'flex',
     flexDirection: 'row',
@@ -1603,7 +1613,6 @@ const HomePage = EStyleSheet.create({
     borderColor: '#1ec621',
     borderWidth: 1,
     color: 'white',
-    marginRight: 4,
     backgroundColor: '#09580a',
   },
   imdbInfoInternalBadge: {
@@ -1613,13 +1622,13 @@ const HomePage = EStyleSheet.create({
     borderColor: '#1e87c6',
     borderWidth: 1,
     color: 'white',
-    marginRight: 4,
     backgroundColor: '#093b58',
   },
   imdbInfoDoubleUpBadge: {
     paddingLeft: 4,
     paddingTop: 2,
     paddingRight: 2,
+    marginLeft: 4,
     borderColor: '#7c00ff',
     borderWidth: 1,
     color: 'white',

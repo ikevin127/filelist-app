@@ -1,5 +1,7 @@
 import {reducer as appConfig} from './appConfig/duck';
 
-export default {
+const obj = {
   appConfig,
 };
+
+export default obj;

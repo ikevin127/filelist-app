@@ -8,7 +8,7 @@ export default () => {
     SplashScreen.hide();
   }, []);
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={{colors: {background: '#000'}}}>
       <Auth />
     </NavigationContainer>
   );

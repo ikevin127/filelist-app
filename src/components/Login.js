@@ -48,6 +48,7 @@ import {
   ACCENT_COLOR,
   statusHeight,
 } from '../assets/variables';
+import {RO, EN} from '../assets/lang';
 
 export default function Login() {
   const [errorMsg, setErrorMsg] = useState(null);
@@ -61,7 +62,7 @@ export default function Login() {
 
   // Redux
   const dispatch = useDispatch();
-  const {lightTheme, listLatest, latestError, fontSizes} = useSelector(
+  const {lightTheme, listLatest, latestError, fontSizes, enLang} = useSelector(
     (state) => state.appConfig,
   );
 
@@ -77,13 +78,11 @@ export default function Login() {
 
     // API error handling
     if (latestError !== null) {
-      switch (latestError.response.status) {
-        case 429:
-          return setLimitReached;
-        case 503:
-          return setAPIDown;
-        default:
-          return setError;
+      if (latestError.response.status === 429) {
+        setLimitReached();
+      }
+      if (latestError.response.status === 503) {
+        setAPIDown();
       }
     }
 
@@ -106,7 +105,7 @@ export default function Login() {
         'keyboardDidShow',
         () => {
           setIsKeyboard(true);
-          scrollRef.current.scrollTo({y: height / 5.4, animated: true});
+          scrollRef.current.scrollTo({y: height / 6.2, animated: true});
         },
       );
     const keyboardDidHideListener = Keyboard.addListener(
@@ -127,18 +126,13 @@ export default function Login() {
   
   const setLimitReached = () => {
     setLoginLoading(false);
-    setErrorMsg('API: Ai atins limita de 150 de cereri pe oră, revino peste o oră pentru a te putea conecta din nou');
+    setErrorMsg(enLang ? EN.alert150 : RO.alert150);
   }
 
   const setAPIDown = () => {
     setLoginLoading(false);
-    setErrorMsg('API: Momentan serviciul Filelist API nu funcţionează');
+    setErrorMsg(enLang ? EN.alertAPI : RO.alertAPI);
   }
-
-  const setError = () => {
-    setLoginLoading(false);
-    setErrorMsg('API: Momentan serviciul Filelist API nu funcţionează');
-  };
 
   const storeData = async (value0, value1) => {
     try {
@@ -250,7 +244,7 @@ export default function Login() {
           <KeyboardAvoidingView
             style={{flex: 1}}
             enabled={false}
-            behavior={'position'}>
+            behavior={'padding'}>
             <View
               style={[
                 LoginPage.container,
@@ -258,7 +252,12 @@ export default function Login() {
                   backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
                   height:
                     Platform.OS === 'ios' ? height : height + statusHeight,
-                  paddingBottom: Platform.OS === 'ios' ? isKeyboard ? height / 5.5 : 0 : 0
+                  paddingBottom:
+                    Platform.OS === 'ios'
+                      ? isKeyboard
+                        ? height / 5.5
+                        : 0
+                      : statusHeight * 2,
                 },
               ]}>
               <View style={LoginPage.profilePicContainer}>
@@ -276,14 +275,11 @@ export default function Login() {
                     user: yup
                       .string()
                       .min(1)
-                      .required('Numele de utilizator lipseşte'),
+                      .required(enLang ? EN.userREQ : RO.userREQ),
                     pass: yup
                       .string()
-                      .min(
-                        32,
-                        'Codul passkey conţine 32 de caractere şi este diferit de parola contului\nAcest cod se află în zona Profil a contului tău filelist',
-                      )
-                      .required('Codul passkey lipseşte'),
+                      .min(32, enLang ? EN.passVAL : RO.passVAL)
+                      .required(enLang ? EN.passREQ : RO.passREQ),
                   })}>
                   {({
                     values,
@@ -318,7 +314,7 @@ export default function Login() {
                         returnKeyType={'go'}
                         selectionColor="grey"
                         autoCapitalize="none"
-                        placeholder="Utilizator"
+                        placeholder={enLang ? EN.user : RO.user}
                         placeholderTextColor={'grey'}
                         blurOnSubmit={false}
                         leftIcon={
@@ -380,7 +376,10 @@ export default function Login() {
                       <View
                         style={[
                           LoginPage.btnContainer,
-                          {elevation: loginLoading ? 0 : 2, zIndex: loginLoading ? 0 : 2},
+                          {
+                            elevation: loginLoading ? 0 : 2,
+                            zIndex: loginLoading ? 0 : 2,
+                          },
                         ]}>
                         {loginLoading ? (
                           <ActivityIndicator

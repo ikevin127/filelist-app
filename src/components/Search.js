@@ -14,6 +14,7 @@ import {
   StatusBar,
   Linking,
 } from 'react-native';
+import { useIsDrawerOpen } from '@react-navigation/drawer';
 import Collapsible from 'react-native-collapsible';
 import {Input, Overlay, Badge} from 'react-native-elements';
 import {Chip} from 'react-native-paper';
@@ -89,6 +90,7 @@ import {catValues} from '../assets/catData';
 
 // Variables
 import {width, height, MAIN_LIGHT, ACCENT_COLOR, statusHeight} from '../assets/variables';
+import {RO, EN} from '../assets/lang';
 
 export default function Search({navigation}) {  
   const [catIndex, setCatIndex] = useState('');
@@ -144,7 +146,8 @@ export default function Search({navigation}) {
     fontSizes,
     collItems,
     listSearch,
-    searchError
+    searchError,
+    enLang
   } = useSelector((state) => state.appConfig);
 
   // Refs
@@ -184,18 +187,19 @@ export default function Search({navigation}) {
   .reduce((a, b) => a + b, 0)
   .toString();
 
+  // Check drawer open/closed
+  let isDrawerOpen = useIsDrawerOpen();
+
   // Component mount
   useEffect(() => {
 
     // API error handling
     if (searchError !== null) {
-      switch (searchError.response.status) {
-        case 429:
-          return setLimitReached;
-        case 503:
-          return setAPIDown;
-        default:
-          return setError;
+      if (searchError.response.status === 429) {
+        setLimitReached();
+      }
+      if (searchError.response.status === 503) {
+        setAPIDown();
       }
     }
 
@@ -232,7 +236,7 @@ export default function Search({navigation}) {
     setSearchLoading(false);
     Alert.alert(
       'Info',
-      'API: Ai atins limita de 150 de cereri pe oră.\n\nPentru ca funcţia de căutare să funcţioneze din nou va trebui să aştepţi 1 oră.',
+      enLang ? EN.alert150 : RO.alert150,
       [
         {
           text: 'OK',
@@ -248,7 +252,7 @@ export default function Search({navigation}) {
     setSearchLoading(false);
     Alert.alert(
       'Info',
-      'API: Momentan serviciul Filelist API nu funcţionează.',
+      enLang ? EN.alertAPI : RO.alertAPI,
       [
         {
           text: 'OK',
@@ -259,22 +263,6 @@ export default function Search({navigation}) {
       {cancelable: true},
     );
   }
-
-  const setError = () => {
-    setSearchLoading(false);
-    Alert.alert(
-      'Info',
-      'API: Momentan serviciul Filelist API nu funcţionează.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-          style: 'cancel',
-        },
-      ],
-      {cancelable: true},
-    );
-  };
 
   const handleSearchType = async (action, type, query) => {
     try {
@@ -298,11 +286,11 @@ export default function Search({navigation}) {
         setSearchLoading(false);
       }, 1000);
     } catch (e) {
-      crashlytics().log('home -> handleSearch()');
+      crashlytics().log('search -> handleSearch()');
       crashlytics().recordError(e);
       Alert.alert(
-        'Eroare',
-        'A apărut o eroare. Încearcă din nou.',
+        enLang ? EN.searchErrH : RO.searchErrH,
+        enLang ? EN.searchErr : RO.searchErr,
         [
           {
             text: 'OK',
@@ -324,7 +312,7 @@ export default function Search({navigation}) {
       if (query === '' && catIndex.length < 1) {
         Alert.alert(
           'Info',
-          'Pentru căutarea fără cuvânt cheie selectează cel puţin o Categorie din panoul de Filtre.',
+          enLang ? EN.searchNoKey : RO.searchNoKey,
           [
             {
               text: 'OK',
@@ -360,17 +348,6 @@ export default function Search({navigation}) {
     // if user network connection is offline
     } else {
       netOff();
-      Alert.alert(
-        'Info',
-        'Conexiune offline. Reconectează-te pentru a folosi funcţia de căutare.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {},
-          },
-        ],
-        {cancelable: true},
-      );
     }
   }
 
@@ -498,7 +475,7 @@ export default function Search({navigation}) {
           .catch((e) => {
             setIMDbLoading(false);
             crashlytics().log(
-              "home -> fetchIMDbInfo() - Axios.get('https://spleeter.co.uk/' + id)",
+              `search -> fetchIMDbInfo() - Axios.get('https://spleeter.co.uk/' + ${id})`,
             );
             crashlytics().recordError(e);
           });
@@ -507,7 +484,7 @@ export default function Search({navigation}) {
         setIMDbData(null);
       }
     } catch (e) {
-      crashlytics().log('home -> fetchIMDbInfo()');
+      crashlytics().log('search -> fetchIMDbInfo()');
       crashlytics().recordError(e);
     }
   };
@@ -584,7 +561,7 @@ export default function Search({navigation}) {
     if (supported) {
       Alert.alert(
         'Info',
-        'Doreşti să descarci fişierul torrent ?',
+        enLang ? EN.download : RO.download,
         [
           {
             text: 'DA',
@@ -602,7 +579,7 @@ export default function Search({navigation}) {
     } else {
       Alert.alert(
         'Info',
-        'Acest torrent nu poate fi descărcat prin intermediul aplicaţiei.',
+        enLang ? EN.downloadErr : RO.downloadErr,
         [
           {
             text: 'OK',
@@ -824,18 +801,14 @@ export default function Search({navigation}) {
       <>
         <Item
           item={item}
-          style={[
-            SearchPage.renderItemStyle,
-            {
+          style={{
               marginTop: 3,
               marginBottom: collItems.includes(item.id) ? 0 : 3,
-            },
-          ]}
+              backgroundColor: 'transparent',
+            }}
         />
         <Collapsible
-          easing={Easing.bounce}
           enablePointerEvents={true}
-          duration={500}
           collapsed={!collItems.includes(item.id)}>
           <View
             style={[
@@ -973,7 +946,7 @@ export default function Search({navigation}) {
                     onPress={() =>
                       Alert.alert(
                         'Info',
-                        'Mărimea totală a fişierelor din torrent',
+                        enLang ? EN.torrSize : RO.torrSize,
                         [
                           {
                             text: 'OK',
@@ -1019,7 +992,7 @@ export default function Search({navigation}) {
                     onPress={() =>
                       Alert.alert(
                         'Info',
-                        'Numărul de persoane care ţin torrentul la seed în acest moment',
+                        enLang ? EN.torrSeeds : RO.torrSeeds,
                         [
                           {
                             text: 'OK',
@@ -1080,7 +1053,7 @@ export default function Search({navigation}) {
                     onPress={() =>
                       Alert.alert(
                         'Info',
-                        'De câte ori a fost descărcat torrentul',
+                        enLang ? EN.torrDown : RO.torrDown,
                         [
                           {
                             text: 'OK',
@@ -1126,7 +1099,7 @@ export default function Search({navigation}) {
                     onPress={() =>
                       Alert.alert(
                         'Info',
-                        'Numărul fişierelor din torrent',
+                        enLang ? EN.torrFiles : RO.torrFiles,
                         [
                           {
                             text: 'OK',
@@ -1171,7 +1144,7 @@ export default function Search({navigation}) {
                     onPress={() =>
                       Alert.alert(
                         'Info',
-                        'Numărul persoanelor care descarcă torrentul în acest moment',
+                        enLang ? EN.torrLeech : RO.torrLeech,
                         [
                           {
                             text: 'OK',
@@ -1277,7 +1250,13 @@ export default function Search({navigation}) {
   return (
     <>
       <StatusBar
-        barStyle={'light-content'}
+        barStyle={
+          isDrawerOpen
+            ? lightTheme
+              ? 'dark-content'
+              : 'light-content'
+            : 'light-content'
+        }
         backgroundColor={catListLatest ? ACCENT_COLOR : 'transparent'}
         translucent={true}
       />
@@ -1319,7 +1298,7 @@ export default function Search({navigation}) {
                 color={ACCENT_COLOR}
               />
             ) : IMDbData ? (
-              IMDbData.map((item, index) => {
+              IMDbData.map((item) => {
                 return (
                   <View
                     style={{
@@ -1353,14 +1332,14 @@ export default function Search({navigation}) {
                             ? {}
                             : Alert.alert(
                                 'Info',
-                                'Doreşti să vizitezi pagina oficială IMDb asociată torrentului ?',
+                                enLang ? EN.imdbNav : RO.imdbNav,
                                 [
                                   {
-                                    text: 'DA',
+                                    text: enLang ? EN.yes : RO.yes,
                                     onPress: () => Linking.openURL(item.link),
                                   },
                                   {
-                                    text: 'NU',
+                                    text: enLang ? EN.no : RO.no,
                                     onPress: () => {},
                                     style: 'cancel',
                                   },
@@ -1469,7 +1448,7 @@ export default function Search({navigation}) {
                                     fontWeight: 'bold',
                                   },
                                 ]}>
-                                Durată:
+                                {enLang ? EN.imdbETA : RO.imdbETA}
                               </Text>
                               <Text
                                 style={[
@@ -1507,7 +1486,7 @@ export default function Search({navigation}) {
                     textAlign: 'center',
                     color: lightTheme ? 'black' : MAIN_LIGHT,
                   }}>
-                  Conexiune offline.
+                  {enLang ? EN.searchErrH : RO.searchErrH}
                 </Text>
                 <Text
                   style={{
@@ -1515,8 +1494,7 @@ export default function Search({navigation}) {
                     textAlign: 'center',
                     color: lightTheme ? 'black' : MAIN_LIGHT,
                   }}>
-                  Reconectează-te pentru a putea vedea datele IMDb ale acestui
-                  torrent.
+                  {enLang ? EN.searchErr : RO.searchErr}
                 </Text>
               </View>
             )}
@@ -1529,7 +1507,10 @@ export default function Search({navigation}) {
             SearchPage.catCheckOverlay,
             {
               height: height,
-              paddingTop: Platform.OS === 'android' ? statusHeight / 1.5 : statusHeight * 2,
+              paddingTop:
+                Platform.OS === 'android'
+                  ? statusHeight / 1.5
+                  : statusHeight * 2,
               paddingBottom: statusHeight / 2,
               backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
             },
@@ -1556,22 +1537,27 @@ export default function Search({navigation}) {
                     fontSize: Adjust(fontSizes !== null ? fontSizes[8] : 22),
                     paddingLeft: 5,
                   }}>
-                  Filtre
+                  {enLang ? EN.filters : RO.filters}
                 </Text>
                 <View
-              style={[
-                SearchPage.catCheckOverlayErase,
-                {bottom: Platform.OS === 'android' ? 0 : 10}]}>
-              <Pressable
-                style={SearchPage.catCheckOverlayPressableErase}
-                android_ripple={{
-                  color: 'white',
-                  borderless: false,
-                }}
-                onPress={resetFilters}>
-                <FontAwesomeIcon color={'white'} size={20} icon={faEraser} />
-              </Pressable>
-            </View>
+                  style={[
+                    SearchPage.catCheckOverlayErase,
+                    {bottom: Platform.OS === 'android' ? 0 : 10},
+                  ]}>
+                  <Pressable
+                    style={SearchPage.catCheckOverlayPressableErase}
+                    android_ripple={{
+                      color: 'white',
+                      borderless: false,
+                    }}
+                    onPress={resetFilters}>
+                    <FontAwesomeIcon
+                      color={'white'}
+                      size={20}
+                      icon={faEraser}
+                    />
+                  </Pressable>
+                </View>
               </View>
               <ScrollView
                 showsVerticalScrollIndicator={true}
@@ -1595,7 +1581,7 @@ export default function Search({navigation}) {
                       fontWeight: 'bold',
                       paddingLeft: 5,
                     }}>
-                    Căutare după
+                    {enLang ? EN.searchType : RO.searchType}
                   </Text>
                 </View>
                 <View style={SearchPage.catCheckScrollContainer}>
@@ -1641,7 +1627,7 @@ export default function Search({navigation}) {
                     onLongPress={() => {
                       Alert.alert(
                         'Info',
-                        'Această opţiune permite căutarea după cuvinte cheie pe modelul:\n\ntitanic.1997\ntitanic 1997',
+                        enLang ? EN.keywordInfo : RO.keywordInfo,
                         [
                           {
                             text: 'OK',
@@ -1655,7 +1641,7 @@ export default function Search({navigation}) {
                       setKeySearch(!keySearch);
                       setImdbSearch(false);
                     }}>
-                    Cuvânt cheie
+                    {enLang ? EN.keywordType : RO.keywordType}
                   </Chip>
                   <Chip
                     style={{
@@ -1699,7 +1685,7 @@ export default function Search({navigation}) {
                     onLongPress={() => {
                       Alert.alert(
                         'Info',
-                        'Această opţiune permite căutarea după codul IMDb pe modelul:\n\ntt4719744\n4719744',
+                        enLang ? EN.imdbInfo : RO.imdbInfo,
                         [
                           {
                             text: 'OK',
@@ -1713,7 +1699,7 @@ export default function Search({navigation}) {
                       setImdbSearch(!imdbSearch);
                       setKeySearch(false);
                     }}>
-                    Cod IMDb
+                    {enLang ? EN.imdbType : RO.imdbType}
                   </Chip>
                 </View>
                 <View
@@ -1730,7 +1716,7 @@ export default function Search({navigation}) {
                       fontWeight: 'bold',
                       paddingLeft: 5,
                     }}>
-                    Categorii
+                    {enLang ? EN.catType : RO.catType}
                   </Text>
                 </View>
                 <View style={SearchPage.catCheckScrollContainer}>
@@ -1854,7 +1840,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setDesene(!desene)}>
-                    Desene
+                    {enLang ? EN.cartoons : RO.cartoons}
                   </Chip>
                   <Chip
                     style={{
@@ -1896,7 +1882,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setDiverse(!diverse)}>
-                    Diverse
+                    {enLang ? EN.misc : RO.misc}
                   </Chip>
                   <Chip
                     style={{
@@ -2014,7 +2000,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setJocConsole(!jocConsole)}>
-                    Jocuri Console
+                    {enLang ? EN.console : RO.console}
                   </Chip>
                   <Chip
                     style={{
@@ -2052,7 +2038,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setJocPc(!jocPc)}>
-                    Jocuri PC
+                    {enLang ? EN.pc : RO.pc}
                   </Chip>
                   <Chip
                     style={{
@@ -2170,7 +2156,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setSoftware(!software)}>
-                    Programe
+                    {enLang ? EN.software : RO.software}
                   </Chip>
                   <Chip
                     style={{
@@ -2254,7 +2240,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setVideos(!videos)}>
-                    Videoclip
+                    {enLang ? EN.clips : RO.clips}
                   </Chip>
                   <Chip
                     style={{
@@ -2307,7 +2293,7 @@ export default function Search({navigation}) {
                         color: lightTheme ? 'black' : 'white',
                         paddingLeft: 5,
                       }}>
-                      Filme şi seriale
+                      {enLang ? EN.movTV : RO.movTV}
                     </Text>
                   </View>
                   <Chip
@@ -2350,7 +2336,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setFilme3d(!filme3d)}>
-                    Filme 3D
+                    {enLang ? EN.td : RO.td}
                   </Chip>
                   <Chip
                     style={{
@@ -2392,7 +2378,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setFilme4k(!filme4k)}>
-                    Filme 4K
+                    {enLang ? EN.pk : RO.pk}
                   </Chip>
                   <Chip
                     style={{
@@ -2434,7 +2420,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setFilme4kBD(!filme4kbd)}>
-                    Filme 4K Blu-Ray
+                    {enLang ? EN.pkbd : RO.pkbd}
                   </Chip>
                   <Chip
                     style={{
@@ -2476,7 +2462,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setFilmeBD(!filmeBD)}>
-                    Filme Blu-Ray
+                    {enLang ? EN.bd : RO.bd}
                   </Chip>
                   <Chip
                     style={{
@@ -2518,7 +2504,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setFilmeDvd(!filmeDvd)}>
-                    Filme DVD
+                    {enLang ? EN.dvd : RO.dvd}
                   </Chip>
                   <Chip
                     style={{
@@ -2560,7 +2546,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setFilmeDvdRo(!filmeDvdRo)}>
-                    Filme DVD-RO
+                    {enLang ? EN.dvdro : RO.dvdro}
                   </Chip>
                   <Chip
                     style={{
@@ -2602,7 +2588,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setFilmeHd(!filmeHd)}>
-                    Filme HD
+                    {enLang ? EN.hd : RO.hd}
                   </Chip>
                   <Chip
                     style={{
@@ -2644,7 +2630,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setFilmeHdRo(!filmeHdRo)}>
-                    Filme HD-RO
+                    {enLang ? EN.hdro : RO.hdro}
                   </Chip>
                   <Chip
                     style={{
@@ -2686,7 +2672,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setFilmeSd(!filmeSd)}>
-                    Filme SD
+                    {enLang ? EN.sd : RO.sd}
                   </Chip>
                   <Chip
                     style={{
@@ -2728,7 +2714,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setSeriale4k(!seriale4k)}>
-                    Seriale 4K
+                    {enLang ? EN.pks : RO.pks}
                   </Chip>
                   <Chip
                     style={{
@@ -2770,7 +2756,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setSerialeHd(!serialeHd)}>
-                    Seriale HD
+                    {enLang ? EN.hds : RO.hds}
                   </Chip>
                   <Chip
                     style={{
@@ -2812,7 +2798,7 @@ export default function Search({navigation}) {
                       )
                     }
                     onPress={() => setSerialeSd(!serialeSd)}>
-                    Seriale SD
+                    {enLang ? EN.sds : RO.sds}
                   </Chip>
                 </View>
                 <View
@@ -2829,7 +2815,7 @@ export default function Search({navigation}) {
                       fontWeight: 'bold',
                       paddingLeft: 5,
                     }}>
-                    Taguri
+                    {enLang ? EN.tags : RO.tags}
                   </Text>
                 </View>
                 <View
@@ -3010,18 +2996,19 @@ export default function Search({navigation}) {
                     SearchPage.inputStyle,
                     {
                       fontSize: Adjust(12),
-                      color: MAIN_LIGHT,
+                      color: 'white',
                     },
                   ]}
                   inputContainerStyle={SearchPage.inputContainerInner}
                   onSubmitEditing={handleSubmit}
                   returnKeyType={'search'}
+                  keyboardType={isDrawerOpen ? null : 'default'}
                   selectionColor="grey"
                   ref={searchRef}
                   autoFocus
                   onFocus={() => resetForm({})}
-                  placeholder="Caută după cuvânt cheie, IMDb..."
-                  placeholderTextColor={'rgba(255,255,255,0.7)'}
+                  placeholder={enLang ? EN.placeholder : RO.placeholder}
+                  placeholderTextColor={'rgba(255,255,255,0.8)'}
                   value={values.search}
                   onChangeText={handleChange('search')}
                   onBlur={() => setFieldTouched('search')}
@@ -3136,7 +3123,8 @@ export default function Search({navigation}) {
                     textAlign: 'center',
                     fontWeight: 'bold',
                   }}>
-                  Rezultatele căutării după "{searchText}"
+                  {enLang ? EN.resAfterA : RO.resAfterA}
+                  {searchText}"
                 </Text>
                 <Text
                   style={{
@@ -3144,14 +3132,14 @@ export default function Search({navigation}) {
                     textAlign: 'center',
                     fontWeight: 'bold',
                   }}>
-                  Nu s-a găsit nimic!
+                  {enLang ? EN.resNo : RO.resNo}
                 </Text>
                 <Text
                   style={{
                     color: lightTheme ? 'black' : 'white',
                     textAlign: 'center',
                   }}>
-                  Încearcă din nou cu alt șir de căutare.
+                  {enLang ? EN.resTry : RO.resTry}
                 </Text>
               </View>
             ) : listSearch.length > 1 ? (
@@ -3166,9 +3154,11 @@ export default function Search({navigation}) {
                     textAlign: 'center',
                     fontWeight: 'bold',
                   }}>
-                  Rezultatele căutării după{' '}
+                  {enLang ? EN.resAfterB : RO.resAfterB}{' '}
                   {searchText === ''
-                    ? 'filtrele selectate'
+                    ? enLang
+                      ? EN.resAfterFilters
+                      : RO.resAfterFilters
                     : '"' + searchText + '"'}
                 </Text>
               </View>
@@ -3181,7 +3171,8 @@ export default function Search({navigation}) {
             style={[
               SearchPage.networkAlertContainer,
               {
-                height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+                height:
+                  Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'limegreen',
                 transform: [
                   {
@@ -3205,7 +3196,8 @@ export default function Search({navigation}) {
             style={[
               SearchPage.networkAlertContainer,
               {
-                height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+                height:
+                  Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'crimson',
                 transform: [
                   {
@@ -3302,9 +3294,6 @@ const SearchPage = EStyleSheet.create({
     borderRadius: 100,
     marginLeft: '0.3rem',
     backgroundColor: '#093b58',
-  },
-  renderItemStyle: {
-    backgroundColor: 'transparent',
   },
   mainSafeAreaView: {
     flex: 1,
@@ -3413,7 +3402,7 @@ const SearchPage = EStyleSheet.create({
     paddingHorizontal: '1rem',
   },
   mainHeader: {
-    height: statusHeight * 4,
+    height: statusHeight * 4.5,
     width: width,
     display: 'flex',
     flexDirection: 'row',

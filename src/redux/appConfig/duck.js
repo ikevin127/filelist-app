@@ -5,6 +5,7 @@ import Axios from 'axios';
 
 const initState = {
   lightTheme: false,
+  enLang: false,
   appInfo: false,
   collItems: [],
   fontSizes: null,
@@ -17,6 +18,9 @@ const initState = {
 export const actions = {
   toggleLightTheme: () => ({
     type: types.APP_CONFIG.LIGHT_THEME,
+  }),
+  toggleEnLang: () => ({
+    type: types.APP_CONFIG.EN_LANG,
   }),
   toggleAppInfo: () => ({
     type: types.APP_CONFIG.APP_INFO,
@@ -145,6 +149,8 @@ export function reducer(state = initState, action) {
   switch (action.type) {
     case types.APP_CONFIG.LIGHT_THEME:
       return {...state, lightTheme: !state.lightTheme};
+    case types.APP_CONFIG.EN_LANG:
+      return {...state, enLang: !state.enLang};
     case types.APP_CONFIG.APP_INFO:
       return {...state, appInfo: !state.appInfo};
     case types.APP_CONFIG.FONT_SIZES:

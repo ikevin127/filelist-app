@@ -32,11 +32,14 @@ function MyTabs() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
+      cardStyle={{ opacity: 1 }}
       animationEnabled={true}
-      lazy={true}
+      lazy
+      keyboardDismissMode={'on-drag'}
       tabBarOptions={{
         showLabel: false,
         showIcon: false,
+        //tabStyle={opacity: 1},
         style: {height: 0},
       }}>
       <Tab.Screen name="Home" component={Home} />
@@ -51,7 +54,7 @@ const RightDrawerHome = () => {
     <Drawer.Navigator
       drawerPosition="left"
       backBehavior="history"
-      drawerStyle={{width: '70%'}}
+      drawerStyle={{width: '70%', backgroundColor: 'black'}}
       drawerContent={(props) => <RightDrawer {...props} />}>
       <Drawer.Screen name="Tabs" component={MyTabs} />
     </Drawer.Navigator>
@@ -67,7 +70,8 @@ export default function Auth() {
 
   // Component mount
   useEffect(() => {
-    establishTheme();
+    setLang();
+    setTheme();
     if (!listLatest) {
       dispatch(AppConfigActions.retrieveLatest());
       setTimeout(() => {
@@ -77,7 +81,18 @@ export default function Auth() {
   }, []);
 
   // Functions
-  const establishTheme = async () => {
+  const setLang = async () => {
+    const currentLang = await AsyncStorage.getItem('enLang');
+    if (currentLang !== null) {
+      if (currentLang === 'true') {
+        dispatch(AppConfigActions.toggleEnLang());
+      }
+    } else {
+      await AsyncStorage.setItem('enLang', 'false');
+    }
+  };
+  
+  const setTheme = async () => {
     const currentTheme = await AsyncStorage.getItem('theme');
     if (currentTheme !== null) {
       if (currentTheme === 'light') {
@@ -91,8 +106,8 @@ export default function Auth() {
   return (
     <Stack.Navigator
       screenOptions={{
-        cardStyleInterpolator: CardStyleInterpolators.forFadeFromBottomAndroid,
-        cardStyle: {backgroundColor: MAIN_LIGHT},
+        cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
+        cardStyle: {backgroundColor: 'black'},
       }}
       headerMode="none">
       {listLatest ? (
@@ -100,7 +115,8 @@ export default function Auth() {
           name="RightDrawerHome"
           component={RightDrawerHome}
           options={{
-            animationTypeForReplace: 'push',
+            animationTypeForReplace: 'pop',
+            cardStyle: {backgroundColor: 'black'},
           }}
         />
       ) : loading ? (
@@ -109,7 +125,7 @@ export default function Auth() {
           component={Loading}
           options={{
             animationTypeForReplace: 'pop',
-            cardStyle: {backgroundColor: 'white'},
+            cardStyle: {backgroundColor: 'black'},
           }}
         />
       ) : (
@@ -117,8 +133,8 @@ export default function Auth() {
           name="Login"
           component={Login}
           options={{
-            animationTypeForReplace: 'push',
-            cardStyle: {backgroundColor: 'white'},
+            animationTypeForReplace: 'pop',
+            cardStyle: {backgroundColor: 'black'},
           }}
         />
       )}

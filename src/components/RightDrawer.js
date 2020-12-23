@@ -8,11 +8,11 @@ import {
   ScrollView,
   Switch,
   Pressable,
-  StatusBar,
   Platform,
   Linking,
 } from 'react-native';
 import {Picker, PickerIOS} from '@react-native-picker/picker';
+import FastImage from 'react-native-fast-image';
 import Accordion from 'react-native-collapsible/Accordion';
 import {Overlay} from 'react-native-elements';
 import crashlytics from '@react-native-firebase/crashlytics';
@@ -36,6 +36,8 @@ import {
   faDirections,
   faTextHeight,
 } from '@fortawesome/free-solid-svg-icons';
+import ro from '../assets/ro.png';
+import en from '../assets/en.png';
 
 // Variables
 import {
@@ -45,52 +47,54 @@ import {
   MAIN_LIGHT,
   ACCENT_COLOR,
 } from '../assets/variables';
-
-const INFO = [
-  {
-    title: '1.Folosirea funcţiei de căutare',
-    content:
-      '* Pentru cele mai recente torrente dintr-o anumită categorie selectează cel puţin 1 categorie din lista de filtre\n\n* Pentru căutarea după cod IMDb asigură-te că selectezi Căutare după: Cod IMDb în lista de Filtre, pentru exemple legat de diferenţele dintre cele două ţine apăsat 2 secunde (long press) pe oricare dintre cele 2 opţiuni Căutare după\n\n* Opţiunea Torrente din lista cu Filtre NU are nici un efect atunci când NU se foloseşte nici un cuvânt cheie ori când se efectuează Căutare după: Cod IMDb\n\n* Opţiunile Torrente: Freeleech, Internal şi 2x Upload pot fi folosite în combinaţie cu oricare dintre Categorii şi Cuvânt cheie ori cod IMDb',
-  },
-  {
-    title: '2.Semnificaţie Freeleech, Internal şi 2x Upload',
-    content:
-      'Freeleech:\ndescărcarea torrentelor din această categorie, îţi va creşte Upload-ul fără să adăuge Download astfel nu-ţi va afecta negativ Raţia\n\nInternal:\ntorrente care fac parte din grupuri interne ale trackerului printre care se numără Play(HD|BD|SD|XD)\n\n2x Upload:\nîn caz că nu se subînţelege, aceste torrente odată descărcate şi ţinute la Seed îţi oferă de 2 ori mai mult upload',
-  },
-  {
-    title: '3.Reactualizarea listei cu torrente recent adăugate',
-    content: 'Se efectuează prin tragerea în jos (pull down) din capul listei',
-  },
-  {
-    title: '4.Pentru a descărca un fişier torrent',
-    content: 'Ţine apăsat 2 secunde (long press) pe torrentul respectiv',
-  },
-  {
-    title: '5.Pentru redirecţionare spre IMDb',
-    content:
-      'Se aplică doar în cazul torrentelor care conţin cod IMDb şi se efectuează prin atingerea posterului',
-  },
-  {
-    title: '6.Dacă mărimea textului este prea mică / mare',
-    content:
-      'Se poate schimba din meniu pe mărimile mic, mediu ori mare în funcţie de preferinţă',
-  },
-];
+import {RO, EN} from '../assets/lang';
 
 export default function RightDrawer({navigation}) {
   const [user, setUser] = useState('');
   const [darkLight] = useState(new Animated.Value(0));
+  const [roEn] = useState(new Animated.Value(1));
   const [activeSections, setActiveSections] = useState([]);
   const spinIt = darkLight.interpolate({
     inputRange: [0, 1, 2],
     outputRange: ['0deg', '180deg', '360deg'],
   });
+  const bounceIt = roEn.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1.1, 1],
+  });
 
   // Redux
   const dispatch = useDispatch();
-  const {appInfo, lightTheme, fontSizes} = useSelector(
+  const {appInfo, lightTheme, fontSizes, enLang} = useSelector(
     (state) => state.appConfig,
   );
+
+  const INFO = [
+    {
+      title: enLang ? EN.infoT1 : RO.infoT1,
+      content: enLang ? EN.infoC1 : RO.infoC1,
+    },
+    {
+      title: enLang ? EN.infoT2 : RO.infoT2,
+      content: enLang ? EN.infoC2 : RO.infoC2,
+    },
+    {
+      title: enLang ? EN.infoT3 : RO.infoT3,
+      content: enLang ? EN.infoC3 : RO.infoC3,
+    },
+    {
+      title: enLang ? EN.infoT4 : RO.infoT4,
+      content: enLang ? EN.infoC4 : RO.infoC4,
+    },
+    {
+      title: enLang ? EN.infoT5 : RO.infoT5,
+      content: enLang ? EN.infoC5 : RO.infoC5,
+    },
+    {
+      title: enLang ? EN.infoT6 : RO.infoT6,
+      content: enLang ? EN.infoC6 : RO.infoC6,
+    },
+  ];
 
   // Component mount
   useEffect(() => {
@@ -160,14 +164,14 @@ export default function RightDrawer({navigation}) {
     if (supported) {
       Alert.alert(
         'Info',
-        'Doreşti să navighezi spre Filelist.io ?',
+        enLang ? EN.filelistWeb : RO.filelistWeb,
         [
           {
-            text: 'DA',
+            text: enLang ? EN.yes : RO.yes,
             onPress: () => Linking.openURL('https://filelist.io'),
           },
           {
-            text: 'NU',
+            text: enLang ? EN.no : RO.no,
             onPress: () => {},
             style: 'cancel',
           },
@@ -177,7 +181,7 @@ export default function RightDrawer({navigation}) {
     } else {
       Alert.alert(
         'Info',
-        'Navigarea spre Filelist.io nu a funcţionat.',
+        enLang ? EN.filelistWebErr : RO.filelistWebErr,
         [
           {
             text: 'OK',
@@ -216,6 +220,38 @@ export default function RightDrawer({navigation}) {
         }
       } else {
         await AsyncStorage.setItem('theme', 'dark');
+      }
+    } catch (e) {
+      alert(e);
+    }
+  };
+
+  const switchLang = async () => {
+    dispatch(AppConfigActions.setCollItems([]));
+    try {
+      const currentLang = await AsyncStorage.getItem('enLang');
+      if (currentLang !== null) {
+        if (currentLang === 'false') {
+          await AsyncStorage.setItem('enLang', 'true');
+          dispatch(AppConfigActions.toggleEnLang());
+          Animated.timing(roEn, {
+            toValue: 0,
+            duration: 1000,
+            easing: Easing.bounce,
+            useNativeDriver: true,
+          }).start();
+        } else {
+          await AsyncStorage.setItem('enLang', 'false');
+          dispatch(AppConfigActions.toggleEnLang());
+          Animated.timing(roEn, {
+            toValue: 1,
+            duration: 1000,
+            easing: Easing.bounce,
+            useNativeDriver: true,
+          }).start();
+        }
+      } else {
+        await AsyncStorage.setItem('enLang', 'false');
       }
     } catch (e) {
       alert(e);
@@ -270,11 +306,6 @@ export default function RightDrawer({navigation}) {
 
   return (
     <>
-    <StatusBar
-        barStyle={appInfo ? 'dark-content' : 'light-content'}
-        backgroundColor={'transparent'}
-        translucent={true}
-      />
       <Overlay
         statusBarTranslucent
         animationType="slide"
@@ -315,7 +346,7 @@ export default function RightDrawer({navigation}) {
                   color: lightTheme ? 'black' : 'white',
                   fontWeight: 'bold',
                 }}>
-                Informaţii folosire
+                {enLang ? EN.howToUse : RO.howToUse}
               </Text>
             </View>
             <Accordion
@@ -401,54 +432,8 @@ export default function RightDrawer({navigation}) {
                   color: lightTheme ? 'black' : 'white',
                 },
               ]}>
-              Informaţii folosire
+              {enLang ? EN.howToUse : RO.howToUse}
             </Text>
-          </Pressable>
-        </View>
-        <View style={RightDrawerStyle.settingsOverlayContainer}>
-          <Pressable
-            style={RightDrawerStyle.settingsOverlayPressable}
-            android_ripple={{
-              color: 'grey',
-              borderless: false,
-            }}
-            onPress={() => switchTheme()}>
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    rotate: spinIt,
-                  },
-                ],
-              }}>
-              <FontAwesomeIcon
-                color={lightTheme ? 'black' : MAIN_LIGHT}
-                size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                icon={faAdjust}
-              />
-            </Animated.View>
-            <Text
-              style={[
-                RightDrawerStyle.settingsOverlayText,
-                {
-                  fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
-                  color: lightTheme ? 'black' : 'white',
-                },
-              ]}>
-              Temă culori
-            </Text>
-            <View
-              style={{
-                paddingLeft: statusHeight / 1.5,
-              }}
-              pointerEvents={'none'}>
-              <Switch
-                trackColor={{false: 'black', true: '#505050'}}
-                thumbColor={lightTheme ? 'white' : MAIN_LIGHT}
-                ios_backgroundColor="#909090"
-                value={!lightTheme}
-              />
-            </View>
           </Pressable>
         </View>
         <View
@@ -477,7 +462,7 @@ export default function RightDrawer({navigation}) {
                   color: lightTheme ? 'black' : 'white',
                 },
               ]}>
-              Dimensiune text
+              {enLang ? EN.textSize : RO.textSize}
             </Text>
           </View>
           {Platform.OS === 'android' ? (
@@ -493,7 +478,7 @@ export default function RightDrawer({navigation}) {
                     : 'm'
                   : 'm'
               }
-              dropdownIconColor={lightTheme ? '#000000': '#FFFFFF'}
+              dropdownIconColor={lightTheme ? '#000000' : '#FFFFFF'}
               style={[
                 RightDrawerStyle.settingsPicker,
                 {
@@ -511,9 +496,9 @@ export default function RightDrawer({navigation}) {
                   ? toggleLFonts()
                   : null
               }>
-              <Picker.Item label="Mic" value="s" />
-              <Picker.Item label="Mediu" value="m" />
-              <Picker.Item label="Mare" value="l" />
+              <Picker.Item label={enLang ? EN.s : RO.s} value="s" />
+              <Picker.Item label={enLang ? EN.m : RO.m} value="m" />
+              <Picker.Item label={enLang ? EN.l : RO.l} value="l" />
             </Picker>
           ) : (
             <PickerIOS
@@ -545,11 +530,109 @@ export default function RightDrawer({navigation}) {
                   ? toggleLFonts()
                   : null
               }>
-              <PickerIOS.Item label="Mic" value="s" />
-              <PickerIOS.Item label="Mediu" value="m" />
-              <PickerIOS.Item label="Mare" value="l" />
+              <PickerIOS.Item label={enLang ? EN.s : RO.s} value="s" />
+              <PickerIOS.Item label={enLang ? EN.m : RO.m} value="m" />
+              <PickerIOS.Item label={enLang ? EN.l : RO.l} value="l" />
             </PickerIOS>
           )}
+        </View>
+        <View style={RightDrawerStyle.settingsOverlayContainer}>
+          <Pressable
+            style={RightDrawerStyle.settingsOverlayPressable}
+            android_ripple={{
+              color: 'grey',
+              borderless: false,
+            }}
+            onPress={switchTheme}>
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    rotate: spinIt,
+                  },
+                ],
+              }}>
+              <FontAwesomeIcon
+                color={lightTheme ? 'black' : MAIN_LIGHT}
+                size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+                icon={faAdjust}
+              />
+            </Animated.View>
+            <Text
+              style={[
+                RightDrawerStyle.settingsOverlayText,
+                {
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                  color: lightTheme ? 'black' : 'white',
+                },
+              ]}>
+              {enLang ? EN.theme : RO.theme}
+            </Text>
+            <View
+              style={{
+                paddingLeft: statusHeight / 1.5,
+              }}
+              pointerEvents={'none'}>
+              <Switch
+                trackColor={{false: 'black', true: '#505050'}}
+                thumbColor={lightTheme ? 'white' : MAIN_LIGHT}
+                ios_backgroundColor="#909090"
+                value={!lightTheme}
+              />
+            </View>
+          </Pressable>
+        </View>
+        <View style={RightDrawerStyle.settingsOverlayContainer}>
+          <Pressable
+            style={RightDrawerStyle.settingsOverlayPressable}
+            android_ripple={{
+              color: 'grey',
+              borderless: false,
+            }}
+            onPress={switchLang}>
+            <Animated.View
+              style={{
+                width: 26,
+                height: 26,
+                transform: [
+                  {
+                    scale: bounceIt,
+                  },
+                ],
+              }}>
+              <FastImage
+                style={{width: '100%', height: '100%'}}
+                resizeMode={FastImage.resizeMode.contain}
+                source={enLang ? en : ro}
+              />
+            </Animated.View>
+            <Text
+              style={{
+                fontSize: Adjust(fontSizes !== null ? fontSizes[6] : 14),
+                color: lightTheme ? 'black' : 'white',
+                fontWeight: 'bold',
+                marginLeft: statusHeight / 1.4,
+              }}>
+              {enLang ? EN.lang : RO.lang}
+            </Text>
+            <View
+              style={{
+                paddingLeft: statusHeight / 1.5,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+              pointerEvents={'none'}>
+              <Switch
+                trackColor={{
+                  false: lightTheme ? 'black' : '#505050',
+                  true: lightTheme ? 'black' : '#505050',
+                }}
+                thumbColor={lightTheme ? 'white' : MAIN_LIGHT}
+                ios_backgroundColor="#909090"
+                value={enLang}
+              />
+            </View>
+          </Pressable>
         </View>
         <View style={RightDrawerStyle.settingsOverlayContainer}>
           <Pressable
@@ -686,8 +769,8 @@ const RightDrawerStyle = EStyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    width: '54%',
-    marginLeft: width / 6,
+    width: '50%',
+    marginLeft: width / 6.65,
     marginTop: '1rem',
   },
   settingsPickerIOS: {
