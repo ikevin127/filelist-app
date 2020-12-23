@@ -12,11 +12,6 @@ import Search from './Search';
 import Login from './Login';
 import Home from './Home';
 
-// Variables
-import {
-  MAIN_LIGHT,
-} from '../assets/variables';
-
 // Navigation
 import {createDrawerNavigator} from '@react-navigation/drawer';
 import {
@@ -39,7 +34,6 @@ function MyTabs() {
       tabBarOptions={{
         showLabel: false,
         showIcon: false,
-        //tabStyle={opacity: 1},
         style: {height: 0},
       }}>
       <Tab.Screen name="Home" component={Home} />

@@ -193,7 +193,7 @@ export default function Home({navigation}) {
   }
 
   const onRefresh = useCallback(async () => {
-      dispatch(AppConfigActions.setCollItems([]));
+    dispatch(AppConfigActions.setCollItems([]));
     setListLatestLoading(true);
     try {
       const value0 = await AsyncStorage.getItem('username');
@@ -241,6 +241,43 @@ export default function Home({navigation}) {
     }
     dispatch(AppConfigActions.setCollItems(newIds));
   };
+
+  const downloadTorrent = async (link) => {
+    const supported = await Linking.canOpenURL(
+      link,
+    );
+    if (supported) {
+      Alert.alert(
+        'Info',
+        enLang ? EN.download : RO.download,
+        [
+          {
+            text: enLang ? EN.yes : RO.yes,
+            onPress: () => Linking.openURL(link),
+          },
+          {
+            text: enLang ? EN.no : RO.no,
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+        {cancelable: true},
+      );
+    } else {
+      Alert.alert(
+        'Info',
+        enLang ? EN.downloadErr : RO.downloadErr,
+        [
+          {
+            text: 'OK',
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+        {cancelable: true},
+      );
+    }
+  }
 
   const fetchIMDbInfo = async (id) => {
     try {
@@ -332,43 +369,6 @@ export default function Home({navigation}) {
       }).start();
     }, 4000);
   };
-
-  const downloadTorrent = async (link) => {
-    const supported = await Linking.canOpenURL(
-      link,
-    );
-    if (supported) {
-      Alert.alert(
-        'Info',
-        enLang ? EN.download : RO.download,
-        [
-          {
-            text: enLang ? EN.yes : RO.yes,
-            onPress: () => Linking.openURL(link),
-          },
-          {
-            text: enLang ? EN.no : RO.no,
-            onPress: () => {},
-            style: 'cancel',
-          },
-        ],
-        {cancelable: true},
-      );
-    } else {
-      Alert.alert(
-        'Info',
-        enLang ? EN.downloadErr : RO.downloadErr,
-        [
-          {
-            text: 'OK',
-            onPress: () => {},
-            style: 'cancel',
-          },
-        ],
-        {cancelable: true},
-      );
-    }
-  }
 
   const SkeletonLoading = () => {
     return (
@@ -1469,7 +1469,6 @@ const HomePage = EStyleSheet.create({
   },
   itemPressableContainer: {
     flex: 1,
-    width: '100%',
     borderWidth: 1,
     padding: '0.5rem',
     flexDirection: 'column',
@@ -1478,7 +1477,6 @@ const HomePage = EStyleSheet.create({
   },
   itemPressableFirst: {
     flex: 1,
-    width: '100%',
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',

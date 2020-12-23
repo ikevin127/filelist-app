@@ -4,7 +4,6 @@ import {
   Text,
   Animated,
   Alert,
-  Easing,
   FlatList,
   ActivityIndicator,
   Pressable,
@@ -360,18 +359,6 @@ export default function Search({navigation}) {
     navigation.navigate('Home');
   }
 
-  const closeCatCheck = () => {
-    setTimeout(() => {
-      getIndexes();
-    }, 100);
-    setTimeout(() => {
-      getIndexes();
-    }, 150);
-    setTimeout(() => {
-      setCatListLatest(!catListLatest);
-    }, 200);
-  }
-
   const setCollapsible = (id) => {
     const newIds = [...collItems];
     const index = newIds.indexOf(id);
@@ -384,6 +371,44 @@ export default function Search({navigation}) {
     }
     dispatch(AppConfigActions.setCollItems(newIds));
   };
+
+  const downloadTorrent = async (link) => {
+    const supported = await Linking.canOpenURL(
+      link,
+    );
+    if (supported) {
+      Alert.alert(
+        'Info',
+        enLang ? EN.download : RO.download,
+        [
+          {
+            text: 'DA',
+            onPress: () =>
+              Linking.openURL(link),
+          },
+          {
+            text: 'NU',
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+        {cancelable: true},
+      );
+    } else {
+      Alert.alert(
+        'Info',
+        enLang ? EN.downloadErr : RO.downloadErr,
+        [
+          {
+            text: 'OK',
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+        {cancelable: true},
+      );
+    }
+  }
 
   const resetSearch = async () => {
     const currentSearch = await AsyncStorage.getItem(
@@ -430,6 +455,7 @@ export default function Search({navigation}) {
   }
 
   const getIndexes = () => {
+    setCatListLatest(!catListLatest);
     setCatIndex([
     animes,
     audio,
@@ -466,6 +492,7 @@ export default function Search({navigation}) {
   const fetchIMDbInfo = async (id) => {
     try {
       if (isNetReachable) {
+        setIMDbModal(true);
         setIMDbLoading(true);
         await Axios.get('https://spleeter.co.uk/' + id)
           .then((res) => {
@@ -480,14 +507,18 @@ export default function Search({navigation}) {
             crashlytics().recordError(e);
           });
       } else {
-        setIMDbLoading(false);
-        setIMDbData(null);
+        netOff();
       }
     } catch (e) {
       crashlytics().log('search -> fetchIMDbInfo()');
       crashlytics().recordError(e);
     }
   };
+
+  const imdbModalClose = () => {
+    setIMDbModal(false);
+    setIMDbData(null);
+  }
 
   const formatBytes = (a, b = 2) => {
     if (0 === a) return '0 Bytes';
@@ -553,44 +584,6 @@ export default function Search({navigation}) {
       }).start();
     }, 4000);
   };
-
-  const downloadTorrent = async (link) => {
-    const supported = await Linking.canOpenURL(
-      link,
-    );
-    if (supported) {
-      Alert.alert(
-        'Info',
-        enLang ? EN.download : RO.download,
-        [
-          {
-            text: 'DA',
-            onPress: () =>
-              Linking.openURL(link),
-          },
-          {
-            text: 'NU',
-            onPress: () => {},
-            style: 'cancel',
-          },
-        ],
-        {cancelable: true},
-      );
-    } else {
-      Alert.alert(
-        'Info',
-        enLang ? EN.downloadErr : RO.downloadErr,
-        [
-          {
-            text: 'OK',
-            onPress: () => {},
-            style: 'cancel',
-          },
-        ],
-        {cancelable: true},
-      );
-    }
-  }
 
   const SkeletonLoading = () => {
     return (
@@ -847,6 +840,12 @@ export default function Search({navigation}) {
                       {
                         fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
                         fontWeight: 'bold',
+                        marginRight:
+                          item.freeleech === 1 &&
+                          item.internal === 0 &&
+                          item.doubleup === 0
+                            ? 0
+                            : 4,
                       },
                     ]}>
                     FREELEECH
@@ -859,6 +858,12 @@ export default function Search({navigation}) {
                       {
                         fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
                         fontWeight: 'bold',
+                        marginRight:
+                          item.freeleech === 1 &&
+                          item.internal === 1 &&
+                          item.doubleup === 0
+                            ? 0
+                            : 4,
                       },
                     ]}>
                     INTERNAL
@@ -871,6 +876,12 @@ export default function Search({navigation}) {
                       {
                         fontSize: Adjust(fontSizes !== null ? fontSizes[0] : 6),
                         fontWeight: 'bold',
+                        marginRight:
+                          item.freeleech === 1 &&
+                          item.internal === 1 &&
+                          item.doubleup === 1
+                            ? 0
+                            : 4,
                       },
                     ]}>
                     2X UPLOAD
@@ -1214,7 +1225,6 @@ export default function Search({navigation}) {
                       }}
                       onPress={() => {
                         fetchIMDbInfo(item.imdb);
-                        setIMDbModal(true);
                       }}>
                       <FontAwesomeIcon
                         size={14}
@@ -1281,10 +1291,7 @@ export default function Search({navigation}) {
             backgroundColor: lightTheme ? 'white' : 'black',
           }}
           isVisible={imdbModal}
-          onBackdropPress={() => {
-            setIMDbData(null);
-            setIMDbModal(false);
-          }}>
+          onBackdropPress={imdbModalClose}>
           <View
             style={{
               flexDirection: 'column',
@@ -1516,7 +1523,7 @@ export default function Search({navigation}) {
             },
           ]}
           isVisible={catListLatest}
-          onBackdropPress={() => closeCatCheck()}>
+          onBackdropPress={getIndexes}>
           <>
             <View style={SearchPage.catCheckContainer}>
               <View
@@ -2961,10 +2968,7 @@ export default function Search({navigation}) {
                     color: 'white',
                     borderless: false,
                   }}
-                  onPress={() => {
-                    getIndexes();
-                    setCatListLatest(!catListLatest);
-                  }}>
+                  onPress={getIndexes}>
                   <FontAwesomeIcon color={'white'} size={20} icon={faCheck} />
                 </Pressable>
               </View>
@@ -3021,7 +3025,7 @@ export default function Search({navigation}) {
                       borderless: true,
                       radius: width / 18,
                     }}
-                    onPress={() => goBack()}>
+                    onPress={goBack}>
                     <FontAwesomeIcon
                       size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
                       color={'white'}
@@ -3508,7 +3512,6 @@ const SearchPage = EStyleSheet.create({
     borderColor: '#1ec621',
     borderWidth: 1,
     color: 'white',
-    marginRight: 4,
     backgroundColor: '#09580a',
   },
   imdbInfoInternalBadge: {
@@ -3518,13 +3521,13 @@ const SearchPage = EStyleSheet.create({
     borderColor: '#1e87c6',
     borderWidth: 1,
     color: 'white',
-    marginRight: 4,
     backgroundColor: '#093b58',
   },
   imdbInfoDoubleUpBadge: {
     paddingLeft: 4,
     paddingTop: 2,
     paddingRight: 2,
+    marginLeft: 4,
     borderColor: '#7c00ff',
     borderWidth: 1,
     color: 'white',

@@ -10,7 +10,6 @@ import {
 } from '../assets/variables';
 
 export default function Loading() {
-  
   return (
     <>
       <StatusBar
@@ -24,7 +23,6 @@ export default function Loading() {
           {backgroundColor: 'black'},
         ]}>
         <ActivityIndicator
-          style={LoadingPage.indicator}
           size={Platform.OS === 'ios' ? 'small' : 'large'}
           color={ACCENT_COLOR}
         />
@@ -39,12 +37,5 @@ const LoadingPage = EStyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     justifyContent: 'center',
-  },
-  indicator: {
-    transform: [
-      {
-        scale: 1.5,
-      },
-    ],
-  },
+  }
 });

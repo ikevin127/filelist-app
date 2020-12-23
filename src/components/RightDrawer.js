@@ -51,9 +51,9 @@ import {RO, EN} from '../assets/lang';
 
 export default function RightDrawer({navigation}) {
   const [user, setUser] = useState('');
-  const [darkLight] = useState(new Animated.Value(0));
-  const [roEn] = useState(new Animated.Value(1));
   const [activeSections, setActiveSections] = useState([]);
+  const [roEn] = useState(new Animated.Value(1));
+  const [darkLight] = useState(new Animated.Value(0));
   const spinIt = darkLight.interpolate({
     inputRange: [0, 1, 2],
     outputRange: ['0deg', '180deg', '360deg'],
@@ -153,7 +153,8 @@ export default function RightDrawer({navigation}) {
         setUser(currentUser);
       }
     } catch (e) {
-      alert(e);
+      crashlytics().log('rightdrawer -> getCurrentUser()');
+      crashlytics().recordError(e);
     }
   };
 
@@ -222,7 +223,8 @@ export default function RightDrawer({navigation}) {
         await AsyncStorage.setItem('theme', 'dark');
       }
     } catch (e) {
-      alert(e);
+      crashlytics().log('rightdrawer -> switchTheme()');
+      crashlytics().recordError(e);
     }
   };
 
@@ -254,18 +256,21 @@ export default function RightDrawer({navigation}) {
         await AsyncStorage.setItem('enLang', 'false');
       }
     } catch (e) {
-      alert(e);
+      crashlytics().log('rightdrawer -> switchLang()');
+      crashlytics().recordError(e);
     }
   };
 
   const handleLogout = async () => {
     const keys = ['username', 'passkey', 'latest'];
+    navigation.closeDrawer();
     try {
       await AsyncStorage.multiRemove(keys);
       dispatch(AppConfigActions.retrieveLatest());
       dispatch(AppConfigActions.latestError());
     } catch (e) {
-      alert(e);
+      crashlytics().log('rightdrawer -> handleLogout()');
+      crashlytics().recordError(e);
     }
   };
 
@@ -666,10 +671,7 @@ export default function RightDrawer({navigation}) {
               color: 'grey',
               borderless: false,
             }}
-            onPress={() => {
-              navigation.closeDrawer();
-              handleLogout();
-            }}>
+            onPress={handleLogout}>
             <FontAwesomeIcon
               style={{
                 transform: [
