@@ -3,6 +3,8 @@ import {
   View,
   Pressable,
   ScrollView,
+  TouchableOpacity,
+  ToastAndroid,
   Animated,
   TouchableWithoutFeedback,
   Keyboard,
@@ -39,6 +41,8 @@ import {
   faUserLock,
   faArrowRight,
 } from '@fortawesome/free-solid-svg-icons';
+import ro from '../assets/ro.png';
+import en from '../assets/en.png';
 
 // Variables
 import {
@@ -55,10 +59,14 @@ export default function Login() {
   const [isKeyboard, setIsKeyboard] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [isNetReachable, setIsNetReachable] = useState(true);
-  const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
-  const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
-  const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
-  const [showNetworkAlertOff] = useState(new Animated.Value(statusHeight * 3));
+  const [showNetworkAlertTextOn, setNetTextOn] = useState(new Animated.Value(0));
+  const [showNetworkAlertTextOff, setNetTextOff] = useState(new Animated.Value(0));
+  const [showNetworkAlertOn, setNetAlertOn] = useState(
+    new Animated.Value(statusHeight * 3),
+  );
+  const [showNetworkAlertOff, setNetAlertOff] = useState(
+    new Animated.Value(statusHeight * 3),
+  );
 
   // Redux
   const dispatch = useDispatch();
@@ -72,15 +80,34 @@ export default function Login() {
 
   // Component mount
   useEffect(() => {
-
     // Set font size
     dispatch(AppConfigActions.setFonts());
 
-    // API error handling
+    // API Error handling
     if (latestError !== null) {
+      // Disable network on / off alert animations when latestError changes
+      setNetTextOn(new Animated.Value(0));
+      setNetTextOff(
+        new Animated.Value(0),
+      );
+      setNetAlertOn(
+        new Animated.Value(statusHeight * 3),
+      );
+      setNetAlertOff(
+        new Animated.Value(statusHeight * 3),
+      );
+      if (latestError.response.status === 403) {
+        if (latestError.response.data.error.includes('Invalid')) {
+          setUserPass();
+        } else {
+          setFailAuth();
+        }
+      }
+
       if (latestError.response.status === 429) {
         setLimitReached();
       }
+
       if (latestError.response.status === 503) {
         setAPIDown();
       }
@@ -100,14 +127,14 @@ export default function Login() {
         netOff();
       }
     });
-    
-      const keyboardDidShowListener = Keyboard.addListener(
-        'keyboardDidShow',
-        () => {
-          setIsKeyboard(true);
-          scrollRef.current.scrollTo({y: height / 6.2, animated: true});
-        },
-      );
+
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setIsKeyboard(true);
+        scrollRef.current.scrollTo({y: height / 6.2, animated: true});
+      },
+    );
     const keyboardDidHideListener = Keyboard.addListener(
       'keyboardDidHide',
       () => {
@@ -127,11 +154,33 @@ export default function Login() {
   const setLimitReached = () => {
     setLoginLoading(false);
     setErrorMsg(enLang ? EN.alert150 : RO.alert150);
+    setTimeout(() => {
+      setErrorMsg(null);
+    }, 5000);
   }
+
+  const setUserPass = () => {
+    setLoginLoading(false);
+    setErrorMsg(enLang ? EN.alertUP : RO.alertUP);
+    setTimeout(() => {
+      setErrorMsg(null);
+    }, 5000);
+  };
+
+  const setFailAuth = () => {
+    setLoginLoading(false);
+    setErrorMsg(enLang ? EN.alertLR : RO.alertLR);
+    setTimeout(() => {
+      setErrorMsg(null);
+    }, 5000);
+  };
 
   const setAPIDown = () => {
     setLoginLoading(false);
     setErrorMsg(enLang ? EN.alertAPI : RO.alertAPI);
+    setTimeout(() => {
+      setErrorMsg(null);
+    }, 5000);
   }
 
   const storeData = async (value0, value1) => {
@@ -163,6 +212,42 @@ export default function Login() {
       }
     } catch (e) {
       crashlytics().log('login -> handleLogin()');
+      crashlytics().recordError(e);
+    }
+  };
+
+  const switchLangRo = async () => {
+    try {
+      const currentLang = await AsyncStorage.getItem('enLang');
+      if (currentLang === 'true') {
+        await AsyncStorage.setItem('enLang', 'false');
+        dispatch(AppConfigActions.toggleEnLang());
+        ToastAndroid.showWithGravity(
+          'Limba: Română',
+          ToastAndroid.SHORT,
+          ToastAndroid.TOP,
+        );
+      }
+    } catch (e) {
+      crashlytics().log('login -> switchLangRo()');
+      crashlytics().recordError(e);
+    }
+  };
+
+  const switchLangEn = async () => {
+    try {
+      const currentLang = await AsyncStorage.getItem('enLang');
+      if (currentLang === 'false') {
+        await AsyncStorage.setItem('enLang', 'true');
+        dispatch(AppConfigActions.toggleEnLang());
+        ToastAndroid.showWithGravity(
+          'Language: English',
+          ToastAndroid.SHORT,
+          ToastAndroid.TOP,
+        );
+      }
+    } catch (e) {
+      crashlytics().log('login -> switchLangEn()');
       crashlytics().recordError(e);
     }
   };
@@ -411,6 +496,43 @@ export default function Login() {
           </KeyboardAvoidingView>
         </ScrollView>
       </TouchableWithoutFeedback>
+      {isKeyboard ? null : (
+        <View
+          style={LoginPage.langView}>
+          <TouchableOpacity
+            onPress={switchLangRo}
+            style={{
+              width: 30,
+              height: 30,
+            }}>
+            <FastImage
+              style={{width: '100%', height: '100%'}}
+              resizeMode={FastImage.resizeMode.contain}
+              source={ro}
+            />
+          </TouchableOpacity>
+          <View
+            style={{
+              height: '15%',
+              width: 0.5,
+              backgroundColor: lightTheme ? 'black' : 'white',
+              marginHorizontal: 20,
+            }}
+          />
+          <TouchableOpacity
+            onPress={switchLangEn}
+            style={{
+              width: 30,
+              height: 30,
+            }}>
+            <FastImage
+              style={{width: '100%', height: '100%'}}
+              resizeMode={FastImage.resizeMode.contain}
+              source={en}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
       {isNetReachable ? (
         <Animated.View
           style={[
@@ -520,6 +642,17 @@ const LoginPage = EStyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  langView: {
+            position: 'absolute',
+            height: statusHeight * 2,
+            bottom: statusHeight,
+            left: 0,
+            right: 0,
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'transparent',
+          },
   networkAlertContainer: {
     elevation: 10,
     zIndex: 10,

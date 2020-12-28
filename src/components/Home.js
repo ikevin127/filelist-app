@@ -4,7 +4,6 @@ import {
   Text,
   Animated,
   Alert,
-  Easing,
   FlatList,
   RefreshControl,
   StatusBar,
@@ -86,7 +85,7 @@ export default function Home({navigation}) {
   const [imdbModal, setIMDbModal] = useState(false);
   const [IMDbData, setIMDbData] = useState(null);
   const [isNetReachable, setIsNetReachable] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing] = useState(false);
   const [IMDbLoading, setIMDbLoading] = useState(false);
   const [listLatestLoading, setListLatestLoading] = useState(false);
   const [listEndLoading, setListEndLoading] = useState(true);
@@ -120,6 +119,7 @@ export default function Home({navigation}) {
 
     // Set font sizes
     dispatch(AppConfigActions.setFonts());
+    dispatch(AppConfigActions.latestError());
 
     // API error handling
     if (latestError !== null) {
@@ -211,7 +211,7 @@ export default function Home({navigation}) {
   }, [listLatest]);
 
   const get50 = useCallback(async () => {
-    if (listLatest.length == 50) {
+    if (listLatest.length === 50) {
       setListEndLoading(false);
       setListEndMsg(true);
     } else {

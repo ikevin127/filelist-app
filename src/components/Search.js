@@ -16,7 +16,7 @@ import {
 import { useIsDrawerOpen } from '@react-navigation/drawer';
 import Collapsible from 'react-native-collapsible';
 import {Input, Overlay, Badge} from 'react-native-elements';
-import {Chip} from 'react-native-paper';
+import Chip from 'react-native-paper/lib/commonjs/components/Chip';
 import FastImage from 'react-native-fast-image';
 import NetInfo from '@react-native-community/netinfo';
 import SkeletonContent from 'react-native-skeleton-content-nonexpo';

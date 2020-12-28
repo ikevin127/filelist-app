@@ -2,7 +2,10 @@ export const RO = {
   // Login screen
   alert150:
     'API: Ai atins limita de 150 de cereri pe oră, revino peste o oră pentru a te putea conecta din nou',
+  alertUP:
+    'Numele de utilizator ori codul Passkey sunt greşite. Verifică cu atenţie datele introduse şi încearcă din nou',
   alertAPI: 'API: Momentan serviciul Filelist API nu funcţionează',
+  alertLR: 'Prea multe autentificări eşuate. Încearcă din nou peste o oră',
   userREQ: 'Numele de utilizator lipseşte',
   passVAL:
     'Codul passkey conţine 32 de caractere şi este diferit de parola contului\nAcest cod se află în zona Profil a contului tău filelist',
@@ -35,7 +38,7 @@ export const RO = {
   m: 'Mediu',
   l: 'Mare',
   theme: 'Temă culori',
-  lang: 'Limbă',
+  lang: 'Limba',
   // Home screen
   download: 'Doreşti să descarci fişierul torrent ?',
   downloadErr:
@@ -98,6 +101,9 @@ export const EN = {
   // Login screen
   alert150:
     'API: You reached the 150 API calls per hour limit, come back and try again in 1 hour',
+  alertUP:
+    'Username or Passkey are incorrect. Make sure they are correct and try again',
+  alertLR: 'Too many failed authentications. Try again in one hour',
   alertAPI:
     'API: Filelist API service is down. Check the forum for more details',
   userREQ: 'Username required',
