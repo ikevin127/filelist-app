@@ -1513,7 +1513,7 @@ export default function Search({navigation}) {
           overlayStyle={[
             SearchPage.catCheckOverlay,
             {
-              height: height,
+              height: Platform.Version < 23 ? height - statusHeight : height,
               paddingTop:
                 Platform.OS === 'android'
                   ? statusHeight / 1.5

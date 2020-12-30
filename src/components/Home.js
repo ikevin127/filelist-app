@@ -1469,6 +1469,7 @@ const HomePage = EStyleSheet.create({
   },
   itemPressableContainer: {
     flex: 1,
+    width: '100%',
     borderWidth: 1,
     padding: '0.5rem',
     flexDirection: 'column',
@@ -1477,6 +1478,7 @@ const HomePage = EStyleSheet.create({
   },
   itemPressableFirst: {
     flex: 1,
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',

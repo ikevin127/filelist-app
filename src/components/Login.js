@@ -77,6 +77,7 @@ export default function Login() {
   // Refs
   const netRef = useRef(false);
   const scrollRef = useRef(null);
+  let timeoutRef = useRef(null);
 
   // Component mount
   useEffect(() => {
@@ -86,16 +87,7 @@ export default function Login() {
     // API Error handling
     if (latestError !== null) {
       // Disable network on / off alert animations when latestError changes
-      setNetTextOn(new Animated.Value(0));
-      setNetTextOff(
-        new Animated.Value(0),
-      );
-      setNetAlertOn(
-        new Animated.Value(statusHeight * 3),
-      );
-      setNetAlertOff(
-        new Animated.Value(statusHeight * 3),
-      );
+      setNetAlertsOff();
       if (latestError.response.status === 403) {
         if (latestError.response.data.error.includes('Invalid')) {
           setUserPass();
@@ -128,6 +120,10 @@ export default function Login() {
       }
     });
 
+    if (Platform.OS === 'android') {
+      scrollRef.current.scrollTo({y: height, animated: true});
+    }
+
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
       () => {
@@ -144,17 +140,25 @@ export default function Login() {
 
     return () => {
       unsubscribe();
+      clearTimeout(timeoutRef);
       keyboardDidHideListener.remove();
       keyboardDidShowListener.remove();
     };
   }, [listLatest, latestError, isNetReachable]);
 
   // Functions
+
+  const setNetAlertsOff = () => {
+    setNetTextOn(new Animated.Value(0));
+    setNetTextOff(new Animated.Value(0));
+    setNetAlertOn(new Animated.Value(statusHeight * 3));
+    setNetAlertOff(new Animated.Value(statusHeight * 3));
+  }
   
   const setLimitReached = () => {
     setLoginLoading(false);
     setErrorMsg(enLang ? EN.alert150 : RO.alert150);
-    setTimeout(() => {
+    timeoutRef = setTimeout(() => {
       setErrorMsg(null);
     }, 5000);
   }
@@ -162,7 +166,7 @@ export default function Login() {
   const setUserPass = () => {
     setLoginLoading(false);
     setErrorMsg(enLang ? EN.alertUP : RO.alertUP);
-    setTimeout(() => {
+    timeoutRef = setTimeout(() => {
       setErrorMsg(null);
     }, 5000);
   };
@@ -170,7 +174,7 @@ export default function Login() {
   const setFailAuth = () => {
     setLoginLoading(false);
     setErrorMsg(enLang ? EN.alertLR : RO.alertLR);
-    setTimeout(() => {
+    timeoutRef = setTimeout(() => {
       setErrorMsg(null);
     }, 5000);
   };
@@ -178,7 +182,7 @@ export default function Login() {
   const setAPIDown = () => {
     setLoginLoading(false);
     setErrorMsg(enLang ? EN.alertAPI : RO.alertAPI);
-    setTimeout(() => {
+    timeoutRef = setTimeout(() => {
       setErrorMsg(null);
     }, 5000);
   }
