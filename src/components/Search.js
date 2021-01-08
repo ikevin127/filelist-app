@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
@@ -13,7 +14,7 @@ import {
   StatusBar,
   Linking,
 } from 'react-native';
-import { useIsDrawerOpen } from '@react-navigation/drawer';
+import {useIsDrawerOpen} from '@react-navigation/drawer';
 import Collapsible from 'react-native-collapsible';
 import {Input, Overlay, Badge} from 'react-native-elements';
 import Chip from 'react-native-paper/lib/commonjs/components/Chip';
@@ -88,10 +89,16 @@ import xxx from '../assets/cat/xxx.png';
 import {catValues} from '../assets/catData';
 
 // Variables
-import {width, height, MAIN_LIGHT, ACCENT_COLOR, statusHeight} from '../assets/variables';
+import {
+  width,
+  height,
+  MAIN_LIGHT,
+  ACCENT_COLOR,
+  statusHeight,
+} from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
-export default function Search({navigation}) {  
+export default function Search({navigation}) {
   const [catIndex, setCatIndex] = useState('');
   const [searchText, setSearchText] = useState('');
   const [imdbModal, setIMDbModal] = useState(false);
@@ -146,52 +153,51 @@ export default function Search({navigation}) {
     collItems,
     listSearch,
     searchError,
-    enLang
+    enLang,
   } = useSelector((state) => state.appConfig);
 
   // Refs
   const netRef = useRef(false);
   const searchRef = useRef(null);
   const selectedFilters = [
-  animes ? 1 : 0,
-  audio ? 1 : 0,
-  desene ? 1 : 0,
-  diverse ? 1 : 0,
-  doc ? 1 : 0,
-  filme3d ? 1 : 0,
-  filme4k ? 1 : 0,
-  filme4kbd ? 1 : 0,
-  filmeBD ? 1 : 0,
-  filmeDvd ? 1 : 0,
-  filmeDvdRo ? 1 : 0,
-  filmeHd ? 1 : 0,
-  filmeHdRo ? 1 : 0,
-  filmeSd ? 1 : 0,
-  flacs ? 1 : 0,
-  jocConsole ? 1 : 0,
-  jocPc ? 1 : 0,
-  lin ? 1 : 0,
-  mob ? 1 : 0,
-  software ? 1 : 0,
-  seriale4k ? 1 : 0,
-  serialeHd ? 1 : 0,
-  serialeSd ? 1 : 0,
-  sports ? 1 : 0,
-  videos ? 1 : 0,
-  porn ? 1 : 0,
-  doubleUp ? 1 : 0,
-  freeleech ? 1 : 0,
-  internal ? 1 : 0,
-]
-  .reduce((a, b) => a + b, 0)
-  .toString();
+    animes ? 1 : 0,
+    audio ? 1 : 0,
+    desene ? 1 : 0,
+    diverse ? 1 : 0,
+    doc ? 1 : 0,
+    filme3d ? 1 : 0,
+    filme4k ? 1 : 0,
+    filme4kbd ? 1 : 0,
+    filmeBD ? 1 : 0,
+    filmeDvd ? 1 : 0,
+    filmeDvdRo ? 1 : 0,
+    filmeHd ? 1 : 0,
+    filmeHdRo ? 1 : 0,
+    filmeSd ? 1 : 0,
+    flacs ? 1 : 0,
+    jocConsole ? 1 : 0,
+    jocPc ? 1 : 0,
+    lin ? 1 : 0,
+    mob ? 1 : 0,
+    software ? 1 : 0,
+    seriale4k ? 1 : 0,
+    serialeHd ? 1 : 0,
+    serialeSd ? 1 : 0,
+    sports ? 1 : 0,
+    videos ? 1 : 0,
+    porn ? 1 : 0,
+    doubleUp ? 1 : 0,
+    freeleech ? 1 : 0,
+    internal ? 1 : 0,
+  ]
+    .reduce((a, b) => a + b, 0)
+    .toString();
 
   // Check drawer open/closed
   let isDrawerOpen = useIsDrawerOpen();
 
   // Component mount
   useEffect(() => {
-
     // API error handling
     if (searchError !== null) {
       if (searchError.response.status === 429) {
@@ -201,13 +207,19 @@ export default function Search({navigation}) {
         setAPIDown();
       }
     }
-
     // Screen focus listener
     const screenFocusListener = navigation.addListener('focus', () => {
       // Focus search input everytime screen gets focus
       searchRef.current.focus();
     });
 
+    return () => {
+      screenFocusListener();
+    };
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, [searchError]);
+
+  useEffect(() => {
     // Connection listener
     const netListener = NetInfo.addEventListener((state) => {
       if (state.isInternetReachable === true) {
@@ -224,10 +236,10 @@ export default function Search({navigation}) {
     });
 
     return () => {
-      screenFocusListener();
       netListener();
     };
-  }, [isNetReachable, searchError]);
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, [isNetReachable]);
 
   // Functions
 
@@ -235,7 +247,7 @@ export default function Search({navigation}) {
     setSearchLoading(false);
     Alert.alert(
       'Info',
-      enLang ? EN.alert150 : RO.alert150,
+      enLang ? EN.alert150S : RO.alert150S,
       [
         {
           text: 'OK',
@@ -245,7 +257,7 @@ export default function Search({navigation}) {
       ],
       {cancelable: true},
     );
-  }
+  };
 
   const setAPIDown = () => {
     setSearchLoading(false);
@@ -261,7 +273,7 @@ export default function Search({navigation}) {
       ],
       {cancelable: true},
     );
-  }
+  };
 
   const handleSearchType = async (action, type, query) => {
     try {
@@ -335,7 +347,7 @@ export default function Search({navigation}) {
             keySearch ? 'name' : 'imdb',
             query,
           );
-        // if search textbox empty && filters not empty
+          // if search textbox empty && filters not empty
         } else {
           handleSearchType(
             'latest-torrents',
@@ -344,11 +356,11 @@ export default function Search({navigation}) {
           );
         }
       }
-    // if user network connection is offline
+      // if user network connection is offline
     } else {
       netOff();
     }
-  }
+  };
 
   const goBack = () => {
     setTimeout(() => {
@@ -357,7 +369,7 @@ export default function Search({navigation}) {
     resetFilters();
     resetSearch();
     navigation.navigate('Home');
-  }
+  };
 
   const setCollapsible = (id) => {
     const newIds = [...collItems];
@@ -373,9 +385,7 @@ export default function Search({navigation}) {
   };
 
   const downloadTorrent = async (link) => {
-    const supported = await Linking.canOpenURL(
-      link,
-    );
+    const supported = await Linking.canOpenURL(link);
     if (supported) {
       Alert.alert(
         'Info',
@@ -383,8 +393,7 @@ export default function Search({navigation}) {
         [
           {
             text: 'DA',
-            onPress: () =>
-              Linking.openURL(link),
+            onPress: () => Linking.openURL(link),
           },
           {
             text: 'NU',
@@ -408,17 +417,15 @@ export default function Search({navigation}) {
         {cancelable: true},
       );
     }
-  }
+  };
 
   const resetSearch = async () => {
-    const currentSearch = await AsyncStorage.getItem(
-      'search',
-    );
+    const currentSearch = await AsyncStorage.getItem('search');
     if (currentSearch !== null) {
       await AsyncStorage.removeItem('search');
       dispatch(AppConfigActions.retrieveSearch());
     }
-  }
+  };
 
   const resetFilters = () => {
     setKeySearch(true);
@@ -452,42 +459,43 @@ export default function Search({navigation}) {
     setFreeleech(false);
     setInternal(false);
     setDoubleUp(false);
-  }
+  };
 
   const getIndexes = () => {
     setCatListLatest(!catListLatest);
-    setCatIndex([
-    animes,
-    audio,
-    desene,
-    diverse,
-    doc,
-    filme3d,
-    filme4k,
-    filme4kbd,
-    filmeBD,
-    filmeDvd,
-    filmeDvdRo,
-    filmeHd,
-    filmeHdRo,
-    filmeSd,
-    flacs,
-    jocConsole,
-    jocPc,
-    lin,
-    mob,
-    software,
-    seriale4k,
-    serialeHd,
-    serialeSd,
-    sports,
-    videos,
-    porn,
-  ].reduce(
-    (out, bool, index) => (bool ? out.concat(index) : out),
-    [],
-  ).map((index) => catValues[index]));
-  }
+    setCatIndex(
+      [
+        animes,
+        audio,
+        desene,
+        diverse,
+        doc,
+        filme3d,
+        filme4k,
+        filme4kbd,
+        filmeBD,
+        filmeDvd,
+        filmeDvdRo,
+        filmeHd,
+        filmeHdRo,
+        filmeSd,
+        flacs,
+        jocConsole,
+        jocPc,
+        lin,
+        mob,
+        software,
+        seriale4k,
+        serialeHd,
+        serialeSd,
+        sports,
+        videos,
+        porn,
+      ]
+        .reduce((out, bool, index) => (bool ? out.concat(index) : out), [])
+        .map((index) => catValues[index]),
+    );
+  };
 
   const fetchIMDbInfo = async (id) => {
     try {
@@ -518,11 +526,13 @@ export default function Search({navigation}) {
   const imdbModalClose = () => {
     setIMDbModal(false);
     setIMDbData(null);
-  }
+  };
 
   const formatBytes = (a, b = 2) => {
-    if (0 === a) return '0 Bytes';
-    const c = 0 > b ? 0 : b,
+    if (a === 0) {
+      return '0 Bytes';
+    }
+    const c = b > 0 ? 0 : b,
       d = Math.floor(Math.log(a) / Math.log(1024));
     return (
       parseFloat((a / Math.pow(1024, d)).toFixed(c)) +
@@ -660,16 +670,17 @@ export default function Search({navigation}) {
         />
       </SkeletonContent>
     );
-  }
+  };
 
   // Torrent pressable
-
   const Item = ({item, onPress, style}) => (
     <Pressable
       onLongPress={() => {
         downloadTorrent(item.download_link);
       }}
-      onPress={() => {setCollapsible(item.id);}}
+      onPress={() => {
+        setCollapsible(item.id);
+      }}
       android_ripple={{
         color: 'grey',
         borderless: false,
@@ -681,7 +692,9 @@ export default function Search({navigation}) {
           {
             borderBottomWidth: collItems.includes(item.id) ? 0 : 1,
             borderColor: lightTheme ? 'rgba(0, 0, 0, 0.1)' : '#171717',
-            backgroundColor: lightTheme ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.04)',
+            backgroundColor: lightTheme
+              ? 'rgba(0, 0, 0, 0.05)'
+              : 'rgba(255, 255, 255, 0.04)',
           },
         ]}>
         <View style={SearchPage.itemPressableFirst}>
@@ -795,10 +808,10 @@ export default function Search({navigation}) {
         <Item
           item={item}
           style={{
-              marginTop: 3,
-              marginBottom: collItems.includes(item.id) ? 0 : 3,
-              backgroundColor: 'transparent',
-            }}
+            marginTop: 3,
+            marginBottom: collItems.includes(item.id) ? 0 : 3,
+            backgroundColor: 'transparent',
+          }}
         />
         <Collapsible
           enablePointerEvents={true}

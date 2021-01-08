@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
@@ -59,14 +60,10 @@ export default function Login() {
   const [isKeyboard, setIsKeyboard] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [isNetReachable, setIsNetReachable] = useState(true);
-  const [showNetworkAlertTextOn, setNetTextOn] = useState(new Animated.Value(0));
-  const [showNetworkAlertTextOff, setNetTextOff] = useState(new Animated.Value(0));
-  const [showNetworkAlertOn, setNetAlertOn] = useState(
-    new Animated.Value(statusHeight * 3),
-  );
-  const [showNetworkAlertOff, setNetAlertOff] = useState(
-    new Animated.Value(statusHeight * 3),
-  );
+  const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
+  const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
+  const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
+  const [showNetworkAlertOff] = useState(new Animated.Value(statusHeight * 3));
 
   // Redux
   const dispatch = useDispatch();
@@ -86,8 +83,6 @@ export default function Login() {
 
     // API Error handling
     if (latestError !== null) {
-      // Disable network on / off alert animations when latestError changes
-      setNetAlertsOff();
       if (latestError.response.status === 403) {
         if (latestError.response.data.error.includes('Invalid')) {
           setUserPass();
@@ -105,6 +100,34 @@ export default function Login() {
       }
     }
 
+    if (Platform.OS === 'android') {
+      scrollRef.current.scrollTo({y: height, animated: true});
+    }
+
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setIsKeyboard(true);
+        scrollRef.current.scrollTo({y: height / 6.2, animated: true});
+      },
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setIsKeyboard(false);
+      },
+    );
+
+    return () => {
+      clearTimeout(timeoutRef);
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
+    };
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, [listLatest, latestError]);
+
+  useEffect(() => {
     // Network connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isInternetReachable === true) {
@@ -120,48 +143,20 @@ export default function Login() {
       }
     });
 
-    if (Platform.OS === 'android') {
-      scrollRef.current.scrollTo({y: height, animated: true});
-    }
-
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
-        setIsKeyboard(true);
-        scrollRef.current.scrollTo({y: height / 6.2, animated: true});
-      },
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        setIsKeyboard(false);
-      },
-    );
-
     return () => {
       unsubscribe();
-      clearTimeout(timeoutRef);
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
     };
-  }, [listLatest, latestError, isNetReachable]);
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, [isNetReachable]);
 
   // Functions
-
-  const setNetAlertsOff = () => {
-    setNetTextOn(new Animated.Value(0));
-    setNetTextOff(new Animated.Value(0));
-    setNetAlertOn(new Animated.Value(statusHeight * 3));
-    setNetAlertOff(new Animated.Value(statusHeight * 3));
-  }
-  
   const setLimitReached = () => {
     setLoginLoading(false);
     setErrorMsg(enLang ? EN.alert150 : RO.alert150);
     timeoutRef = setTimeout(() => {
       setErrorMsg(null);
     }, 5000);
-  }
+  };
 
   const setUserPass = () => {
     setLoginLoading(false);
@@ -185,7 +180,7 @@ export default function Login() {
     timeoutRef = setTimeout(() => {
       setErrorMsg(null);
     }, 5000);
-  }
+  };
 
   const storeData = async (value0, value1) => {
     try {
@@ -501,8 +496,7 @@ export default function Login() {
         </ScrollView>
       </TouchableWithoutFeedback>
       {isKeyboard ? null : (
-        <View
-          style={LoginPage.langView}>
+        <View style={LoginPage.langView}>
           <TouchableOpacity
             onPress={switchLangRo}
             style={{
@@ -616,7 +610,6 @@ const LoginPage = EStyleSheet.create({
   },
   error: {
     width: '100%',
-    fontSize: '0.55rem',
     paddingLeft: '0.5rem',
     textAlign: 'left',
     color: 'crimson',
@@ -632,7 +625,7 @@ const LoginPage = EStyleSheet.create({
   btnContainer: {
     width: width / 6,
     height: width / 6,
-    borderRadius: (width / 6) / 2,
+    borderRadius: width / 6 / 2,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
@@ -642,21 +635,21 @@ const LoginPage = EStyleSheet.create({
     width: width / 6,
     height: width / 6,
     backgroundColor: ACCENT_COLOR,
-    borderRadius: (width / 6) / 2,
+    borderRadius: width / 6 / 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   langView: {
-            position: 'absolute',
-            height: statusHeight * 2,
-            bottom: statusHeight,
-            left: 0,
-            right: 0,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'transparent',
-          },
+    position: 'absolute',
+    height: statusHeight * 2,
+    bottom: statusHeight,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
   networkAlertContainer: {
     elevation: 10,
     zIndex: 10,

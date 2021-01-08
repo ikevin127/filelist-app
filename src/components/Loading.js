@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import {View, StatusBar, ActivityIndicator, Platform} from 'react-native';
 
@@ -5,9 +6,7 @@ import {View, StatusBar, ActivityIndicator, Platform} from 'react-native';
 import EStyleSheet from 'react-native-extended-stylesheet';
 
 // Variables
-import {
-  ACCENT_COLOR,
-} from '../assets/variables';
+import {ACCENT_COLOR} from '../assets/variables';
 
 export default function Loading() {
   return (
@@ -17,11 +16,7 @@ export default function Loading() {
         backgroundColor={'black'}
         translucent={true}
       />
-      <View
-        style={[
-          LoadingPage.container,
-          {backgroundColor: 'black'},
-        ]}>
+      <View style={[LoadingPage.container, {backgroundColor: 'black'}]}>
         <ActivityIndicator
           size={Platform.OS === 'ios' ? 'small' : 'large'}
           color={ACCENT_COLOR}
@@ -36,6 +31,5 @@ const LoadingPage = EStyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     justifyContent: 'center',
-    justifyContent: 'center',
-  }
+  },
 });

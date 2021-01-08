@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
@@ -13,7 +14,7 @@ import {
   Keyboard,
   Linking,
 } from 'react-native';
-import { useIsDrawerOpen } from '@react-navigation/drawer';
+import {useIsDrawerOpen} from '@react-navigation/drawer';
 import Collapsible from 'react-native-collapsible';
 import {Overlay} from 'react-native-elements';
 import FastImage from 'react-native-fast-image';
@@ -78,7 +79,13 @@ import vids from '../assets/cat/vids.png';
 import xxx from '../assets/cat/xxx.png';
 
 // Variables
-import {width, height, MAIN_LIGHT, ACCENT_COLOR, statusHeight} from '../assets/variables';
+import {
+  width,
+  height,
+  MAIN_LIGHT,
+  ACCENT_COLOR,
+  statusHeight,
+} from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
 export default function Home({navigation}) {
@@ -116,7 +123,6 @@ export default function Home({navigation}) {
 
   // Component mount
   useEffect(() => {
-
     // Set font sizes
     dispatch(AppConfigActions.setFonts());
     dispatch(AppConfigActions.latestError());
@@ -137,6 +143,13 @@ export default function Home({navigation}) {
       Keyboard.dismiss();
     });
 
+    return () => {
+      screenFocusListener();
+    };
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, [latestError]);
+
+  useEffect(() => {
     // Connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isInternetReachable === true) {
@@ -153,18 +166,17 @@ export default function Home({navigation}) {
     });
 
     return () => {
-      screenFocusListener();
       unsubscribe();
     };
-  }, [isNetReachable, latestError]);
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, [isNetReachable]);
 
   // Functions
-
   const setLimitReached = () => {
     setListLatestLoading(false);
     Alert.alert(
       'Info',
-      enLang ? EN.alert150 : RO.alert150,
+      enLang ? EN.alert150R : RO.alert150R,
       [
         {
           text: 'OK',
@@ -174,7 +186,7 @@ export default function Home({navigation}) {
       ],
       {cancelable: true},
     );
-  }
+  };
 
   const setAPIDown = () => {
     setListLatestLoading(false);
@@ -190,7 +202,7 @@ export default function Home({navigation}) {
       ],
       {cancelable: true},
     );
-  }
+  };
 
   const onRefresh = useCallback(async () => {
     dispatch(AppConfigActions.setCollItems([]));
@@ -208,10 +220,10 @@ export default function Home({navigation}) {
     setTimeout(() => {
       setListLatestLoading(false);
     }, 1000);
-  }, [listLatest]);
+  }, [dispatch]);
 
   const get50 = useCallback(async () => {
-    if (listLatest.length === 50) {
+    if (listLatest && listLatest.length === 50) {
       setListEndLoading(false);
       setListEndMsg(true);
     } else {
@@ -227,7 +239,7 @@ export default function Home({navigation}) {
     setTimeout(() => {
       setListEndLoading(false);
     }, 1000);
-  }, [listLatest]);
+  }, [listLatest, dispatch]);
 
   const setCollapsible = (id) => {
     const newIds = [...collItems];
@@ -243,9 +255,7 @@ export default function Home({navigation}) {
   };
 
   const downloadTorrent = async (link) => {
-    const supported = await Linking.canOpenURL(
-      link,
-    );
+    const supported = await Linking.canOpenURL(link);
     if (supported) {
       Alert.alert(
         'Info',
@@ -277,7 +287,7 @@ export default function Home({navigation}) {
         {cancelable: true},
       );
     }
-  }
+  };
 
   const fetchIMDbInfo = async (id) => {
     try {
@@ -306,8 +316,10 @@ export default function Home({navigation}) {
   };
 
   const formatBytes = (a, b = 2) => {
-    if (0 === a) return '0 Bytes';
-    const c = 0 > b ? 0 : b,
+    if (a === 0) {
+      return '0 Bytes';
+    }
+    const c = b > 0 ? 0 : b,
       d = Math.floor(Math.log(a) / Math.log(1024));
     return (
       parseFloat((a / Math.pow(1024, d)).toFixed(c)) +
@@ -445,7 +457,7 @@ export default function Home({navigation}) {
         />
       </SkeletonContent>
     );
-  }
+  };
 
   // Torrent pressable
 
@@ -466,7 +478,9 @@ export default function Home({navigation}) {
           {
             borderBottomWidth: collItems.includes(item.id) ? 0 : 1,
             borderColor: lightTheme ? 'rgba(0, 0, 0, 0.1)' : '#171717',
-            backgroundColor: lightTheme ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.04)',
+            backgroundColor: lightTheme
+              ? 'rgba(0, 0, 0, 0.05)'
+              : 'rgba(255, 255, 255, 0.04)',
           },
         ]}>
         <View style={HomePage.itemPressableFirst}>

@@ -1,6 +1,5 @@
 import {width, height, pixelRatio} from '../assets/variables';
 
-
 export default function Adjust(size) {
   if (pixelRatio >= 2 && pixelRatio < 3) {
     // iphone 5s and older Androids

@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -27,7 +28,7 @@ function MyTabs() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
-      cardStyle={{ opacity: 1 }}
+      cardStyle={{opacity: 1}}
       animationEnabled={true}
       lazy
       keyboardDismissMode={'on-drag'}
@@ -56,7 +57,7 @@ const RightDrawerHome = () => {
 };
 
 export default function Auth() {
-  const [loading, setLoading] = useState(true);
+  //const [loading, setLoading] = useState(true);
 
   // Redux
   const dispatch = useDispatch();
@@ -64,14 +65,10 @@ export default function Auth() {
 
   // Component mount
   useEffect(() => {
+    //setLoading(false);
     setLang();
     setTheme();
-    if (!listLatest) {
-      dispatch(AppConfigActions.retrieveLatest());
-      setTimeout(() => {
-        setLoading(false);
-      }, 100);
-    }
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, []);
 
   // Functions
@@ -85,7 +82,7 @@ export default function Auth() {
       await AsyncStorage.setItem('enLang', 'false');
     }
   };
-  
+
   const setTheme = async () => {
     const currentTheme = await AsyncStorage.getItem('theme');
     if (currentTheme !== null) {
@@ -104,19 +101,10 @@ export default function Auth() {
         cardStyle: {backgroundColor: 'black'},
       }}
       headerMode="none">
-      {listLatest ? (
+      {listLatest !== null ? (
         <Stack.Screen
           name="RightDrawerHome"
           component={RightDrawerHome}
-          options={{
-            animationTypeForReplace: 'pop',
-            cardStyle: {backgroundColor: 'black'},
-          }}
-        />
-      ) : loading ? (
-        <Stack.Screen
-          name="Loading"
-          component={Loading}
           options={{
             animationTypeForReplace: 'pop',
             cardStyle: {backgroundColor: 'black'},

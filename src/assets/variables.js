@@ -1,4 +1,4 @@
-import {Dimensions, PixelRatio, StatusBar} from 'react-native';
+import {Dimensions, PixelRatio} from 'react-native';
 import {getStatusBarHeight} from 'react-native-status-bar-height';
 
 // Colors

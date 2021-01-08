@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {useState, useEffect} from 'react';
 import {
   Alert,
@@ -100,6 +101,7 @@ export default function RightDrawer({navigation}) {
   useEffect(() => {
     getCurrentUser();
     dispatch(AppConfigActions.setFonts());
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, []);
 
   // Functions
@@ -159,9 +161,7 @@ export default function RightDrawer({navigation}) {
   };
 
   const openFilelist = async () => {
-    const supported = await Linking.canOpenURL(
-      'https://filelist.io',
-    );
+    const supported = await Linking.canOpenURL('https://filelist.io');
     if (supported) {
       Alert.alert(
         'Info',
@@ -193,7 +193,7 @@ export default function RightDrawer({navigation}) {
         {cancelable: true},
       );
     }
-  }
+  };
 
   const switchTheme = async () => {
     dispatch(AppConfigActions.setCollItems([]));
@@ -256,8 +256,8 @@ export default function RightDrawer({navigation}) {
         await AsyncStorage.setItem('enLang', 'false');
       }
     } catch (e) {
-      crashlytics().log('rightdrawer -> switchLang()');
       crashlytics().recordError(e);
+      crashlytics().log('rightdrawer -> switchLang()');
     }
   };
 
@@ -266,11 +266,11 @@ export default function RightDrawer({navigation}) {
     navigation.closeDrawer();
     try {
       await AsyncStorage.multiRemove(keys);
-      dispatch(AppConfigActions.retrieveLatest());
       dispatch(AppConfigActions.latestError());
+      dispatch(AppConfigActions.retrieveLatest());
     } catch (e) {
-      crashlytics().log('rightdrawer -> handleLogout()');
       crashlytics().recordError(e);
+      crashlytics().log('rightdrawer -> handleLogout()');
     }
   };
 
@@ -303,12 +303,12 @@ export default function RightDrawer({navigation}) {
     );
   };
 
+  // eslint-disable-next-line no-shadow
   const _updateSections = (activeSections) => {
     setActiveSections(activeSections);
   };
 
   // Component render
-
   return (
     <>
       <Overlay
@@ -739,7 +739,7 @@ const RightDrawerStyle = EStyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingBottom: Platform.OS === 'ios' ? statusHeight / 3 : 0
+    paddingBottom: Platform.OS === 'ios' ? statusHeight / 3 : 0,
   },
   settingsOverlayContainer: {
     width: '100%',
