@@ -57,7 +57,7 @@ const RightDrawerHome = () => {
 };
 
 export default function Auth() {
-  //const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   // Redux
   const dispatch = useDispatch();
@@ -65,9 +65,15 @@ export default function Auth() {
 
   // Component mount
   useEffect(() => {
-    //setLoading(false);
     setLang();
     setTheme();
+    // if latestList !== null && app restart => send user to home
+    if (listLatest === null) {
+      dispatch(AppConfigActions.retrieveLatest());
+      setTimeout(() => {
+        setLoading(false);
+      }, 100);
+    }
     // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, []);
 
@@ -105,6 +111,15 @@ export default function Auth() {
         <Stack.Screen
           name="RightDrawerHome"
           component={RightDrawerHome}
+          options={{
+            animationTypeForReplace: 'pop',
+            cardStyle: {backgroundColor: 'black'},
+          }}
+        />
+      ) : loading ? (
+        <Stack.Screen
+          name="Loading"
+          component={Loading}
           options={{
             animationTypeForReplace: 'pop',
             cardStyle: {backgroundColor: 'black'},

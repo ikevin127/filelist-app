@@ -4,11 +4,32 @@
   </a>
 </p>
 
-# About Filelist App
+# 💭 About
 
-> This is a React Native mobile application based around Filelist's API. FileList is a private romanian torrent tracker that recently developed a JSON API that will allow its users to get information from the website.
+> **React Native App** based on **Filelist API**. Filelist is a private romanian torrent tracker that recently developed an API that allows its **registered users** to get information about torrents using their **Username** and **Passkey**.
 
-## How does the API work ?
+# 📲 App features
+
+> State management w/ **Redux Ducks**
+
+> Language support: **Romanian & English**
+
+> Custom function for handling **font size responsiveness**
+
+> Options for changing font size to: **Small, Medium or Large**
+
+> Data persistence w/ **@react-native-async-storage/async-storage**
+
+> Connection listener ON | OFF w/ **@react-native-community/netinfo**
+
+> Layout responsiveness using **rem** units w/ **react-native-extended-stylesheet**
+
+> API Error handling for all **Error codes** listed at the bottom of the **API description**
+
+# ![Google Play Logo](https://www.gstatic.com/android/market_images/web/favicon_v2.ico "Google Play Logo") Google Play Store
+**[Filelist App](https://play.google.com/store/apps/details?id=com.baderproductions.fl)**
+
+# 📋 API description
 
 ```sh
 # General info
@@ -17,21 +38,20 @@
 - All the arguments listed below are set as parameters in the call URL
 - Every API call requires authentication with Username and Passkey
 - Every user is limited to 150 API calls per hour
-- Red highlighted parameters are required
 
 # Authentication
 
  Parameters:
    username
    passkey
- Example: https://filelist.io/api.php?username=[username]&passkey=[passkey]
+ Example: https://filelist.io/api.php?username=[USERNAME]&passkey=[PASSKEY]
 
  # Parameters & endpoints
 
  Parameters:
    action
  Valid values: search-torrents, latest-torrents
- Example: https://filelist.io/api.php?username=[username]&passkey=[passkey]&action=search-torrents
+ Example: https://filelist.io/api.php?username=[USERNAME]&passkey=[PASSKEY]&action=search-torrents
 
  Additional parameters for action=search-torrents
    type               Valid values: imdb, name
@@ -53,12 +73,12 @@
    output        Valid values: json, rss. Default is JSON.
 
  Examples:
-   https://filelist.io/api.php?username=[username]&passkey=[passkey]&action=search-torrents&type=name&query=Gemini
-   https://filelist.io/api.php?username=[username]&passkey=[passkey]&action=search-torrents&type=imdb&query=tt4719744&category=4,19
-   https://filelist.io/api.php?username=[username]&passkey=[passkey]&action=latest-torrents
-   https://filelist.io/api.php?username=[username]&passkey=[passkey]&action=latest-torrents&output=rss
+   https://filelist.io/api.php?username=[USERNAME]&passkey=[PASSKEY]&action=search-torrents&type=name&query=Gemini
+   https://filelist.io/api.php?username=[USERNAME]&passkey=[PASSKEY]&action=search-torrents&type=imdb&query=tt4719744&category=4,19
+   https://filelist.io/api.php?username=[USERNAME]&passkey=[PASSKEY]&action=latest-torrents
+   https://filelist.io/api.php?username=[USERNAME]&passkey=[PASSKEY]&action=latest-torrents&output=rss
 
- # Category ID codes
+ # Category ID Codes
 
 +----+------------------+
 | id | name             |
@@ -105,4 +125,4 @@
 
 ## :scroll: License
 
-MIT © BADERproductions
+MIT © [BADERproductions.net](https://baderproductions.net/)

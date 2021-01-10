@@ -6,6 +6,7 @@ import {
   Animated,
   Alert,
   FlatList,
+  ToastAndroid,
   RefreshControl,
   StatusBar,
   ActivityIndicator,
@@ -152,12 +153,12 @@ export default function Home({navigation}) {
   useEffect(() => {
     // Connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
-      if (state.isInternetReachable === true) {
-        if (!netRef.current) {
-          netRef.current = true;
-        } else {
+      if (state.isInternetReachable) {
+        if (netRef.current) {
           setIsNetReachable(true);
           netOn();
+        } else {
+          netRef.current = true;
         }
       } else {
         setIsNetReachable(false);
@@ -219,8 +220,13 @@ export default function Home({navigation}) {
     }
     setTimeout(() => {
       setListLatestLoading(false);
+      ToastAndroid.showWithGravity(
+        enLang ? EN.refreshLatest : RO.refreshLatest,
+        ToastAndroid.SHORT,
+        ToastAndroid.CENTER,
+      );
     }, 1000);
-  }, [dispatch]);
+  }, [enLang, dispatch]);
 
   const get50 = useCallback(async () => {
     if (listLatest && listLatest.length === 50) {
@@ -1056,7 +1062,6 @@ export default function Home({navigation}) {
   };
 
   // Component render
-
   return (
     <>
       <StatusBar

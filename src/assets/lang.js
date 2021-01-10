@@ -16,20 +16,21 @@ export const RO = {
   passREQ: 'Codul passkey lipseşte',
   user: 'Utilizator',
   // Drawer
-  infoT1: '1.Funcţia de căutare',
+  infoT1: 'Funcţia de căutare ',
   infoC1:
-    '* Pentru cele mai recente torrente dintr-o anumită categorie selectează cel puţin 1 categorie din lista de filtre\n\n* Pentru căutarea după cod IMDb asigură-te că selectezi Căutare după: Cod IMDb în lista de Filtre, pentru exemple legat de diferenţele dintre cele două ţine apăsat 2 secunde (long press) pe oricare dintre cele 2 opţiuni Căutare după\n\n* Opţiunea Torrente din lista cu Filtre NU are nici un efect atunci când nu se foloseşte un Cuvânt cheie ori Cod IMDb\n\n* Opţiunile Torrente: Freeleech, Internal şi 2x Upload pot fi folosite în combinaţie cu oricare dintre Categorii şi Cuvânt cheie ori cod IMDb',
-  infoT2: '2.Semnificaţie Freeleech, Internal şi 2x Upload',
+    'Pentru cele mai recente torrente dintr-o anumită categorie selectează cel puţin o categorie din lista de filtre\n\nPentru căutarea după cod IMDb asigură-te că selectezi Căutare după: Cod IMDb din lista de Filtre, pentru exemple legat de diferenţele dintre cele două ţine apăsat 2 secunde (long press) pe oricare dintre cele 2 opţiuni de Căutare după\n\nOpţiunile de Torrente din lista cu Filtre NU au nici un efect atunci când nu se foloseşte un Cuvânt cheie ori Cod IMDb\n\nOpţiunile Torrente: Freeleech, Internal şi 2x Upload pot fi folosite în combinaţie cu oricare dintre Categorii şi Cuvânt cheie ori Cod IMDb',
+  infoT2: 'Semnificaţie Freeleech, Internal şi 2x Upload',
   infoC2:
-    'Freeleech: descărcarea torrentelor din această categorie, îţi va creşte Upload-ul fără să adăuge Download astfel nu-ţi va afecta negativ Raţia\n\nInternal: torrente care fac parte din grupuri interne ale trackerului printre care se numără Play(HD|BD|SD|XD)\n\n2x Upload: în caz că nu se subînţelege, aceste torrente odată descărcate şi ţinute la Seed îţi oferă de 2 ori mai mult upload',
-  infoT3: '3.Reactualizarea listei cu torrente recent adăugate',
+    'Freeleech: descărcarea torrentelor din această categorie îţi va creşte Upload-ul fără să adăuge Download astfel nu-ţi va afecta negativ Raţia\n\nInternal: torrente care fac parte din grupuri interne ale trackerului printre care Play(HD|BD|SD|XD)\n\n2x Upload: acest tip de torrente odată descărcate şi ţinute la Seed îţi oferă de 2 ori mai mult upload',
+  infoT3: 'Reactualizarea listei cu torrente recent adăugate',
   infoC3: 'Se efectuează prin tragerea în jos (pull down) din capul listei',
-  infoT4: '4.Pentru a descărca un fişier torrent',
-  infoC4: 'Ţine apăsat 2 secunde (long press) pe torrentul respectiv',
-  infoT5: '5.Pentru redirecţionare spre IMDb',
+  infoT4: 'Pentru a descărca un fişier torrent',
+  infoC4:
+    'Ţine apăsat 2 secunde (long press) pe torrentul respectiv ori dacă deschizi obiectul torrentului pentru detalii, prin butonul Download',
+  infoT5: 'Pentru redirecţionare spre IMDb',
   infoC5:
-    'Se aplică doar în cazul torrentelor care conţin cod IMDb şi se efectuează prin atingerea posterului',
-  infoT6: '6.Dacă mărimea textului este prea mică / mare',
+    'Se aplică doar în cazul torrentelor care conţin Cod IMDb şi se efectuează prin atingerea posterului',
+  infoT6: 'Dacă mărimea textului este prea mică / mare',
   infoC6:
     'Se poate schimba din meniu pe mărimile mic, mediu ori mare în funcţie de preferinţă',
   filelistWeb: 'Doreşti să navighezi spre Filelist.io ?',
@@ -44,6 +45,7 @@ export const RO = {
   theme: 'Temă culori',
   lang: 'Limba',
   // Home screen
+  refreshLatest: 'Listă actualizată ✅',
   download: 'Doreşti să descarci fişierul torrent ?',
   downloadErr:
     'Acest torrent nu poate fi descărcat prin intermediul aplicaţiei.',
@@ -120,20 +122,21 @@ export const EN = {
   passREQ: 'Passkey required',
   user: 'Username',
   // Drawer
-  infoT1: '1.Search function',
+  infoT1: 'Search function',
   infoC1:
-    "* In order to search torrents you need to choose at least one Category from Filters\n\n* If you want to search for movies with their IMDb code make sure to select Search with: IMDb code from Filters, for more information on the Search with options (long press) on any of the two options\n\n* The Torrent options from Filters DOESN'T have any effect when searching without any Keyword or IMDb code\n\n* The Torrent options: Freeleech, Internal and 2x Upload have effect ONLY when they're being used in combination with a Keyword or IMDb code",
-  infoT2: '2.About Freeleech, Internal and 2x Upload',
+    "In order to search torrents you need to choose at least one Category from Filters\n\nIf you want to search for movies using their IMDb Code make sure to select Search with: IMDb Code from Filters, for more information on the Search with options (long press) on any of the two options\n\nThe Torrent options from Filters DOESN'T have any effect when searching without any Keyword or IMDb Code\n\nThe Torrent options: Freeleech, Internal and 2x Upload have effect ONLY when they're being used in combination with a Keyword or IMDb Code",
+  infoT2: 'About Freeleech, Internal and 2x Upload',
   infoC2:
-    "Freeleech: when downloading these type torrents, you will get Upload only without adding to your Download quota therefore your Ratio WON'T be negatively affected\n\nInternal: these type of torrents are part of Filelist internal groups like Play(HD|BD|SD|XD)\n\n2x Upload: in case this one is not obvious, these type of torrents once downloaded and held on Seed in your torrent client you will get 2 times more Upload which will grow your Ratio 2 times faster then Seeding regular torrents",
-  infoT3: '3.Refreshing the latest torrents list',
+    "Freeleech: when downloading these type torrents, you will get Upload only without adding to your Download quota therefore your Ratio WON'T be negatively affected\n\nInternal: these type of torrents are part of Filelist internal groups like Play(HD|BD|SD|XD)\n\n2x Upload: these type of torrents once downloaded and held on Seed in your torrent client will get you 2x more Upload which will grow your Ratio 2 times faster then Seeding regular torrents",
+  infoT3: 'Refreshing the latest torrents list',
   infoC3: 'This can be done by (pull-down) from the top of the list',
-  infoT4: '4.How to download a torrent',
-  infoC4: '(Long press) over the torrent you want to download',
-  infoT5: '5.Redirecting to IMDb',
+  infoT4: 'How to download a torrent',
+  infoC4:
+    '(Long press) over the torrent you want to download or if you touch and open the torrent object for more details it can be done by pressing the Download button',
+  infoT5: 'Redirecting to IMDb',
   infoC5:
     'This applies only for those torrents that have the IMDb button and can be done by touching the movie poster',
-  infoT6: '6.Text size is too small / large',
+  infoT6: 'Text size is too small / large',
   infoC6:
     'You can change it from the menu, having 3 sizes at your disposal: small, medium and large as per your preference',
   filelistWeb: 'Do you want to navigate to Filelist.io ?',
@@ -148,6 +151,7 @@ export const EN = {
   theme: 'Color theme',
   lang: 'Language',
   // Home screen
+  refreshLatest: 'List actualized ✅',
   download: 'Do you want to download this torrent ?',
   downloadErr: "This torrent can't be downloaded on your device.",
   torrSize: 'The total size of the torrent content',

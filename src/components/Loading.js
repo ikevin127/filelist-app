@@ -2,21 +2,29 @@
 import React from 'react';
 import {View, StatusBar, ActivityIndicator, Platform} from 'react-native';
 
+// Redux
+import {useSelector} from 'react-redux';
+
 // Responsiveness
 import EStyleSheet from 'react-native-extended-stylesheet';
 
 // Variables
-import {ACCENT_COLOR} from '../assets/variables';
+import {ACCENT_COLOR, MAIN_LIGHT} from '../assets/variables';
 
 export default function Loading() {
+  const {lightTheme} = useSelector((state) => state.appConfig);
   return (
     <>
       <StatusBar
-        barStyle={'dark-content'}
-        backgroundColor={'black'}
+        barStyle={'light-content'}
+        backgroundColor={'transparent'}
         translucent={true}
       />
-      <View style={[LoadingPage.container, {backgroundColor: 'black'}]}>
+      <View
+        style={[
+          LoadingPage.container,
+          {backgroundColor: lightTheme ? MAIN_LIGHT : 'black'},
+        ]}>
         <ActivityIndicator
           size={Platform.OS === 'ios' ? 'small' : 'large'}
           color={ACCENT_COLOR}

@@ -130,12 +130,12 @@ export default function Login() {
   useEffect(() => {
     // Network connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
-      if (state.isInternetReachable === true) {
-        if (!netRef.current) {
-          netRef.current = true;
-        } else {
+      if (state.isInternetReachable) {
+        if (netRef.current) {
           setIsNetReachable(true);
           netOn();
+        } else {
+          netRef.current = true;
         }
       } else {
         setIsNetReachable(false);
