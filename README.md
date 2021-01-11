@@ -10,6 +10,8 @@
 
 # 📲 App features
 
+> Recent search keywords history
+
 > State management w/ **Redux Ducks**
 
 > Language support: **Romanian & English**
