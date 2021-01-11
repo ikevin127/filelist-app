@@ -3195,13 +3195,16 @@ export default function Search({navigation}) {
               showsVerticalScrollIndicator={false}>
               <>
                 <View
-                  style={{
-                    width: width,
-                    backgroundColor: 'transparent',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}>
+                  style={[
+                    SearchPage.itemHistoryNav,
+                    {
+                      width: width,
+                      backgroundColor: 'transparent',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    },
+                  ]}>
                   <TouchableOpacity
                     style={{
                       height: statusHeight * 1.5,
@@ -3222,8 +3225,6 @@ export default function Search({navigation}) {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={{
-                      position: 'absolute',
-                      right: statusHeight / 2.5,
                       height: statusHeight * 1.5,
                       justifyContent: 'center',
                       alignItems: 'center',
@@ -3471,8 +3472,11 @@ const SearchPage = EStyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'transparent',
   },
+  itemHistoryNav: {
+    paddingHorizontal: '1.2rem',
+  },
   historyText: {
-    paddingLeft: '3.5rem',
+    paddingLeft: '1.2rem',
   },
   itemPressableFirst: {
     flex: 1,
