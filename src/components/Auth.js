@@ -65,8 +65,10 @@ export default function Auth() {
 
   // Component mount
   useEffect(() => {
+    // Set language, theme & font sizes
     setLang();
     setTheme();
+    dispatch(AppConfigActions.setFonts());
     // if latestList !== null && app restart => send user to home
     if (listLatest === null) {
       dispatch(AppConfigActions.retrieveLatest());

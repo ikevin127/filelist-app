@@ -124,7 +124,7 @@ export default function Home({navigation}) {
 
   // Component mount
   useEffect(() => {
-    // Set font sizes
+    // Set font sizes & clear latestError if any
     dispatch(AppConfigActions.setFonts());
     dispatch(AppConfigActions.latestError());
 
@@ -1087,7 +1087,7 @@ export default function Home({navigation}) {
           animationType="fade"
           overlayStyle={{
             width: '90%',
-            height: height / 3,
+            height: fontSizes[0] === 8 ? height / 2 : height / 3,
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
@@ -1578,7 +1578,7 @@ const HomePage = EStyleSheet.create({
   mainHeaderText: {
     color: 'white',
     fontWeight: 'bold',
-    paddingBottom: '1.35rem',
+    paddingBottom: '1.7rem',
   },
   mainHeaderSearchContainer: {
     position: 'absolute',

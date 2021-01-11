@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import crashlytics from '@react-native-firebase/crashlytics';
+import {S, M, L} from '../../assets/variables';
 import {types} from '../types';
 import Axios from 'axios';
 
@@ -8,6 +9,7 @@ const initState = {
   enLang: false,
   appInfo: false,
   collItems: [],
+  historyList: {},
   fontSizes: null,
   listLatest: null,
   latestError: null,
@@ -27,14 +29,28 @@ export const actions = {
   }),
   setFonts: () => async (dispatch) => {
     try {
-      const fonts = await AsyncStorage.getItem('fontSizes');
-      if (fonts !== null) {
+      const size = await AsyncStorage.getItem('fontSizes');
+      if (size !== null) {
+        size === 'S' &&
+          dispatch({
+            type: types.APP_CONFIG.FONT_SIZES,
+            payload: JSON.parse(S),
+          });
+        size === 'M' &&
+          dispatch({
+            type: types.APP_CONFIG.FONT_SIZES,
+            payload: JSON.parse(M),
+          });
+        size === 'L' &&
+          dispatch({
+            type: types.APP_CONFIG.FONT_SIZES,
+            payload: JSON.parse(L),
+          });
+      } else {
         dispatch({
           type: types.APP_CONFIG.FONT_SIZES,
-          payload: JSON.parse(fonts),
+          payload: JSON.parse(M),
         });
-      } else {
-        crashlytics().log('Font sizes not found in async storage.');
       }
     } catch (e) {
       crashlytics().log('ducks -> setFonts()');
@@ -43,6 +59,25 @@ export const actions = {
   },
   setCollItems: (data) => async (dispatch) => {
     dispatch({type: types.APP_CONFIG.COLL_ITEMS, payload: data});
+  },
+  getHistoryList: () => async (dispatch) => {
+    try {
+      const history = await AsyncStorage.getItem('history');
+      if (history !== null) {
+        dispatch({
+          type: types.APP_CONFIG.HISTORY_LIST,
+          payload: JSON.parse(history).reverse(),
+        });
+      } else {
+        dispatch({
+          type: types.APP_CONFIG.HISTORY_LIST,
+          payload: {},
+        });
+      }
+    } catch (e) {
+      crashlytics().log('ducks -> getHistoryList()');
+      crashlytics().recordError(e);
+    }
   },
   getLatest: (user, pass, limit) => async (dispatch) => {
     await Axios.get(
@@ -157,6 +192,8 @@ export function reducer(state = initState, action) {
       return {...state, fontSizes: action.payload};
     case types.APP_CONFIG.COLL_ITEMS:
       return {...state, collItems: action.payload};
+    case types.APP_CONFIG.HISTORY_LIST:
+      return {...state, historyList: action.payload};
     case types.APP_CONFIG.GET_LATEST:
       return {...state, listLatest: action.payload};
     case types.APP_CONFIG.LATEST_ERROR:

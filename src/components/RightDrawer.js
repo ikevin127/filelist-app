@@ -99,51 +99,30 @@ export default function RightDrawer({navigation}) {
 
   // Component mount
   useEffect(() => {
+    // Get Username for display
     getCurrentUser();
-    dispatch(AppConfigActions.setFonts());
-    // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, []);
 
   // Functions
-
-  const toggleSFonts = async () => {
+  const toggleFontSize = async (size) => {
     dispatch(AppConfigActions.setCollItems([]));
     try {
-      await AsyncStorage.setItem(
-        'fontSizes',
-        JSON.stringify([4, 6, 8, 9, 10, 11, 12, 14, 20, 45]),
-      );
+      switch (size) {
+        case 'S':
+          await AsyncStorage.setItem('fontSizes', 'S');
+          break;
+        case 'M':
+          await AsyncStorage.setItem('fontSizes', 'M');
+          break;
+        case 'L':
+          await AsyncStorage.setItem('fontSizes', 'L');
+          break;
+        default:
+          await AsyncStorage.setItem('fontSizes', 'M');
+      }
       dispatch(AppConfigActions.setFonts());
     } catch (e) {
-      crashlytics().log('rightdrawer -> toggleSFonts()');
-      crashlytics().recordError(e);
-    }
-  };
-
-  const toggleMFonts = async () => {
-    dispatch(AppConfigActions.setCollItems([]));
-    try {
-      await AsyncStorage.setItem(
-        'fontSizes',
-        JSON.stringify([6, 9, 10, 11, 12, 13, 14, 16, 22, 50]),
-      );
-      dispatch(AppConfigActions.setFonts());
-    } catch (e) {
-      crashlytics().log('rightdrawer -> toggleMFonts()');
-      crashlytics().recordError(e);
-    }
-  };
-
-  const toggleLFonts = async () => {
-    dispatch(AppConfigActions.setCollItems([]));
-    try {
-      await AsyncStorage.setItem(
-        'fontSizes',
-        JSON.stringify([8, 10, 12, 13, 14, 15, 16, 18, 24, 50]),
-      );
-      dispatch(AppConfigActions.setFonts());
-    } catch (e) {
-      crashlytics().log('rightdrawer -> toggleLFonts()');
+      crashlytics().log(`rightdrawer -> toggleFontSize(${size})`);
       crashlytics().recordError(e);
     }
   };
@@ -494,11 +473,11 @@ export default function RightDrawer({navigation}) {
               mode="dropdown"
               onValueChange={(itemValue) =>
                 itemValue === 's'
-                  ? toggleSFonts()
+                  ? toggleFontSize('S')
                   : itemValue === 'm'
-                  ? toggleMFonts()
+                  ? toggleFontSize('M')
                   : itemValue === 'l'
-                  ? toggleLFonts()
+                  ? toggleFontSize('L')
                   : null
               }>
               <Picker.Item label={enLang ? EN.s : RO.s} value="s" />
@@ -528,11 +507,11 @@ export default function RightDrawer({navigation}) {
               }}
               onValueChange={(itemValue) =>
                 itemValue === 's'
-                  ? toggleSFonts()
+                  ? toggleFontSize('S')
                   : itemValue === 'm'
-                  ? toggleMFonts()
+                  ? toggleFontSize('M')
                   : itemValue === 'l'
-                  ? toggleLFonts()
+                  ? toggleFontSize('L')
                   : null
               }>
               <PickerIOS.Item label={enLang ? EN.s : RO.s} value="s" />

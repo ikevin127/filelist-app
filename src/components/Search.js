@@ -7,10 +7,12 @@ import {
   Alert,
   FlatList,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  TouchableOpacity,
+  ScrollView,
   Pressable,
   Platform,
   Keyboard,
-  ScrollView,
   StatusBar,
   Linking,
 } from 'react-native';
@@ -57,6 +59,8 @@ import {
   faEraser,
   faFilter,
   faArrowLeft,
+  faTimes,
+  faArrowUp,
 } from '@fortawesome/free-solid-svg-icons';
 
 // Assets
@@ -108,7 +112,9 @@ export default function Search({navigation}) {
   const [keySearch, setKeySearch] = useState(true);
   const [isNetReachable, setIsNetReachable] = useState(true);
   const [IMDbLoading, setIMDbLoading] = useState(false);
+  const [historyHidden, setHistoryHidden] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   // Categories
   const [animes, setAnimes] = useState(false);
   const [audio, setAudio] = useState(false);
@@ -151,6 +157,7 @@ export default function Search({navigation}) {
     lightTheme,
     fontSizes,
     collItems,
+    historyList,
     listSearch,
     searchError,
     enLang,
@@ -159,6 +166,7 @@ export default function Search({navigation}) {
   // Refs
   const netRef = useRef(false);
   const searchRef = useRef(null);
+  const formikRef = useRef(null);
   const selectedFilters = [
     animes ? 1 : 0,
     audio ? 1 : 0,
@@ -209,12 +217,31 @@ export default function Search({navigation}) {
     }
     // Screen focus listener
     const screenFocusListener = navigation.addListener('focus', () => {
+      // Get search history list everytime screen gets focus
+      dispatch(AppConfigActions.getHistoryList());
       // Focus search input everytime screen gets focus
       searchRef.current.focus();
     });
 
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        setHistoryHidden(true);
+      },
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      },
+    );
+
     return () => {
       screenFocusListener();
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
     };
     // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, [searchError]);
@@ -242,6 +269,24 @@ export default function Search({navigation}) {
   }, [isNetReachable]);
 
   // Functions
+  const clearSearchHistory = async () => {
+    setHistoryHidden(false);
+    await AsyncStorage.removeItem('history');
+    // Set search history empty after AsyncStorage got cleared
+    dispatch(AppConfigActions.getHistoryList());
+  };
+
+  const addHistoryItem = async (item) => {
+    let currentHistory = await AsyncStorage.getItem('history');
+    let currentData = JSON.parse(currentHistory || '[]');
+    let randomId = Math.floor(Math.random() * Math.floor(100000 * 100000));
+    let newItem = {
+      id: randomId,
+      query: item,
+    };
+    currentData.push(newItem);
+    await AsyncStorage.setItem('history', JSON.stringify(currentData));
+  };
 
   const setLimitReached = () => {
     setSearchLoading(false);
@@ -337,6 +382,8 @@ export default function Search({navigation}) {
       } else {
         // if search textbox not empty && filters empty
         if (query.length > 0) {
+          // save search keyword for history suggestions list
+          addHistoryItem(query);
           const currentSearch = await AsyncStorage.getItem('search');
           if (currentSearch !== null) {
             await AsyncStorage.removeItem('search');
@@ -356,6 +403,8 @@ export default function Search({navigation}) {
           );
         }
       }
+      // get search history after search
+      dispatch(AppConfigActions.getHistoryList());
       // if user network connection is offline
     } else {
       netOff();
@@ -369,6 +418,7 @@ export default function Search({navigation}) {
     resetFilters();
     resetSearch();
     navigation.navigate('Home');
+    setHistoryHidden(false);
   };
 
   const setCollapsible = (id) => {
@@ -1295,7 +1345,7 @@ export default function Search({navigation}) {
           animationType="fade"
           overlayStyle={{
             width: '90%',
-            height: height / 3,
+            height: fontSizes[0] === 8 ? height / 2.3 : height / 3,
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
@@ -1422,7 +1472,6 @@ export default function Search({navigation}) {
                         style={{
                           flex: 1,
                           flexDirection: 'column',
-                          flexWrap: 'wrap',
                           justifyContent: 'flex-start',
                           alignItems: 'flex-start',
                           paddingHorizontal: 10,
@@ -2990,6 +3039,7 @@ export default function Search({navigation}) {
         </Overlay>
         <View style={SearchPage.mainHeader}>
           <Formik
+            innerRef={formikRef}
             initialValues={{search: ''}}
             onSubmit={(values) => {
               handleSearch(values.search);
@@ -3024,27 +3074,54 @@ export default function Search({navigation}) {
                   ref={searchRef}
                   autoFocus
                   onFocus={() => resetForm({})}
-                  placeholder={enLang ? EN.placeholder : RO.placeholder}
+                  placeholder={
+                    keySearch
+                      ? enLang
+                        ? EN.placeholderK
+                        : RO.placeholderK
+                      : enLang
+                      ? EN.placeholderI
+                      : RO.placeholderI
+                  }
                   placeholderTextColor={'rgba(255,255,255,0.8)'}
                   value={values.search}
                   onChangeText={handleChange('search')}
                   onBlur={() => setFieldTouched('search')}
                 />
                 <View style={SearchPage.mainHeaderSearch1Container}>
-                  <Pressable
-                    style={SearchPage.mainHeaderCogPressable}
-                    android_ripple={{
-                      color: 'white',
-                      borderless: true,
-                      radius: width / 18,
-                    }}
-                    onPress={goBack}>
-                    <FontAwesomeIcon
-                      size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                      color={'white'}
-                      icon={faArrowLeft}
-                    />
-                  </Pressable>
+                  {values.search.length > 0 ? (
+                    <Pressable
+                      style={SearchPage.mainHeaderCogPressable}
+                      android_ripple={{
+                        color: 'white',
+                        borderless: true,
+                        radius: width / 18,
+                      }}
+                      onPress={() => {
+                        resetForm({});
+                      }}>
+                      <FontAwesomeIcon
+                        size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+                        color={'white'}
+                        icon={faTimes}
+                      />
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      style={SearchPage.mainHeaderCogPressable}
+                      android_ripple={{
+                        color: 'white',
+                        borderless: true,
+                        radius: width / 18,
+                      }}
+                      onPress={goBack}>
+                      <FontAwesomeIcon
+                        size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+                        color={'white'}
+                        icon={faArrowLeft}
+                      />
+                    </Pressable>
+                  )}
                 </View>
                 <View style={SearchPage.mainHeaderSearch2Container}>
                   <Pressable
@@ -3097,6 +3174,135 @@ export default function Search({navigation}) {
             )}
           </Formik>
         </View>
+        {searchRef.current &&
+        searchRef.current.isFocused() &&
+        historyHidden &&
+        historyList.length > 0 ? (
+          <KeyboardAvoidingView
+            style={{height: height + statusHeight * 1.5, width: width}}>
+            <ScrollView
+              style={{
+                marginBottom:
+                  keyboardHeight > 0
+                    ? keyboardHeight + statusHeight * 6
+                    : statusHeight * 5.1,
+                paddingTop: 5,
+                height: height,
+                width: width,
+                backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
+              }}
+              keyboardShouldPersistTaps="always"
+              showsVerticalScrollIndicator={false}>
+              <>
+                <View
+                  style={{
+                    width: width,
+                    backgroundColor: 'transparent',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <TouchableOpacity
+                    style={{
+                      height: statusHeight * 1.5,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: 'transparent',
+                    }}
+                    onPress={() => clearSearchHistory()}>
+                    <Text
+                      style={{
+                        color: ACCENT_COLOR,
+                        fontSize: Adjust(
+                          fontSizes !== null ? fontSizes[3] : 11,
+                        ),
+                      }}>
+                      {enLang ? EN.clearSearchHistory : RO.clearSearchHistory}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{
+                      position: 'absolute',
+                      right: statusHeight / 2.5,
+                      height: statusHeight * 1.5,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: 'transparent',
+                    }}
+                    onPress={() => setHistoryHidden(false)}>
+                    <Text
+                      style={{
+                        color: 'crimson',
+                        fontSize: Adjust(
+                          fontSizes !== null ? fontSizes[3] : 11,
+                        ),
+                      }}>
+                      {enLang ? EN.close : RO.close}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {historyList.length > 0 &&
+                  historyList.map((item, i) => (
+                    <Pressable
+                      key={item.id}
+                      onPress={() => handleSearch(item.query)}
+                      android_ripple={{
+                        color: 'grey',
+                        borderless: false,
+                      }}
+                      style={[
+                        SearchPage.itemPressableHistory,
+                        {marginBottom: i === historyList.length - 1 ? 10 : 5},
+                      ]}>
+                      <View style={SearchPage.itemPressableHistoryContainer}>
+                        <Text
+                          style={[
+                            SearchPage.historyText,
+                            {
+                              color: lightTheme ? 'black' : 'white',
+                              fontSize: Adjust(
+                                fontSizes !== null ? fontSizes[4] : 12,
+                              ),
+                            },
+                          ]}>
+                          {item.query}
+                        </Text>
+                        <Pressable
+                          style={{
+                            width: statusHeight * 1.5,
+                            height: statusHeight * 1.5,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            marginRight: statusHeight / 3,
+                            backgroundColor: 'transparent',
+                          }}
+                          android_ripple={{
+                            color: 'grey',
+                            borderless: true,
+                            radius: width / 18,
+                          }}
+                          onPress={() =>
+                            formikRef.current.setFieldValue(
+                              'search',
+                              item.query,
+                            )
+                          }>
+                          <FontAwesomeIcon
+                            style={{transform: [{rotate: '-45deg'}]}}
+                            size={Adjust(
+                              fontSizes !== null ? fontSizes[7] : 16,
+                            )}
+                            color={lightTheme ? 'black' : 'white'}
+                            icon={faArrowUp}
+                          />
+                        </Pressable>
+                      </View>
+                    </Pressable>
+                  ))}
+              </>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        ) : null}
         <FlatList
           data={
             searchLoading
@@ -3118,7 +3324,7 @@ export default function Search({navigation}) {
                   {id: '15'},
                 ]
               : listSearch !== null
-              ? listSearch.slice(0, 30)
+              ? listSearch.slice(0, 20)
               : listSearch
           }
           renderItem={searchLoading ? () => <SkeletonLoading /> : renderItem}
@@ -3244,6 +3450,10 @@ const SearchPage = EStyleSheet.create({
     elevation: 7,
     zIndex: 7,
   },
+  itemPressableHistory: {
+    elevation: 7,
+    zIndex: 7,
+  },
   itemPressableContainer: {
     flex: 1,
     width: '100%',
@@ -3252,6 +3462,17 @@ const SearchPage = EStyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
+  },
+  itemPressableHistoryContainer: {
+    width: '100%',
+    height: statusHeight * 1.5,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  historyText: {
+    paddingLeft: '3.5rem',
   },
   itemPressableFirst: {
     flex: 1,

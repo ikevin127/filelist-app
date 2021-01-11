@@ -186,13 +186,6 @@ export default function Login() {
     try {
       await AsyncStorage.setItem('username', value0);
       await AsyncStorage.setItem('passkey', value1);
-      const fonts = await AsyncStorage.getItem('fontSizes');
-      if (fonts !== null) {
-        await AsyncStorage.setItem(
-          'fontSizes',
-          JSON.stringify([6, 9, 10, 11, 12, 13, 14, 16, 22, 50]),
-        );
-      }
     } catch (e) {
       crashlytics().log('login -> storeData()');
       crashlytics().recordError(e);
