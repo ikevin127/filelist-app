@@ -19,22 +19,15 @@ import {Input} from 'react-native-elements';
 import FastImage from 'react-native-fast-image';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 // Redux
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
-
 // Forms
 import * as yup from 'yup';
 import {Formik} from 'formik';
-
-// Firebase
-import crashlytics from '@react-native-firebase/crashlytics';
-
 // Responsiveness
 import Adjust from './AdjustText';
 import EStyleSheet from 'react-native-extended-stylesheet';
-
 // Icons
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -44,7 +37,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import ro from '../assets/ro.png';
 import en from '../assets/en.png';
-
 // Variables
 import {
   width,
@@ -56,6 +48,7 @@ import {
 import {RO, EN} from '../assets/lang';
 
 export default function Login() {
+  // State
   const [errorMsg, setErrorMsg] = useState(null);
   const [isKeyboard, setIsKeyboard] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
@@ -64,13 +57,11 @@ export default function Login() {
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
   const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
   const [showNetworkAlertOff] = useState(new Animated.Value(statusHeight * 3));
-
   // Redux
   const dispatch = useDispatch();
   const {lightTheme, listLatest, latestError, fontSizes, enLang} = useSelector(
     (state) => state.appConfig,
   );
-
   // Refs
   const netRef = useRef(false);
   const scrollRef = useRef(null);
@@ -80,7 +71,6 @@ export default function Login() {
   useEffect(() => {
     // Set font size
     dispatch(AppConfigActions.setFonts());
-
     // API Error handling
     if (latestError !== null) {
       if (latestError.response.status === 403) {
@@ -90,11 +80,9 @@ export default function Login() {
           setFailAuth();
         }
       }
-
       if (latestError.response.status === 429) {
         setLimitReached();
       }
-
       if (latestError.response.status === 503) {
         setAPIDown();
       }
@@ -183,64 +171,44 @@ export default function Login() {
   };
 
   const storeData = async (value0, value1) => {
-    try {
-      await AsyncStorage.setItem('username', value0);
-      await AsyncStorage.setItem('passkey', value1);
-    } catch (e) {
-      crashlytics().log('login -> storeData()');
-      crashlytics().recordError(e);
-    }
+    await AsyncStorage.setItem('username', value0);
+    await AsyncStorage.setItem('passkey', value1);
   };
 
   const handleLogin = async (user, pass) => {
-    try {
-      Keyboard.dismiss();
-      if (isNetReachable) {
-        setLoginLoading(true);
-        storeData(user, pass);
-        dispatch(AppConfigActions.getLatest(user, pass, 20));
-      } else {
-        netOff();
-      }
-    } catch (e) {
-      crashlytics().log('login -> handleLogin()');
-      crashlytics().recordError(e);
+    Keyboard.dismiss();
+    if (isNetReachable) {
+      setLoginLoading(true);
+      storeData(user, pass);
+      dispatch(AppConfigActions.getLatestLogin(user, pass));
+    } else {
+      netOff();
     }
   };
 
   const switchLangRo = async () => {
-    try {
-      const currentLang = await AsyncStorage.getItem('enLang');
-      if (currentLang === 'true') {
-        await AsyncStorage.setItem('enLang', 'false');
-        dispatch(AppConfigActions.toggleEnLang());
-        ToastAndroid.showWithGravity(
-          'Limba: Română',
-          ToastAndroid.SHORT,
-          ToastAndroid.TOP,
-        );
-      }
-    } catch (e) {
-      crashlytics().log('login -> switchLangRo()');
-      crashlytics().recordError(e);
+    const currentLang = await AsyncStorage.getItem('enLang');
+    if (currentLang === 'true') {
+      await AsyncStorage.setItem('enLang', 'false');
+      dispatch(AppConfigActions.toggleEnLang());
+      ToastAndroid.showWithGravity(
+        'Limba: Română',
+        ToastAndroid.SHORT,
+        ToastAndroid.TOP,
+      );
     }
   };
 
   const switchLangEn = async () => {
-    try {
-      const currentLang = await AsyncStorage.getItem('enLang');
-      if (currentLang === 'false') {
-        await AsyncStorage.setItem('enLang', 'true');
-        dispatch(AppConfigActions.toggleEnLang());
-        ToastAndroid.showWithGravity(
-          'Language: English',
-          ToastAndroid.SHORT,
-          ToastAndroid.TOP,
-        );
-      }
-    } catch (e) {
-      crashlytics().log('login -> switchLangEn()');
-      crashlytics().recordError(e);
+    const currentLang = await AsyncStorage.getItem('enLang');
+    if (currentLang === 'false') {
+      await AsyncStorage.setItem('enLang', 'true');
+      dispatch(AppConfigActions.toggleEnLang());
+      ToastAndroid.showWithGravity(
+        'Language: English',
+        ToastAndroid.SHORT,
+        ToastAndroid.TOP,
+      );
     }
   };
 

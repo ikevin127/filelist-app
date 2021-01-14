@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {S, M, L, removeDublicate} from '../../assets/variables';
 import crashlytics from '@react-native-firebase/crashlytics';
-import {S, M, L} from '../../assets/variables';
+import {ToastAndroid} from 'react-native';
+import {RO, EN} from '../../assets/lang';
 import {types} from '../types';
 import Axios from 'axios';
 
@@ -8,13 +10,15 @@ const initState = {
   lightTheme: false,
   enLang: false,
   appInfo: false,
-  collItems: [],
-  historyList: {},
   fontSizes: null,
   listLatest: null,
+  latestLoading: false,
   latestError: null,
   listSearch: null,
+  searchLoading: false,
   searchError: null,
+  collItems: [],
+  historyList: {},
 };
 
 export const actions = {
@@ -28,98 +32,123 @@ export const actions = {
     type: types.APP_CONFIG.APP_INFO,
   }),
   setFonts: () => async (dispatch) => {
-    try {
-      const size = await AsyncStorage.getItem('fontSizes');
-      if (size !== null) {
-        size === 'S' &&
-          dispatch({
-            type: types.APP_CONFIG.FONT_SIZES,
-            payload: JSON.parse(S),
-          });
-        size === 'M' &&
-          dispatch({
-            type: types.APP_CONFIG.FONT_SIZES,
-            payload: JSON.parse(M),
-          });
-        size === 'L' &&
-          dispatch({
-            type: types.APP_CONFIG.FONT_SIZES,
-            payload: JSON.parse(L),
-          });
-      } else {
+    const size = await AsyncStorage.getItem('fontSizes');
+    if (size !== null) {
+      size === 'S' &&
+        dispatch({
+          type: types.APP_CONFIG.FONT_SIZES,
+          payload: JSON.parse(S),
+        });
+      size === 'M' &&
         dispatch({
           type: types.APP_CONFIG.FONT_SIZES,
           payload: JSON.parse(M),
         });
-      }
-    } catch (e) {
-      crashlytics().log('ducks -> setFonts()');
-      crashlytics().recordError(e);
+      size === 'L' &&
+        dispatch({
+          type: types.APP_CONFIG.FONT_SIZES,
+          payload: JSON.parse(L),
+        });
+    } else {
+      dispatch({
+        type: types.APP_CONFIG.FONT_SIZES,
+        payload: JSON.parse(M),
+      });
     }
   },
   setCollItems: (data) => async (dispatch) => {
     dispatch({type: types.APP_CONFIG.COLL_ITEMS, payload: data});
   },
   getHistoryList: () => async (dispatch) => {
+    const history = await AsyncStorage.getItem('history');
+    if (history !== null) {
+      dispatch({
+        type: types.APP_CONFIG.HISTORY_LIST,
+        payload: removeDublicate(JSON.parse(history).reverse()),
+      });
+    } else {
+      dispatch({
+        type: types.APP_CONFIG.HISTORY_LIST,
+        payload: {},
+      });
+    }
+  },
+  getLatest: (user, pass) => async (dispatch) => {
     try {
-      const history = await AsyncStorage.getItem('history');
-      if (history !== null) {
-        dispatch({
-          type: types.APP_CONFIG.HISTORY_LIST,
-          payload: JSON.parse(history).reverse(),
+      dispatch({
+        type: types.APP_CONFIG.LATEST_LOADING,
+      });
+      await Axios.get(
+        `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=latest-torrents&limit=30`,
+      )
+        .then(async (res) => {
+          let {data} = res;
+          dispatch({
+            type: types.APP_CONFIG.GET_LATEST,
+            payload: data,
+          });
+          const enLang = await AsyncStorage.getItem('enLang');
+          dispatch({
+            type: types.APP_CONFIG.LATEST_LOADING,
+          });
+          if (enLang !== null) {
+            ToastAndroid.showWithGravity(
+              enLang === 'true' ? EN.refreshComplete : RO.refreshComplete,
+              ToastAndroid.SHORT,
+              ToastAndroid.CENTER,
+            );
+          }
+        })
+        .catch((err) => {
+          dispatch({
+            type: types.APP_CONFIG.LATEST_ERROR,
+            payload: err,
+          });
+          dispatch({
+            type: types.APP_CONFIG.LATEST_LOADING,
+          });
         });
-      } else {
-        dispatch({
-          type: types.APP_CONFIG.HISTORY_LIST,
-          payload: {},
-        });
-      }
     } catch (e) {
-      crashlytics().log('ducks -> getHistoryList()');
+      crashlytics().log('ducks -> getLatest()');
       crashlytics().recordError(e);
     }
   },
-  getLatest: (user, pass, limit) => async (dispatch) => {
-    await Axios.get(
-      `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=latest-torrents&limit=${limit}`,
-    )
-      .then(async (res) => {
-        let {data} = res;
-        dispatch({
-          type: types.APP_CONFIG.GET_LATEST,
-          payload: data,
-        });
-        try {
+  getLatestLogin: (user, pass) => async (dispatch) => {
+    try {
+      await Axios.get(
+        `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=latest-torrents&limit=30`,
+      )
+        .then(async (res) => {
+          let {data} = res;
+          dispatch({
+            type: types.APP_CONFIG.GET_LATEST,
+            payload: data,
+          });
           await AsyncStorage.setItem('latest', JSON.stringify(data));
-        } catch (e) {
-          crashlytics().log('ducks -> getLatest()');
-          crashlytics().recordError(e);
-        }
-      })
-      .catch((err) => {
-        dispatch({
-          type: types.APP_CONFIG.LATEST_ERROR,
-          payload: err,
+        })
+        .catch((err) => {
+          dispatch({
+            type: types.APP_CONFIG.LATEST_ERROR,
+            payload: err,
+          });
         });
-      });
+    } catch (e) {
+      crashlytics().log('ducks -> getLatestLogin()');
+      crashlytics().recordError(e);
+    }
   },
   retrieveLatest: () => async (dispatch) => {
-    try {
-      const latest = await AsyncStorage.getItem('latest');
-      if (latest !== null) {
-        dispatch({
-          type: types.APP_CONFIG.GET_LATEST,
-          payload: JSON.parse(latest),
-        });
-      } else {
-        dispatch({
-          type: types.APP_CONFIG.GET_LATEST,
-          payload: null,
-        });
-      }
-    } catch (e) {
-      crashlytics().log('ducks -> retrieveLatest()');
-      crashlytics().recordError(e);
+    const latest = await AsyncStorage.getItem('latest');
+    if (latest !== null) {
+      dispatch({
+        type: types.APP_CONFIG.GET_LATEST,
+        payload: JSON.parse(latest),
+      });
+    } else {
+      dispatch({
+        type: types.APP_CONFIG.GET_LATEST,
+        payload: null,
+      });
     }
   },
   latestError: () => async (dispatch) => {
@@ -136,44 +165,41 @@ export const actions = {
     freeleech,
     doubleup,
   ) => async (dispatch) => {
-    await Axios.get(
-      `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=${action}&type=${type}&query=${query}${category}${freeleech}${internal}${doubleup}`,
-    )
-      .then(async (res) => {
-        let {data} = res;
-        dispatch({
-          type: types.APP_CONFIG.GET_SEARCH,
-          payload: data,
-        });
-        try {
-          await AsyncStorage.setItem('search', JSON.stringify(data));
-        } catch (e) {
-          crashlytics().log('ducks -> getSearch()');
-          crashlytics().recordError(e);
-        }
-      })
-      .catch((err) => {
-        dispatch({type: types.APP_CONFIG.SEARCH_ERROR, payload: err});
-      });
-  },
-  retrieveSearch: () => async (dispatch) => {
     try {
-      const search = await AsyncStorage.getItem('search');
-      if (search !== null) {
-        dispatch({
-          type: types.APP_CONFIG.GET_SEARCH,
-          payload: JSON.parse(search),
+      dispatch({
+        type: types.APP_CONFIG.SEARCH_LOADING,
+      });
+      await Axios.get(
+        `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=${action}&type=${type}&query=${query}${category}${freeleech}${internal}${doubleup}`,
+      )
+        .then(async (res) => {
+          let {data} = res;
+          dispatch({
+            type: types.APP_CONFIG.GET_SEARCH,
+            payload: data,
+          });
+          await AsyncStorage.setItem('search', JSON.stringify(data));
+          dispatch({
+            type: types.APP_CONFIG.SEARCH_LOADING,
+          });
+        })
+        .catch((err) => {
+          dispatch({type: types.APP_CONFIG.SEARCH_ERROR, payload: err});
+          dispatch({
+            type: types.APP_CONFIG.SEARCH_LOADING,
+          });
         });
-      } else {
-        dispatch({
-          type: types.APP_CONFIG.GET_SEARCH,
-          payload: null,
-        });
-      }
     } catch (e) {
-      crashlytics().log('ducks -> retrieveSearch()');
+      crashlytics().log('ducks -> getSearch()');
       crashlytics().recordError(e);
     }
+  },
+  clearSearchStorage: () => async (dispatch) => {
+    await AsyncStorage.removeItem('search');
+    dispatch({
+      type: types.APP_CONFIG.GET_SEARCH,
+      payload: null,
+    });
   },
   searchError: () => async (dispatch) => {
     dispatch({type: types.APP_CONFIG.SEARCH_ERROR, payload: null});
@@ -196,10 +222,14 @@ export function reducer(state = initState, action) {
       return {...state, historyList: action.payload};
     case types.APP_CONFIG.GET_LATEST:
       return {...state, listLatest: action.payload};
+    case types.APP_CONFIG.LATEST_LOADING:
+      return {...state, latestLoading: !state.latestLoading};
     case types.APP_CONFIG.LATEST_ERROR:
       return {...state, latestError: action.payload};
     case types.APP_CONFIG.GET_SEARCH:
       return {...state, listSearch: action.payload};
+    case types.APP_CONFIG.SEARCH_LOADING:
+      return {...state, searchLoading: !state.searchLoading};
     case types.APP_CONFIG.SEARCH_ERROR:
       return {...state, searchError: action.payload};
     default:

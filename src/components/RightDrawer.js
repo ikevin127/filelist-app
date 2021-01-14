@@ -7,6 +7,7 @@ import {
   View,
   Easing,
   ScrollView,
+  ToastAndroid,
   Switch,
   Pressable,
   Platform,
@@ -16,17 +17,13 @@ import {Picker, PickerIOS} from '@react-native-picker/picker';
 import FastImage from 'react-native-fast-image';
 import Accordion from 'react-native-collapsible/Accordion';
 import {Overlay} from 'react-native-elements';
-import crashlytics from '@react-native-firebase/crashlytics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 // Redux
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
-
 // Responsiveness
 import Adjust from './AdjustText';
 import EStyleSheet from 'react-native-extended-stylesheet';
-
 // Icons
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -39,7 +36,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import ro from '../assets/ro.png';
 import en from '../assets/en.png';
-
 // Variables
 import {
   width,
@@ -51,8 +47,10 @@ import {
 import {RO, EN} from '../assets/lang';
 
 export default function RightDrawer({navigation}) {
+  // State
   const [user, setUser] = useState('');
   const [activeSections, setActiveSections] = useState([]);
+  // Animations
   const [roEn] = useState(new Animated.Value(1));
   const [darkLight] = useState(new Animated.Value(0));
   const spinIt = darkLight.interpolate({
@@ -63,13 +61,13 @@ export default function RightDrawer({navigation}) {
     inputRange: [0, 1],
     outputRange: [1.1, 1],
   });
-
   // Redux
   const dispatch = useDispatch();
   const {appInfo, lightTheme, fontSizes, enLang} = useSelector(
     (state) => state.appConfig,
   );
 
+  // Accordion info
   const INFO = [
     {
       title: enLang ? EN.infoT1 : RO.infoT1,
@@ -104,39 +102,71 @@ export default function RightDrawer({navigation}) {
   }, []);
 
   // Functions
-  const toggleFontSize = async (size) => {
-    dispatch(AppConfigActions.setCollItems([]));
-    try {
-      switch (size) {
-        case 'S':
-          await AsyncStorage.setItem('fontSizes', 'S');
-          break;
-        case 'M':
-          await AsyncStorage.setItem('fontSizes', 'M');
-          break;
-        case 'L':
-          await AsyncStorage.setItem('fontSizes', 'L');
-          break;
-        default:
-          await AsyncStorage.setItem('fontSizes', 'M');
-      }
-      dispatch(AppConfigActions.setFonts());
-    } catch (e) {
-      crashlytics().log(`rightdrawer -> toggleFontSize(${size})`);
-      crashlytics().recordError(e);
-    }
+  // eslint-disable-next-line no-shadow
+  const _updateSections = (activeSections) => {
+    setActiveSections(activeSections);
   };
 
   const getCurrentUser = async () => {
-    try {
-      const currentUser = await AsyncStorage.getItem('username');
-      if (currentUser !== null) {
-        setUser(currentUser);
-      }
-    } catch (e) {
-      crashlytics().log('rightdrawer -> getCurrentUser()');
-      crashlytics().recordError(e);
+    const currentUser = await AsyncStorage.getItem('username');
+    if (currentUser !== null) {
+      setUser(currentUser);
     }
+  };
+
+  const handleLogout = async () => {
+    const keys = ['username', 'passkey', 'latest'];
+    navigation.closeDrawer();
+    await AsyncStorage.multiRemove(keys);
+    dispatch(AppConfigActions.latestError());
+    dispatch(AppConfigActions.retrieveLatest());
+  };
+
+  const _renderHeader = (section) => {
+    return (
+      <View>
+        <Text
+          style={{
+            fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
+            color: ACCENT_COLOR,
+            fontWeight: 'bold',
+          }}>
+          {section.title}
+        </Text>
+      </View>
+    );
+  };
+
+  const _renderContent = (section) => {
+    return (
+      <View style={RightDrawerStyle.renderContent}>
+        <Text
+          style={{
+            color: lightTheme ? 'black' : 'white',
+            fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
+          }}>
+          {section.content}
+        </Text>
+      </View>
+    );
+  };
+
+  const toggleFontSize = async (size) => {
+    dispatch(AppConfigActions.setCollItems([]));
+    switch (size) {
+      case 'S':
+        await AsyncStorage.setItem('fontSizes', 'S');
+        break;
+      case 'M':
+        await AsyncStorage.setItem('fontSizes', 'M');
+        break;
+      case 'L':
+        await AsyncStorage.setItem('fontSizes', 'L');
+        break;
+      default:
+        await AsyncStorage.setItem('fontSizes', 'M');
+    }
+    dispatch(AppConfigActions.setFonts());
   };
 
   const openFilelist = async () => {
@@ -176,115 +206,68 @@ export default function RightDrawer({navigation}) {
 
   const switchTheme = async () => {
     dispatch(AppConfigActions.setCollItems([]));
-    try {
-      const currentTheme = await AsyncStorage.getItem('theme');
-      if (currentTheme !== null) {
-        if (currentTheme === 'dark') {
-          await AsyncStorage.setItem('theme', 'light');
-          dispatch(AppConfigActions.toggleLightTheme());
-          Animated.timing(darkLight, {
-            toValue: 1,
-            duration: 500,
-            easing: Easing.cubic,
-            useNativeDriver: true,
-          }).start();
-        } else {
-          await AsyncStorage.setItem('theme', 'dark');
-          dispatch(AppConfigActions.toggleLightTheme());
-          Animated.timing(darkLight, {
-            toValue: 2,
-            duration: 500,
-            easing: Easing.cubic,
-            useNativeDriver: true,
-          }).start();
-        }
+    const currentTheme = await AsyncStorage.getItem('theme');
+    if (currentTheme !== null) {
+      if (currentTheme === 'dark') {
+        await AsyncStorage.setItem('theme', 'light');
+        dispatch(AppConfigActions.toggleLightTheme());
+        Animated.timing(darkLight, {
+          toValue: 1,
+          duration: 500,
+          easing: Easing.cubic,
+          useNativeDriver: true,
+        }).start();
       } else {
         await AsyncStorage.setItem('theme', 'dark');
+        dispatch(AppConfigActions.toggleLightTheme());
+        Animated.timing(darkLight, {
+          toValue: 2,
+          duration: 500,
+          easing: Easing.cubic,
+          useNativeDriver: true,
+        }).start();
       }
-    } catch (e) {
-      crashlytics().log('rightdrawer -> switchTheme()');
-      crashlytics().recordError(e);
+    } else {
+      await AsyncStorage.setItem('theme', 'dark');
     }
   };
 
   const switchLang = async () => {
     dispatch(AppConfigActions.setCollItems([]));
-    try {
-      const currentLang = await AsyncStorage.getItem('enLang');
-      if (currentLang !== null) {
-        if (currentLang === 'false') {
-          await AsyncStorage.setItem('enLang', 'true');
-          dispatch(AppConfigActions.toggleEnLang());
-          Animated.timing(roEn, {
-            toValue: 0,
-            duration: 1000,
-            easing: Easing.bounce,
-            useNativeDriver: true,
-          }).start();
-        } else {
-          await AsyncStorage.setItem('enLang', 'false');
-          dispatch(AppConfigActions.toggleEnLang());
-          Animated.timing(roEn, {
-            toValue: 1,
-            duration: 1000,
-            easing: Easing.bounce,
-            useNativeDriver: true,
-          }).start();
-        }
+    const currentLang = await AsyncStorage.getItem('enLang');
+    if (currentLang !== null) {
+      if (currentLang === 'false') {
+        await AsyncStorage.setItem('enLang', 'true');
+        dispatch(AppConfigActions.toggleEnLang());
+        Animated.timing(roEn, {
+          toValue: 0,
+          duration: 1000,
+          easing: Easing.bounce,
+          useNativeDriver: true,
+        }).start();
+        ToastAndroid.showWithGravity(
+          'Language: English',
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
       } else {
         await AsyncStorage.setItem('enLang', 'false');
+        dispatch(AppConfigActions.toggleEnLang());
+        Animated.timing(roEn, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.bounce,
+          useNativeDriver: true,
+        }).start();
+        ToastAndroid.showWithGravity(
+          'Limba: Română',
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
       }
-    } catch (e) {
-      crashlytics().recordError(e);
-      crashlytics().log('rightdrawer -> switchLang()');
+    } else {
+      await AsyncStorage.setItem('enLang', 'false');
     }
-  };
-
-  const handleLogout = async () => {
-    const keys = ['username', 'passkey', 'latest'];
-    navigation.closeDrawer();
-    try {
-      await AsyncStorage.multiRemove(keys);
-      dispatch(AppConfigActions.latestError());
-      dispatch(AppConfigActions.retrieveLatest());
-    } catch (e) {
-      crashlytics().recordError(e);
-      crashlytics().log('rightdrawer -> handleLogout()');
-    }
-  };
-
-  const _renderHeader = (section) => {
-    return (
-      <View>
-        <Text
-          style={{
-            fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
-            color: ACCENT_COLOR,
-            fontWeight: 'bold',
-          }}>
-          {section.title}
-        </Text>
-      </View>
-    );
-  };
-
-  const _renderContent = (section) => {
-    return (
-      <View style={RightDrawerStyle.renderContent}>
-        <Text
-          style={{
-            color: lightTheme ? 'black' : 'white',
-            fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
-          }}>
-          {section.content}
-        </Text>
-      </View>
-    );
-  };
-
-  // eslint-disable-next-line no-shadow
-  const _updateSections = (activeSections) => {
-    setActiveSections(activeSections);
   };
 
   // Component render

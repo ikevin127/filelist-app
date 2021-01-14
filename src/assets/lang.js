@@ -45,7 +45,7 @@ export const RO = {
   theme: 'Temă culori',
   lang: 'Limba',
   // Home screen
-  refreshLatest: 'Listă actualizată ✅',
+  refreshComplete: 'Actualizare completă',
   download: 'Doreşti să descarci fişierul torrent ?',
   downloadErr:
     'Acest torrent nu poate fi descărcat prin intermediul aplicaţiei.',
@@ -154,7 +154,7 @@ export const EN = {
   theme: 'Color theme',
   lang: 'Language',
   // Home screen
-  refreshLatest: 'List actualized ✅',
+  refreshComplete: 'Actualization complete',
   download: 'Do you want to download this torrent ?',
   downloadErr: "This torrent can't be downloaded on your device.",
   torrSize: 'The total size of the torrent content',

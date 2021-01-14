@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -24,23 +24,17 @@ import FastImage from 'react-native-fast-image';
 import NetInfo from '@react-native-community/netinfo';
 import SkeletonContent from 'react-native-skeleton-content-nonexpo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 // Forms
 import * as yup from 'yup';
 import {Formik} from 'formik';
-
 // Fetch & firebase
 import Axios from 'axios';
-import crashlytics from '@react-native-firebase/crashlytics';
-
 // Redux
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
-
 // Responsiveness
 import Adjust from './AdjustText';
 import EStyleSheet from 'react-native-extended-stylesheet';
-
 // Icons
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -62,7 +56,6 @@ import {
   faTimes,
   faArrowUp,
 } from '@fortawesome/free-solid-svg-icons';
-
 // Assets
 import a3d from '../assets/cat/3d.png';
 import a4k from '../assets/cat/4k.png';
@@ -91,7 +84,6 @@ import sport from '../assets/cat/sport.png';
 import vids from '../assets/cat/vids.png';
 import xxx from '../assets/cat/xxx.png';
 import {catValues} from '../assets/catData';
-
 // Variables
 import {
   width,
@@ -99,12 +91,14 @@ import {
   MAIN_LIGHT,
   ACCENT_COLOR,
   statusHeight,
+  sortArrayHistory,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
 export default function Search({navigation}) {
   const [catIndex, setCatIndex] = useState('');
   const [searchText, setSearchText] = useState('');
+  const [inputKeyword, setInputKeyword] = useState('');
   const [imdbModal, setIMDbModal] = useState(false);
   const [IMDbData, setIMDbData] = useState(null);
   const [catListLatest, setCatListLatest] = useState(false);
@@ -113,7 +107,6 @@ export default function Search({navigation}) {
   const [isNetReachable, setIsNetReachable] = useState(true);
   const [IMDbLoading, setIMDbLoading] = useState(false);
   const [historyHidden, setHistoryHidden] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   // Categories
   const [animes, setAnimes] = useState(false);
@@ -150,7 +143,6 @@ export default function Search({navigation}) {
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
   const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
   const [showNetworkAlertOff] = useState(new Animated.Value(statusHeight * 3));
-
   // Redux
   const dispatch = useDispatch();
   const {
@@ -159,6 +151,7 @@ export default function Search({navigation}) {
     collItems,
     historyList,
     listSearch,
+    searchLoading,
     searchError,
     enLang,
   } = useSelector((state) => state.appConfig);
@@ -167,44 +160,37 @@ export default function Search({navigation}) {
   const netRef = useRef(false);
   const searchRef = useRef(null);
   const formikRef = useRef(null);
-  const selectedFilters = [
-    animes ? 1 : 0,
-    audio ? 1 : 0,
-    desene ? 1 : 0,
-    diverse ? 1 : 0,
-    doc ? 1 : 0,
-    filme3d ? 1 : 0,
-    filme4k ? 1 : 0,
-    filme4kbd ? 1 : 0,
-    filmeBD ? 1 : 0,
-    filmeDvd ? 1 : 0,
-    filmeDvdRo ? 1 : 0,
-    filmeHd ? 1 : 0,
-    filmeHdRo ? 1 : 0,
-    filmeSd ? 1 : 0,
-    flacs ? 1 : 0,
-    jocConsole ? 1 : 0,
-    jocPc ? 1 : 0,
-    lin ? 1 : 0,
-    mob ? 1 : 0,
-    software ? 1 : 0,
-    seriale4k ? 1 : 0,
-    serialeHd ? 1 : 0,
-    serialeSd ? 1 : 0,
-    sports ? 1 : 0,
-    videos ? 1 : 0,
-    porn ? 1 : 0,
-    doubleUp ? 1 : 0,
-    freeleech ? 1 : 0,
-    internal ? 1 : 0,
-  ]
-    .reduce((a, b) => a + b, 0)
-    .toString();
-
   // Check drawer open/closed
   let isDrawerOpen = useIsDrawerOpen();
 
   // Component mount
+  useEffect(() => {
+    inputKeyword.length > 1 && sortArrayHistory(historyList, inputKeyword);
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, [inputKeyword]);
+
+  useEffect(() => {
+    // Connection listener
+    const netListener = NetInfo.addEventListener((state) => {
+      if (state.isInternetReachable) {
+        if (netRef.current) {
+          setIsNetReachable(true);
+          netOn();
+        } else {
+          netRef.current = true;
+        }
+      } else {
+        setIsNetReachable(false);
+        netOff();
+      }
+    });
+
+    return () => {
+      netListener();
+    };
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, [isNetReachable]);
+
   useEffect(() => {
     // API error handling
     if (searchError !== null) {
@@ -244,31 +230,23 @@ export default function Search({navigation}) {
       keyboardDidShowListener.remove();
     };
     // eslint-disable-next-line  react-hooks/exhaustive-deps
-  }, [searchError]);
+  }, [searchError, inputKeyword]);
 
-  useEffect(() => {
-    // Connection listener
-    const netListener = NetInfo.addEventListener((state) => {
-      if (state.isInternetReachable) {
-        if (netRef.current) {
-          setIsNetReachable(true);
-          netOn();
-        } else {
-          netRef.current = true;
-        }
-      } else {
-        setIsNetReachable(false);
-        netOff();
-      }
-    });
+  // FUNCTIONS
+  const imdbModalClose = () => {
+    setIMDbModal(false);
+    setIMDbData(null);
+  };
 
-    return () => {
-      netListener();
-    };
-    // eslint-disable-next-line  react-hooks/exhaustive-deps
-  }, [isNetReachable]);
+  const onRefChange = useCallback((node) => {
+    if (node === null) {
+      // node is null, if DOM node of ref had been unmounted before
+    } else {
+      formikRef.current = node;
+      setInputKeyword(node.values.search);
+    }
+  }, []);
 
-  // Functions
   const clearSearchHistory = async () => {
     setHistoryHidden(false);
     await AsyncStorage.removeItem('history');
@@ -289,7 +267,6 @@ export default function Search({navigation}) {
   };
 
   const setLimitReached = () => {
-    setSearchLoading(false);
     Alert.alert(
       'Info',
       enLang ? EN.alert150S : RO.alert150S,
@@ -305,7 +282,6 @@ export default function Search({navigation}) {
   };
 
   const setAPIDown = () => {
-    setSearchLoading(false);
     Alert.alert(
       'Info',
       enLang ? EN.alertAPI : RO.alertAPI,
@@ -320,11 +296,63 @@ export default function Search({navigation}) {
     );
   };
 
+  const goBack = () => {
+    setTimeout(() => {
+      Keyboard.dismiss();
+    }, 100);
+    resetFilters();
+    dispatch(AppConfigActions.clearSearchStorage());
+    navigation.navigate('Home');
+    setHistoryHidden(false);
+  };
+
+  const formatBytes = (a, b = 2) => {
+    if (a === 0) {
+      return '0 Bytes';
+    }
+    const c = b > 0 ? 0 : b,
+      d = Math.floor(Math.log(a) / Math.log(1024));
+    return (
+      parseFloat((a / Math.pow(1024, d)).toFixed(c)) +
+      ' ' +
+      ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
+    );
+  };
+
+  const setCollapsible = (id) => {
+    const newIds = [...collItems];
+    const index = newIds.indexOf(id);
+
+    if (index > -1) {
+      newIds.splice(index, 1);
+    } else {
+      newIds.shift();
+      newIds.push(id);
+    }
+    dispatch(AppConfigActions.setCollItems(newIds));
+  };
+
+  const fetchIMDbInfo = async (id) => {
+    if (isNetReachable) {
+      setIMDbModal(true);
+      setIMDbLoading(true);
+      await Axios.get('https://spleeter.co.uk/' + id)
+        .then((res) => {
+          setIMDbData(Array(res.data));
+          setIMDbLoading(false);
+        })
+        .catch((e) => {
+          setIMDbLoading(false);
+        });
+    } else {
+      netOff();
+    }
+  };
+
   const handleSearchType = async (action, type, query) => {
     try {
       const value0 = await AsyncStorage.getItem('username');
       const value1 = await AsyncStorage.getItem('passkey');
-      setSearchLoading(true);
       dispatch(
         AppConfigActions.getSearch(
           value0,
@@ -338,12 +366,7 @@ export default function Search({navigation}) {
           doubleUp ? '&doubleup=1' : '',
         ),
       );
-      setTimeout(() => {
-        setSearchLoading(false);
-      }, 1000);
     } catch (e) {
-      crashlytics().log('search -> handleSearch()');
-      crashlytics().recordError(e);
       Alert.alert(
         enLang ? EN.searchErrH : RO.searchErrH,
         enLang ? EN.searchErr : RO.searchErr,
@@ -362,7 +385,7 @@ export default function Search({navigation}) {
     Keyboard.dismiss();
     // if user network connection is online
     if (isNetReachable) {
-      resetSearch();
+      dispatch(AppConfigActions.clearSearchStorage());
       setSearchText(query);
       // if empty search textbox && no filters selected
       if (query === '' && catIndex.length < 1) {
@@ -384,11 +407,6 @@ export default function Search({navigation}) {
         if (query.length > 0) {
           // save search keyword for history suggestions list
           addHistoryItem(query);
-          const currentSearch = await AsyncStorage.getItem('search');
-          if (currentSearch !== null) {
-            await AsyncStorage.removeItem('search');
-            dispatch(AppConfigActions.retrieveSearch());
-          }
           handleSearchType(
             'search-torrents',
             keySearch ? 'name' : 'imdb',
@@ -409,29 +427,6 @@ export default function Search({navigation}) {
     } else {
       netOff();
     }
-  };
-
-  const goBack = () => {
-    setTimeout(() => {
-      Keyboard.dismiss();
-    }, 100);
-    resetFilters();
-    resetSearch();
-    navigation.navigate('Home');
-    setHistoryHidden(false);
-  };
-
-  const setCollapsible = (id) => {
-    const newIds = [...collItems];
-    const index = newIds.indexOf(id);
-
-    if (index > -1) {
-      newIds.splice(index, 1);
-    } else {
-      newIds.shift();
-      newIds.push(id);
-    }
-    dispatch(AppConfigActions.setCollItems(newIds));
   };
 
   const downloadTorrent = async (link) => {
@@ -469,13 +464,39 @@ export default function Search({navigation}) {
     }
   };
 
-  const resetSearch = async () => {
-    const currentSearch = await AsyncStorage.getItem('search');
-    if (currentSearch !== null) {
-      await AsyncStorage.removeItem('search');
-      dispatch(AppConfigActions.retrieveSearch());
-    }
-  };
+  const selectedFilters = [
+    animes ? 1 : 0,
+    audio ? 1 : 0,
+    desene ? 1 : 0,
+    diverse ? 1 : 0,
+    doc ? 1 : 0,
+    filme3d ? 1 : 0,
+    filme4k ? 1 : 0,
+    filme4kbd ? 1 : 0,
+    filmeBD ? 1 : 0,
+    filmeDvd ? 1 : 0,
+    filmeDvdRo ? 1 : 0,
+    filmeHd ? 1 : 0,
+    filmeHdRo ? 1 : 0,
+    filmeSd ? 1 : 0,
+    flacs ? 1 : 0,
+    jocConsole ? 1 : 0,
+    jocPc ? 1 : 0,
+    lin ? 1 : 0,
+    mob ? 1 : 0,
+    software ? 1 : 0,
+    seriale4k ? 1 : 0,
+    serialeHd ? 1 : 0,
+    serialeSd ? 1 : 0,
+    sports ? 1 : 0,
+    videos ? 1 : 0,
+    porn ? 1 : 0,
+    doubleUp ? 1 : 0,
+    freeleech ? 1 : 0,
+    internal ? 1 : 0,
+  ]
+    .reduce((a, b) => a + b, 0)
+    .toString();
 
   const resetFilters = () => {
     setKeySearch(true);
@@ -544,50 +565,6 @@ export default function Search({navigation}) {
       ]
         .reduce((out, bool, index) => (bool ? out.concat(index) : out), [])
         .map((index) => catValues[index]),
-    );
-  };
-
-  const fetchIMDbInfo = async (id) => {
-    try {
-      if (isNetReachable) {
-        setIMDbModal(true);
-        setIMDbLoading(true);
-        await Axios.get('https://spleeter.co.uk/' + id)
-          .then((res) => {
-            setIMDbData(Array(res.data));
-            setIMDbLoading(false);
-          })
-          .catch((e) => {
-            setIMDbLoading(false);
-            crashlytics().log(
-              `search -> fetchIMDbInfo() - Axios.get('https://spleeter.co.uk/' + ${id})`,
-            );
-            crashlytics().recordError(e);
-          });
-      } else {
-        netOff();
-      }
-    } catch (e) {
-      crashlytics().log('search -> fetchIMDbInfo()');
-      crashlytics().recordError(e);
-    }
-  };
-
-  const imdbModalClose = () => {
-    setIMDbModal(false);
-    setIMDbData(null);
-  };
-
-  const formatBytes = (a, b = 2) => {
-    if (a === 0) {
-      return '0 Bytes';
-    }
-    const c = b > 0 ? 0 : b,
-      d = Math.floor(Math.log(a) / Math.log(1024));
-    return (
-      parseFloat((a / Math.pow(1024, d)).toFixed(c)) +
-      ' ' +
-      ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
     );
   };
 
@@ -3039,10 +3016,10 @@ export default function Search({navigation}) {
         </Overlay>
         <View style={SearchPage.mainHeader}>
           <Formik
-            innerRef={formikRef}
+            innerRef={onRefChange}
             initialValues={{search: ''}}
             onSubmit={(values) => {
-              handleSearch(values.search);
+              searchLoading ? null : handleSearch(values.search);
             }}
             validationSchema={yup.object().shape({
               search: yup.string(),
@@ -3242,64 +3219,58 @@ export default function Search({navigation}) {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                {historyList.length > 0 &&
-                  historyList.map((item, i) => (
-                    <Pressable
-                      key={item.id}
-                      onPress={() => handleSearch(item.query)}
-                      android_ripple={{
-                        color: 'grey',
-                        borderless: false,
-                      }}
-                      style={[
-                        SearchPage.itemPressableHistory,
-                        {marginBottom: i === historyList.length - 1 ? 10 : 5},
-                      ]}>
-                      <View style={SearchPage.itemPressableHistoryContainer}>
-                        <Text
-                          style={[
-                            SearchPage.historyText,
-                            {
-                              color: lightTheme ? 'black' : 'white',
-                              fontSize: Adjust(
-                                fontSizes !== null ? fontSizes[4] : 12,
-                              ),
-                            },
-                          ]}>
-                          {item.query}
-                        </Text>
-                        <Pressable
-                          style={{
-                            width: statusHeight * 1.5,
-                            height: statusHeight * 1.5,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            marginRight: statusHeight / 3,
-                            backgroundColor: 'transparent',
-                          }}
-                          android_ripple={{
-                            color: 'grey',
-                            borderless: true,
-                            radius: width / 18,
-                          }}
-                          onPress={() =>
-                            formikRef.current.setFieldValue(
-                              'search',
-                              item.query,
-                            )
-                          }>
-                          <FontAwesomeIcon
-                            style={{transform: [{rotate: '-45deg'}]}}
-                            size={Adjust(
-                              fontSizes !== null ? fontSizes[7] : 16,
-                            )}
-                            color={lightTheme ? 'black' : 'white'}
-                            icon={faArrowUp}
-                          />
-                        </Pressable>
-                      </View>
-                    </Pressable>
-                  ))}
+                {historyList.map((item, i) => (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => handleSearch(item.query)}
+                    android_ripple={{
+                      color: 'grey',
+                      borderless: false,
+                    }}
+                    style={[
+                      SearchPage.itemPressableHistory,
+                      {marginBottom: i === historyList.length - 1 ? 10 : 5},
+                    ]}>
+                    <View style={SearchPage.itemPressableHistoryContainer}>
+                      <Text
+                        style={[
+                          SearchPage.historyText,
+                          {
+                            color: lightTheme ? 'black' : 'white',
+                            fontSize: Adjust(
+                              fontSizes !== null ? fontSizes[4] : 12,
+                            ),
+                          },
+                        ]}>
+                        {item.query}
+                      </Text>
+                      <Pressable
+                        style={{
+                          width: statusHeight * 1.5,
+                          height: statusHeight * 1.5,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          marginRight: statusHeight / 3,
+                          backgroundColor: 'transparent',
+                        }}
+                        android_ripple={{
+                          color: 'grey',
+                          borderless: true,
+                          radius: width / 18,
+                        }}
+                        onPress={() =>
+                          formikRef.current.setFieldValue('search', item.query)
+                        }>
+                        <FontAwesomeIcon
+                          style={{transform: [{rotate: '-45deg'}]}}
+                          size={Adjust(fontSizes !== null ? fontSizes[7] : 16)}
+                          color={lightTheme ? 'black' : 'white'}
+                          icon={faArrowUp}
+                        />
+                      </Pressable>
+                    </View>
+                  </Pressable>
+                ))}
               </>
             </ScrollView>
           </KeyboardAvoidingView>

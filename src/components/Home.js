@@ -6,7 +6,6 @@ import {
   Animated,
   Alert,
   FlatList,
-  ToastAndroid,
   RefreshControl,
   StatusBar,
   ActivityIndicator,
@@ -22,19 +21,14 @@ import FastImage from 'react-native-fast-image';
 import NetInfo from '@react-native-community/netinfo';
 import SkeletonContent from 'react-native-skeleton-content-nonexpo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 // Fetch & firebase
 import Axios from 'axios';
-import crashlytics from '@react-native-firebase/crashlytics';
-
 // Redux
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
-
 // Responsiveness
 import Adjust from './AdjustText';
 import EStyleSheet from 'react-native-extended-stylesheet';
-
 // Icons
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -47,10 +41,8 @@ import {
   faSearch,
   faFileDownload,
   faFilm,
-  faCheck,
   faBars,
 } from '@fortawesome/free-solid-svg-icons';
-
 // Assets
 import a3d from '../assets/cat/3d.png';
 import a4k from '../assets/cat/4k.png';
@@ -78,7 +70,6 @@ import sdtv from '../assets/cat/sdtv.png';
 import sport from '../assets/cat/sport.png';
 import vids from '../assets/cat/vids.png';
 import xxx from '../assets/cat/xxx.png';
-
 // Variables
 import {
   width,
@@ -90,21 +81,17 @@ import {
 import {RO, EN} from '../assets/lang';
 
 export default function Home({navigation}) {
+  // State
   const [imdbModal, setIMDbModal] = useState(false);
   const [IMDbData, setIMDbData] = useState(null);
   const [isNetReachable, setIsNetReachable] = useState(true);
   const [refreshing] = useState(false);
   const [IMDbLoading, setIMDbLoading] = useState(false);
-  const [listLatestLoading, setListLatestLoading] = useState(false);
-  const [listEndLoading, setListEndLoading] = useState(true);
-  const [listEndMsg, setListEndMsg] = useState(false);
-
   // Animations
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
   const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
   const [showNetworkAlertOff] = useState(new Animated.Value(statusHeight * 3));
-
   // Redux
   const dispatch = useDispatch();
   const {
@@ -112,13 +99,12 @@ export default function Home({navigation}) {
     fontSizes,
     collItems,
     listLatest,
+    latestLoading,
     latestError,
     enLang,
   } = useSelector((state) => state.appConfig);
-
   // Refs
   const netRef = useRef(false);
-
   // Check drawer open/closed
   let isDrawerOpen = useIsDrawerOpen();
 
@@ -127,7 +113,6 @@ export default function Home({navigation}) {
     // Set font sizes & clear latestError if any
     dispatch(AppConfigActions.setFonts());
     dispatch(AppConfigActions.latestError());
-
     // API error handling
     if (latestError !== null) {
       if (latestError.response.status === 429) {
@@ -137,13 +122,11 @@ export default function Home({navigation}) {
         setAPIDown();
       }
     }
-
     // Screen focus listener
     const screenFocusListener = navigation.addListener('focus', () => {
       // Dismiss keyboard everytime screen gets focus
       Keyboard.dismiss();
     });
-
     return () => {
       screenFocusListener();
     };
@@ -165,16 +148,67 @@ export default function Home({navigation}) {
         netOff();
       }
     });
-
     return () => {
       unsubscribe();
     };
     // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, [isNetReachable]);
 
-  // Functions
+  // FUNCTIONS
+
+  const onRefresh = useCallback(async () => {
+    dispatch(AppConfigActions.setCollItems([]));
+    const value0 = await AsyncStorage.getItem('username');
+    const value1 = await AsyncStorage.getItem('passkey');
+    if (value0 !== null && value1 !== null) {
+      dispatch(AppConfigActions.getLatest(value0, value1));
+    }
+  }, [dispatch]);
+
+  const setCollapsible = (id) => {
+    const newIds = [...collItems];
+    const index = newIds.indexOf(id);
+
+    if (index > -1) {
+      newIds.splice(index, 1);
+    } else {
+      newIds.shift();
+      newIds.push(id);
+    }
+    dispatch(AppConfigActions.setCollItems(newIds));
+  };
+
+  const formatBytes = (a, b = 2) => {
+    if (a === 0) {
+      return '0 Bytes';
+    }
+    const c = b > 0 ? 0 : b,
+      d = Math.floor(Math.log(a) / Math.log(1024));
+    return (
+      parseFloat((a / Math.pow(1024, d)).toFixed(c)) +
+      ' ' +
+      ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
+    );
+  };
+
+  const fetchIMDbInfo = async (id) => {
+    if (isNetReachable) {
+      setIMDbLoading(true);
+      await Axios.get('https://spleeter.co.uk/' + id)
+        .then((res) => {
+          setIMDbData(Array(res.data));
+          setIMDbLoading(false);
+        })
+        .catch((e) => {
+          setIMDbLoading(false);
+        });
+    } else {
+      setIMDbLoading(false);
+      setIMDbData(null);
+    }
+  };
+
   const setLimitReached = () => {
-    setListLatestLoading(false);
     Alert.alert(
       'Info',
       enLang ? EN.alert150R : RO.alert150R,
@@ -190,7 +224,6 @@ export default function Home({navigation}) {
   };
 
   const setAPIDown = () => {
-    setListLatestLoading(false);
     Alert.alert(
       'Info',
       enLang ? EN.alertAPI : RO.alertAPI,
@@ -203,61 +236,6 @@ export default function Home({navigation}) {
       ],
       {cancelable: true},
     );
-  };
-
-  const onRefresh = useCallback(async () => {
-    dispatch(AppConfigActions.setCollItems([]));
-    setListLatestLoading(true);
-    try {
-      const value0 = await AsyncStorage.getItem('username');
-      const value1 = await AsyncStorage.getItem('passkey');
-      if (value0 !== null && value1 !== null) {
-        dispatch(AppConfigActions.getLatest(value0, value1, 20));
-      }
-    } catch (e) {
-      crashlytics().log('home -> getRefreshData()');
-      crashlytics().recordError(e);
-    }
-    setTimeout(() => {
-      setListLatestLoading(false);
-      ToastAndroid.showWithGravity(
-        enLang ? EN.refreshLatest : RO.refreshLatest,
-        ToastAndroid.SHORT,
-        ToastAndroid.CENTER,
-      );
-    }, 1000);
-  }, [enLang, dispatch]);
-
-  const get50 = useCallback(async () => {
-    if (listLatest && listLatest.length === 50) {
-      setListEndLoading(false);
-      setListEndMsg(true);
-    } else {
-      setListEndLoading(true);
-      setListEndMsg(false);
-      const value0 = await AsyncStorage.getItem('username');
-      const value1 = await AsyncStorage.getItem('passkey');
-      if (value0 !== null && value1 !== null) {
-        dispatch(AppConfigActions.getLatest(value0, value1, 50));
-      }
-    }
-
-    setTimeout(() => {
-      setListEndLoading(false);
-    }, 1000);
-  }, [listLatest, dispatch]);
-
-  const setCollapsible = (id) => {
-    const newIds = [...collItems];
-    const index = newIds.indexOf(id);
-
-    if (index > -1) {
-      newIds.splice(index, 1);
-    } else {
-      newIds.shift();
-      newIds.push(id);
-    }
-    dispatch(AppConfigActions.setCollItems(newIds));
   };
 
   const downloadTorrent = async (link) => {
@@ -293,45 +271,6 @@ export default function Home({navigation}) {
         {cancelable: true},
       );
     }
-  };
-
-  const fetchIMDbInfo = async (id) => {
-    try {
-      if (isNetReachable) {
-        setIMDbLoading(true);
-        await Axios.get('https://spleeter.co.uk/' + id)
-          .then((res) => {
-            setIMDbData(Array(res.data));
-            setIMDbLoading(false);
-          })
-          .catch((e) => {
-            setIMDbLoading(false);
-            crashlytics().log(
-              `home -> fetchIMDbInfo() - Axios.get('https://spleeter.co.uk/' + ${id})`,
-            );
-            crashlytics().recordError(e);
-          });
-      } else {
-        setIMDbLoading(false);
-        setIMDbData(null);
-      }
-    } catch (e) {
-      crashlytics().log('home -> fetchIMDbInfo()');
-      crashlytics().recordError(e);
-    }
-  };
-
-  const formatBytes = (a, b = 2) => {
-    if (a === 0) {
-      return '0 Bytes';
-    }
-    const c = b > 0 ? 0 : b,
-      d = Math.floor(Math.log(a) / Math.log(1024));
-    return (
-      parseFloat((a / Math.pow(1024, d)).toFixed(c)) +
-      ' ' +
-      ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
-    );
   };
 
   const netOn = () => {
@@ -388,6 +327,7 @@ export default function Home({navigation}) {
     }, 4000);
   };
 
+  // Skeleton loading component
   const SkeletonLoading = () => {
     return (
       <SkeletonContent
@@ -465,8 +405,7 @@ export default function Home({navigation}) {
     );
   };
 
-  // Torrent pressable
-
+  // Torrent pressable component
   const Item = ({item, onPress, style}) => (
     <Pressable
       onLongPress={() => {
@@ -594,6 +533,7 @@ export default function Home({navigation}) {
     </Pressable>
   );
 
+  // Torrent pressable collapsible
   const renderItem = ({item}) => {
     return (
       <>
@@ -1061,7 +1001,7 @@ export default function Home({navigation}) {
     );
   };
 
-  // Component render
+  // Component render return
   return (
     <>
       <StatusBar
@@ -1362,44 +1302,22 @@ export default function Home({navigation}) {
         </View>
         <FlatList
           refreshControl={
-            <RefreshControl
-              tintColor={ACCENT_COLOR}
-              progressViewOffset={55}
-              refreshing={refreshing}
-              onRefresh={isNetReachable ? onRefresh : netOff}
-            />
+            latestLoading ? null : (
+              <RefreshControl
+                tintColor={ACCENT_COLOR}
+                progressViewOffset={55}
+                refreshing={refreshing}
+                onRefresh={isNetReachable ? onRefresh : netOff}
+              />
+            )
           }
           showsVerticalScrollIndicator={false}
-          ListFooterComponent={() =>
-            listEndLoading ? (
-              <ActivityIndicator
-                style={{marginVertical: statusHeight / 2}}
-                size="large"
-                color={ACCENT_COLOR}
-              />
-            ) : listEndMsg ? (
-              <View
-                style={{
-                  marginVertical: statusHeight / 2,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <FontAwesomeIcon
-                  size={14}
-                  icon={faCheck}
-                  color={ACCENT_COLOR}
-                />
-              </View>
-            ) : null
-          }
-          onEndReachedThreshold={0.02}
-          onEndReached={latestError !== null ? null : get50}
           contentContainerStyle={{
             padding: 9,
             width: width,
           }}
           data={
-            listLatestLoading
+            latestLoading
               ? [
                   {id: '1'},
                   {id: '2'},
@@ -1419,9 +1337,7 @@ export default function Home({navigation}) {
                 ]
               : listLatest
           }
-          renderItem={
-            listLatestLoading ? () => <SkeletonLoading /> : renderItem
-          }
+          renderItem={latestLoading ? () => <SkeletonLoading /> : renderItem}
           extraData={collItems}
           keyExtractor={(item) => item.id.toString()}
         />

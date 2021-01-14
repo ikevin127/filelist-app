@@ -1,3 +1,4 @@
+/* eslint-disable curly */
 import {Dimensions, PixelRatio} from 'react-native';
 import {getStatusBarHeight} from 'react-native-status-bar-height';
 
@@ -15,48 +16,24 @@ export const S = JSON.stringify([4, 6, 8, 9, 10, 11, 12, 14, 20, 45]);
 export const M = JSON.stringify([6, 9, 10, 11, 12, 13, 14, 16, 22, 50]);
 export const L = JSON.stringify([8, 10, 12, 13, 14, 15, 16, 18, 24, 50]);
 
-// Calculate 2 strings matching results: 0 to 1
-// https://stackoverflow.com/questions/10473745/compare-strings-javascript-return-of-likely
-function editDistance(s1, s2) {
-  s1 = s1.toLowerCase();
-  s2 = s2.toLowerCase();
+// Keep only one search keyword if multiple
+export const removeDublicate = (arr) => {
+  let result = [];
+  let deQuery = [...arr.map((item) => item.query)];
+  deQuery.forEach((item, index) => {
+    deQuery.indexOf(item) === index && result.push({id: index, query: item});
+  });
+  return result;
+};
 
-  const costs = [];
-  for (let i = 0; i <= s1.length; i++) {
-    let lastValue = i;
-    for (let j = 0; j <= s2.length; j++) {
-      if (i === 0) {
-        costs[j] = j;
-      } else {
-        if (j > 0) {
-          let newValue = costs[j - 1];
-          if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-            costs[j - 1] = lastValue;
-            lastValue = newValue;
-          }
-        }
-      }
-    }
-    if (i > 0) {
-      costs[s2.length] = lastValue;
-    }
-  }
-  return costs[s2.length];
-}
+// Sort search keywords (query) array based on  search keyword
+export const sortArrayHistory = (array, keyword) => {
+  array.sort((a, b) => {
+    if (a.query.indexOf(keyword) !== -1 && b.query.indexOf(keyword) !== -1)
+      return a.query.localeCompare(b.query);
+    else if (a.query.indexOf(keyword) !== -1) return -1;
+    else if (b.query.indexOf(keyword) !== -1) return 1;
 
-export function similarity(s1, s2) {
-  let longer = s1;
-  let shorter = s2;
-  if (s1.length < s2.length) {
-    longer = s2;
-    shorter = s1;
-  }
-  const longerLength = longer.length;
-  if (longerLength === 0) {
-    return 1.0;
-  }
-  return (
-    (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength)
-  );
-}
+    return a.query.localeCompare(b.query);
+  });
+};
