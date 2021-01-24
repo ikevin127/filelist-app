@@ -42,6 +42,7 @@ import {
   faFileDownload,
   faFilm,
   faBars,
+  faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 // Assets
 import a3d from '../assets/cat/3d.png';
@@ -87,6 +88,7 @@ export default function Home({navigation}) {
   const [isNetReachable, setIsNetReachable] = useState(true);
   const [refreshing] = useState(false);
   const [IMDbLoading, setIMDbLoading] = useState(false);
+  const [listEndMsg, setListEndMsg] = useState(false);
   // Animations
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
@@ -100,6 +102,7 @@ export default function Home({navigation}) {
     collItems,
     listLatest,
     latestLoading,
+    endListLoading,
     latestError,
     enLang,
   } = useSelector((state) => state.appConfig);
@@ -165,6 +168,19 @@ export default function Home({navigation}) {
     }
   }, [dispatch]);
 
+  const getMore = async () => {
+    if (listLatest && listLatest.length > 35) {
+      setListEndMsg(true);
+    } else {
+      setListEndMsg(false);
+      const value0 = await AsyncStorage.getItem('username');
+      const value1 = await AsyncStorage.getItem('passkey');
+      if (value0 !== null && value1 !== null) {
+        dispatch(AppConfigActions.getPlusLatest(value0, value1, 50));
+      }
+    }
+  };
+
   const setCollapsible = (id) => {
     const newIds = [...collItems];
     const index = newIds.indexOf(id);
@@ -194,7 +210,7 @@ export default function Home({navigation}) {
   const fetchIMDbInfo = async (id) => {
     if (isNetReachable) {
       setIMDbLoading(true);
-      await Axios.get('https://spleeter.co.uk/' + id)
+      await Axios.get('https://inkthatquote.com/' + id)
         .then((res) => {
           setIMDbData(Array(res.data));
           setIMDbLoading(false);
@@ -1311,11 +1327,35 @@ export default function Home({navigation}) {
               />
             )
           }
+          ListFooterComponent={() =>
+            endListLoading ? (
+              <ActivityIndicator
+                style={{marginVertical: statusHeight / 1.5}}
+                size="large"
+                color={ACCENT_COLOR}
+              />
+            ) : listEndMsg ? (
+              <View
+                style={{
+                  marginVertical: statusHeight / 1.5,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <FontAwesomeIcon
+                  size={14}
+                  icon={faCheck}
+                  color={ACCENT_COLOR}
+                />
+              </View>
+            ) : null
+          }
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             padding: 9,
             width: width,
           }}
+          onEndReachedThreshold={0.02}
+          onEndReached={latestError !== null ? null : getMore}
           data={
             latestLoading
               ? [

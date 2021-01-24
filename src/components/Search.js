@@ -165,7 +165,9 @@ export default function Search({navigation}) {
 
   // Component mount
   useEffect(() => {
-    inputKeyword.length > 1 && sortArrayHistory(historyList, inputKeyword);
+    inputKeyword.length > 1 &&
+      historyList.length > 1 &&
+      sortArrayHistory(historyList, inputKeyword);
     // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, [inputKeyword]);
 
@@ -336,7 +338,7 @@ export default function Search({navigation}) {
     if (isNetReachable) {
       setIMDbModal(true);
       setIMDbLoading(true);
-      await Axios.get('https://spleeter.co.uk/' + id)
+      await Axios.get('https://inkthatquote.com/' + id)
         .then((res) => {
           setIMDbData(Array(res.data));
           setIMDbLoading(false);
@@ -3296,7 +3298,7 @@ export default function Search({navigation}) {
                   {id: '15'},
                 ]
               : listSearch !== null
-              ? listSearch.slice(0, 20)
+              ? listSearch.slice(0, 30)
               : listSearch
           }
           renderItem={searchLoading ? () => <SkeletonLoading /> : renderItem}

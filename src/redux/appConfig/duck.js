@@ -13,6 +13,7 @@ const initState = {
   fontSizes: null,
   listLatest: null,
   latestLoading: false,
+  endListLoading: false,
   latestError: null,
   listSearch: null,
   searchLoading: false,
@@ -110,6 +111,38 @@ export const actions = {
         });
     } catch (e) {
       crashlytics().log('ducks -> getLatest()');
+      crashlytics().recordError(e);
+    }
+  },
+  getPlusLatest: (user, pass, length) => async (dispatch) => {
+    try {
+      dispatch({
+        type: types.APP_CONFIG.END_LIST_LOADING,
+      });
+      await Axios.get(
+        `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=latest-torrents&limit=${length}`,
+      )
+        .then(async (res) => {
+          let {data} = res;
+          dispatch({
+            type: types.APP_CONFIG.GET_LATEST,
+            payload: data,
+          });
+          dispatch({
+            type: types.APP_CONFIG.END_LIST_LOADING,
+          });
+        })
+        .catch((err) => {
+          dispatch({
+            type: types.APP_CONFIG.LATEST_ERROR,
+            payload: err,
+          });
+          dispatch({
+            type: types.APP_CONFIG.END_LIST_LOADING,
+          });
+        });
+    } catch (e) {
+      crashlytics().log('ducks -> getPlus30()');
       crashlytics().recordError(e);
     }
   },
@@ -222,6 +255,8 @@ export function reducer(state = initState, action) {
       return {...state, historyList: action.payload};
     case types.APP_CONFIG.GET_LATEST:
       return {...state, listLatest: action.payload};
+    case types.APP_CONFIG.END_LIST_LOADING:
+      return {...state, endListLoading: !state.endListLoading};
     case types.APP_CONFIG.LATEST_LOADING:
       return {...state, latestLoading: !state.latestLoading};
     case types.APP_CONFIG.LATEST_ERROR:
