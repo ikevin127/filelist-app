@@ -6,16 +6,16 @@ import {
   Animated,
   Alert,
   FlatList,
-  ActivityIndicator,
   KeyboardAvoidingView,
   TouchableOpacity,
   ScrollView,
   Pressable,
   Platform,
   Keyboard,
-  StatusBar,
-  Linking,
+  PermissionsAndroid,
+  ToastAndroid,
 } from 'react-native';
+import RNFS from 'react-native-fs';
 import {useIsDrawerOpen} from '@react-navigation/drawer';
 import Collapsible from 'react-native-collapsible';
 import {Input, Overlay, Badge} from 'react-native-elements';
@@ -27,8 +27,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Forms
 import * as yup from 'yup';
 import {Formik} from 'formik';
-// Fetch & firebase
-import Axios from 'axios';
 // Redux
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
@@ -43,12 +41,10 @@ import {
   faCopy,
   faDownload,
   faDatabase,
-  faStar,
   faSearch,
   faAngleDoubleUp,
   faFileDownload,
   faCheckSquare,
-  faFilm,
   faCheck,
   faEraser,
   faFilter,
@@ -56,6 +52,7 @@ import {
   faTimes,
   faArrowUp,
 } from '@fortawesome/free-solid-svg-icons';
+import {faImdb} from '@fortawesome/free-brands-svg-icons';
 // Assets
 import a3d from '../assets/cat/3d.png';
 import a4k from '../assets/cat/4k.png';
@@ -95,19 +92,17 @@ import {
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
-export default function Search({navigation}) {
+export default function Search({route, navigation}) {
   const [catIndex, setCatIndex] = useState('');
   const [searchText, setSearchText] = useState('');
   const [inputKeyword, setInputKeyword] = useState('');
-  const [imdbModal, setIMDbModal] = useState(false);
-  const [IMDbData, setIMDbData] = useState(null);
   const [catListLatest, setCatListLatest] = useState(false);
   const [imdbSearch, setImdbSearch] = useState(false);
   const [keySearch, setKeySearch] = useState(true);
   const [isNetReachable, setIsNetReachable] = useState(true);
-  const [IMDbLoading, setIMDbLoading] = useState(false);
   const [historyHidden, setHistoryHidden] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [downloadNotice, setDownloadNotice] = useState(false);
   // Categories
   const [animes, setAnimes] = useState(false);
   const [audio, setAudio] = useState(false);
@@ -139,6 +134,7 @@ export default function Search({navigation}) {
   const [freeleech, setFreeleech] = useState(false);
   const [internal, setInternal] = useState(false);
   // Animations
+  const [downloadAnimation] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
   const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
@@ -146,6 +142,7 @@ export default function Search({navigation}) {
   // Redux
   const dispatch = useDispatch();
   const {
+    autofocusScreen,
     lightTheme,
     fontSizes,
     collItems,
@@ -207,10 +204,9 @@ export default function Search({navigation}) {
     const screenFocusListener = navigation.addListener('focus', () => {
       // Get search history list everytime screen gets focus
       dispatch(AppConfigActions.getHistoryList());
-      // Focus search input everytime screen gets focus
-      searchRef.current.focus();
+      // Focus search input when screen gets focus but not when coming back from IMDb Info
+      autofocusScreen && searchRef.current.focus();
     });
-
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
       (e) => {
@@ -218,7 +214,6 @@ export default function Search({navigation}) {
         setHistoryHidden(true);
       },
     );
-
     const keyboardDidHideListener = Keyboard.addListener(
       'keyboardDidHide',
       () => {
@@ -235,10 +230,25 @@ export default function Search({navigation}) {
   }, [searchError, inputKeyword]);
 
   // FUNCTIONS
-  const imdbModalClose = () => {
-    setIMDbModal(false);
-    setIMDbData(null);
-  };
+  function downAnimation() {
+    return Animated.loop(
+      Animated.sequence([
+        Animated.timing(downloadAnimation, {
+          toValue: 0.5,
+          duration: 350,
+          useNativeDriver: true,
+        }),
+        Animated.timing(downloadAnimation, {
+          toValue: 1,
+          duration: 350,
+          useNativeDriver: true,
+        }),
+      ]),
+      {
+        iterations: 4,
+      },
+    ).start();
+  }
 
   const onRefChange = useCallback((node) => {
     if (node === null) {
@@ -298,6 +308,10 @@ export default function Search({navigation}) {
     );
   };
 
+  const closeSuggestions = () => {
+    setHistoryHidden(false);
+  };
+
   const goBack = () => {
     setTimeout(() => {
       Keyboard.dismiss();
@@ -332,23 +346,6 @@ export default function Search({navigation}) {
       newIds.push(id);
     }
     dispatch(AppConfigActions.setCollItems(newIds));
-  };
-
-  const fetchIMDbInfo = async (id) => {
-    if (isNetReachable) {
-      setIMDbModal(true);
-      setIMDbLoading(true);
-      await Axios.get('https://inkthatquote.com/' + id)
-        .then((res) => {
-          setIMDbData(Array(res.data));
-          setIMDbLoading(false);
-        })
-        .catch((e) => {
-          setIMDbLoading(false);
-        });
-    } else {
-      netOff();
-    }
   };
 
   const handleSearchType = async (action, type, query) => {
@@ -431,37 +428,34 @@ export default function Search({navigation}) {
     }
   };
 
-  const downloadTorrent = async (link) => {
-    const supported = await Linking.canOpenURL(link);
-    if (supported) {
-      Alert.alert(
-        'Info',
-        enLang ? EN.download : RO.download,
-        [
-          {
-            text: 'DA',
-            onPress: () => Linking.openURL(link),
-          },
-          {
-            text: 'NU',
-            onPress: () => {},
-            style: 'cancel',
-          },
-        ],
-        {cancelable: true},
-      );
+  const downloadTorrent = async (name, link) => {
+    const request = await PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+    ]);
+    if (
+      request['android.permission.READ_EXTERNAL_STORAGE'] &&
+      request['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
+    ) {
+      if (isNetReachable) {
+        RNFS.downloadFile({
+          fromUrl: link,
+          toFile: `${RNFS.DownloadDirectoryPath}/${name}.torrent`,
+        }).promise.then(() => {
+          setDownloadNotice(true);
+          downAnimation();
+          setTimeout(() => {
+            setDownloadNotice(false);
+          }, 4000);
+        });
+      } else {
+        netOff();
+      }
     } else {
-      Alert.alert(
-        'Info',
-        enLang ? EN.downloadErr : RO.downloadErr,
-        [
-          {
-            text: 'OK',
-            onPress: () => {},
-            style: 'cancel',
-          },
-        ],
-        {cancelable: true},
+      ToastAndroid.showWithGravity(
+        enLang ? EN.permissionDenied : RO.permissionDenied,
+        ToastAndroid.SHORT,
+        ToastAndroid.CENTER,
       );
     }
   };
@@ -624,6 +618,144 @@ export default function Search({navigation}) {
     }, 4000);
   };
 
+  const sizeInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrSize : RO.torrSize,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const seedersInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrSeeds : RO.torrSeeds,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const downloadInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrDown : RO.torrDown,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const filesInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrFiles : RO.torrFiles,
+      [
+        {
+          text: 'OK',
+        },
+      ],
+      {onDismiss: () => {}, cancelable: true},
+    );
+  };
+
+  const leechersInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrLeech : RO.torrLeech,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const showKeywordSearchInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.keywordInfo : RO.keywordInfo,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const setKeywordSearchType = () => {
+    setKeySearch(!keySearch);
+    setImdbSearch(false);
+  };
+
+  const showIMDbSearchInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.imdbInfo : RO.imdbInfo,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const setIMDbSearchType = () => {
+    setImdbSearch(!imdbSearch);
+    setKeySearch(false);
+  };
+
+  const animesSetCat = () => setAnimes(!animes);
+  const audioSetCat = () => setAudio(!audio);
+  const deseneSetCat = () => setDesene(!desene);
+  const diverseSetCat = () => setDiverse(!diverse);
+  const docSetCat = () => setDoc(!doc);
+  const filme3dSetCat = () => setFilme3d(!filme3d);
+  const filme4kSetCat = () => setFilme4k(!filme4k);
+  const filme4kbdSetCat = () => setFilme4kBD(!filme4kbd);
+  const filmeBDSetCat = () => setFilmeBD(!filmeBD);
+  const filmeDvdSetCat = () => setFilmeDvd(!filmeDvd);
+  const filmeDvdRoSetCat = () => setFilmeDvdRo(!filmeDvdRo);
+  const filmeHdSetCat = () => setFilmeHd(!filmeHd);
+  const filmeHdRoSetCat = () => setFilmeHdRo(!filmeHdRo);
+  const filmeSdSetCat = () => setFilmeSd(!filmeSd);
+  const flacsSetCat = () => setFlacs(!flacs);
+  const jocConsoleSetCat = () => setJocConsole(!jocConsole);
+  const jocPcSetCat = () => setJocPc(!jocPc);
+  const linSetCat = () => setLin(!lin);
+  const mobSetCat = () => setMob(!mob);
+  const softwareSetCat = () => setSoftware(!software);
+  const seriale4kSetCat = () => setSeriale4k(!seriale4k);
+  const serialeHdSetCat = () => setSerialeHd(!serialeHd);
+  const serialeSdSetCat = () => setSerialeSd(!serialeSd);
+  const sportsSetCat = () => setSports(!sports);
+  const videosSetCat = () => setVideos(!videos);
+  const pornSetCat = () => setPorn(!porn);
+  const freeleechSetCat = () => setFreeleech(!freeleech);
+  const internalSetCat = () => setInternal(!internal);
+  const doubleSetCat = () => setDoubleUp(!doubleUp);
+  const displayCatList = () => setCatListLatest(!catListLatest);
+
   const SkeletonLoading = () => {
     return (
       <SkeletonContent
@@ -704,12 +836,7 @@ export default function Search({navigation}) {
   // Torrent pressable
   const Item = ({item, onPress, style}) => (
     <Pressable
-      onLongPress={() => {
-        downloadTorrent(item.download_link);
-      }}
-      onPress={() => {
-        setCollapsible(item.id);
-      }}
+      onPress={() => setCollapsible(item.id)}
       android_ripple={{
         color: 'grey',
         borderless: false,
@@ -960,9 +1087,9 @@ export default function Search({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() => {
-                      downloadTorrent(item.download_link);
-                    }}>
+                    onPress={() =>
+                      downloadTorrent(item.name, item.download_link)
+                    }>
                     <FontAwesomeIcon
                       size={14}
                       icon={faFileDownload}
@@ -996,19 +1123,7 @@ export default function Search({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.torrSize : RO.torrSize,
-                        [
-                          {
-                            text: 'OK',
-                            onPress: () => {},
-                          },
-                        ],
-                        {cancelable: true},
-                      )
-                    }>
+                    onPress={sizeInfo}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faDatabase}
@@ -1042,19 +1157,7 @@ export default function Search({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.torrSeeds : RO.torrSeeds,
-                        [
-                          {
-                            text: 'OK',
-                            onPress: () => {},
-                          },
-                        ],
-                        {cancelable: true},
-                      )
-                    }>
+                    onPress={seedersInfo}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faChevronCircleUp}
@@ -1103,19 +1206,7 @@ export default function Search({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.torrDown : RO.torrDown,
-                        [
-                          {
-                            text: 'OK',
-                            onPress: () => {},
-                          },
-                        ],
-                        {cancelable: true},
-                      )
-                    }>
+                    onPress={downloadInfo}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faDownload}
@@ -1149,18 +1240,7 @@ export default function Search({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.torrFiles : RO.torrFiles,
-                        [
-                          {
-                            text: 'OK',
-                          },
-                        ],
-                        {onDismiss: () => {}, cancelable: true},
-                      )
-                    }>
+                    onPress={filesInfo}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faCopy}
@@ -1194,19 +1274,7 @@ export default function Search({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.torrLeech : RO.torrLeech,
-                        [
-                          {
-                            text: 'OK',
-                            onPress: () => {},
-                          },
-                        ],
-                        {cancelable: true},
-                      )
-                    }>
+                    onPress={leechersInfo}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faChevronCircleDown}
@@ -1265,27 +1333,17 @@ export default function Search({navigation}) {
                       android_ripple={{
                         color: 'grey',
                       }}
-                      onPress={() => {
-                        fetchIMDbInfo(item.imdb);
-                      }}>
+                      onPress={() =>
+                        navigation.navigate('IMDb', {
+                          id: item.imdb,
+                          screen: 'Search',
+                        })
+                      }>
                       <FontAwesomeIcon
-                        size={14}
-                        icon={faFilm}
+                        size={Adjust(35)}
+                        icon={faImdb}
                         color={'black'}
                       />
-                      <Text
-                        style={[
-                          {
-                            fontSize: Adjust(
-                              fontSizes !== null ? fontSizes[1] : 9,
-                            ),
-                            fontWeight: 'bold',
-                            color: 'black',
-                            marginLeft: 5,
-                          },
-                        ]}>
-                        IMDb
-                      </Text>
                     </Pressable>
                   </View>
                 </View>
@@ -1298,2124 +1356,1835 @@ export default function Search({navigation}) {
   };
 
   // Component render
-
   return (
-    <>
-      <StatusBar
-        barStyle={
-          isDrawerOpen
-            ? lightTheme
-              ? 'dark-content'
-              : 'light-content'
-            : 'light-content'
-        }
-        backgroundColor={catListLatest ? ACCENT_COLOR : 'transparent'}
-        translucent={true}
-      />
-      <View
-        style={[
-          SearchPage.mainSafeAreaView,
+    <View
+      style={[
+        SearchPage.mainSafeAreaView,
+        {
+          backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
+        },
+      ]}>
+      <Overlay
+        statusBarTranslucent={false}
+        animationType="slide"
+        overlayStyle={[
+          SearchPage.catCheckOverlay,
           {
+            height: Platform.Version < 23 ? height - statusHeight : height,
+            paddingTop:
+              Platform.OS === 'android' ? statusHeight / 1.5 : statusHeight * 2,
+            paddingBottom: statusHeight / 2,
             backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
           },
-        ]}>
-        <Overlay
-          statusBarTranslucent
-          animationType="fade"
-          overlayStyle={{
-            width: '90%',
-            height: fontSizes[0] === 8 ? height / 2.3 : height / 3,
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: 0,
-            padding: 5,
-            backgroundColor: lightTheme ? 'white' : 'black',
-          }}
-          isVisible={imdbModal}
-          onBackdropPress={imdbModalClose}>
-          <View
-            style={{
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            {IMDbLoading ? (
-              <ActivityIndicator
-                style={{marginVertical: statusHeight}}
-                size="large"
-                color={ACCENT_COLOR}
-              />
-            ) : IMDbData ? (
-              IMDbData.map((item) => {
-                return (
-                  <View
-                    style={{
-                      height: width / 2,
-                      width: '100%',
-                      flexDirection: 'row',
-                      justifyContent: 'flex-start',
-                      alignItems: 'flex-start',
-                      marginVertical: 20,
-                      paddingRight: 20,
-                    }}
-                    key={item.link}>
-                    <View
-                      style={{
-                        width: '45%',
-                        height: '100%',
-                        flexDirection: 'column',
-                        justifyContent: 'flex-start',
-                        alignItems: 'flex-start',
-                      }}>
-                      <Pressable
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          flexDirection: 'column',
-                          justifyContent: 'flex-start',
-                          alignItems: 'flex-start',
-                        }}
-                        onPress={() =>
-                          typeof item.link === 'function'
-                            ? {}
-                            : Alert.alert(
-                                'Info',
-                                enLang ? EN.imdbNav : RO.imdbNav,
-                                [
-                                  {
-                                    text: enLang ? EN.yes : RO.yes,
-                                    onPress: () => Linking.openURL(item.link),
-                                  },
-                                  {
-                                    text: enLang ? EN.no : RO.no,
-                                    onPress: () => {},
-                                    style: 'cancel',
-                                  },
-                                ],
-                                {cancelable: true},
-                              )
-                        }>
-                        <FastImage
-                          style={{width: '100%', height: '80%'}}
-                          resizeMode={FastImage.resizeMode.contain}
-                          source={{
-                            uri: item.poster,
-                          }}
-                        />
-                        {item.rating === '' ||
-                        item.rating === undefined ? null : (
-                          <>
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                width: '100%',
-                                height: '20%',
-                              }}>
-                              <Text
-                                style={[
-                                  {
-                                    fontSize: Adjust(
-                                      fontSizes !== null ? fontSizes[6] : 14,
-                                    ),
-                                    color: lightTheme ? 'black' : 'white',
-                                    fontWeight: 'bold',
-                                  },
-                                ]}>
-                                {item.rating}
-                              </Text>
-                              <FontAwesomeIcon
-                                size={Adjust(
-                                  fontSizes !== null ? fontSizes[6] : 14,
-                                )}
-                                style={{marginLeft: 5}}
-                                color={lightTheme ? 'goldenrod' : 'gold'}
-                                icon={faStar}
-                              />
-                            </View>
-                          </>
-                        )}
-                      </Pressable>
-                    </View>
-                    <View
-                      style={{
-                        width: '55%',
-                        height: '100%',
-                        flexDirection: 'column',
-                        justifyContent: 'flex-start',
-                        alignItems: 'flex-start',
-                      }}>
-                      <View
-                        style={{
-                          flex: 1,
-                          flexDirection: 'column',
-                          justifyContent: 'flex-start',
-                          alignItems: 'flex-start',
-                          paddingHorizontal: 10,
-                        }}>
-                        <Text
-                          style={[
-                            {
-                              fontSize: Adjust(
-                                fontSizes !== null ? fontSizes[1] : 8,
-                              ),
-                              color: lightTheme ? 'black' : 'white',
-                              fontWeight: 'bold',
-                            },
-                          ]}>
-                          Plot
-                        </Text>
-                        <Text
-                          selectable
-                          style={[
-                            {
-                              fontSize: Adjust(
-                                fontSizes !== null ? fontSizes[1] : 8,
-                              ),
-                              color: lightTheme ? 'black' : MAIN_LIGHT,
-                              flexWrap: 'wrap',
-                              marginBottom: 3,
-                            },
-                          ]}>
-                          {item.plot === undefined
-                            ? 'Acest material nu are plot.'
-                            : item.plot.split('\n')[0]}
-                        </Text>
-                        {item.duration === '' ? null : (
-                          <>
-                            <View style={{width: '100%', flexDirection: 'row'}}>
-                              <Text
-                                style={[
-                                  {
-                                    fontSize: Adjust(
-                                      fontSizes !== null ? fontSizes[1] : 8,
-                                    ),
-                                    color: lightTheme ? 'black' : 'white',
-                                    fontWeight: 'bold',
-                                  },
-                                ]}>
-                                {enLang ? EN.imdbETA : RO.imdbETA}
-                              </Text>
-                              <Text
-                                style={[
-                                  {
-                                    fontSize: Adjust(
-                                      fontSizes !== null ? fontSizes[1] : 8,
-                                    ),
-                                    color: lightTheme ? 'black' : MAIN_LIGHT,
-                                  },
-                                ]}>
-                                {' '}
-                                {item.duration === undefined
-                                  ? '∞'
-                                  : item.duration}
-                              </Text>
-                            </View>
-                          </>
-                        )}
-                      </View>
-                    </View>
-                  </View>
-                );
-              })
-            ) : (
-              <View
+        ]}
+        isVisible={catListLatest}
+        onBackdropPress={getIndexes}>
+        <>
+          <View style={SearchPage.catCheckContainer}>
+            <View
+              style={{
+                width: width,
+                height: width / 8,
+                flexDirection: 'row',
+                left: 10,
+                paddingRight: 25,
+                paddingBottom: 10,
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+              }}>
+              <Text
                 style={{
-                  width: '80%',
-                  height: '100%',
-                  justifyContent: 'center',
-                  alignItems: 'center',
+                  color: lightTheme ? 'black' : 'white',
+                  fontWeight: 'bold',
+                  fontSize: Adjust(fontSizes !== null ? fontSizes[8] : 22),
+                  paddingLeft: 5,
                 }}>
-                <Text
-                  style={{
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[2] : 10),
-                    textAlign: 'center',
-                    color: lightTheme ? 'black' : MAIN_LIGHT,
-                  }}>
-                  {enLang ? EN.searchErrH : RO.searchErrH}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[2] : 10),
-                    textAlign: 'center',
-                    color: lightTheme ? 'black' : MAIN_LIGHT,
-                  }}>
-                  {enLang ? EN.searchErr : RO.searchErr}
-                </Text>
+                {enLang ? EN.filters : RO.filters}
+              </Text>
+              <View
+                style={[
+                  SearchPage.catCheckOverlayErase,
+                  {bottom: Platform.OS === 'android' ? 0 : 10},
+                ]}>
+                <Pressable
+                  style={SearchPage.catCheckOverlayPressableErase}
+                  android_ripple={{
+                    color: 'white',
+                    borderless: false,
+                  }}
+                  onPress={resetFilters}>
+                  <FontAwesomeIcon color={'white'} size={20} icon={faEraser} />
+                </Pressable>
               </View>
-            )}
-          </View>
-        </Overlay>
-        <Overlay
-          statusBarTranslucent={false}
-          animationType="slide"
-          overlayStyle={[
-            SearchPage.catCheckOverlay,
-            {
-              height: Platform.Version < 23 ? height - statusHeight : height,
-              paddingTop:
-                Platform.OS === 'android'
-                  ? statusHeight / 1.5
-                  : statusHeight * 2,
-              paddingBottom: statusHeight / 2,
-              backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
-            },
-          ]}
-          isVisible={catListLatest}
-          onBackdropPress={getIndexes}>
-          <>
-            <View style={SearchPage.catCheckContainer}>
+            </View>
+            <ScrollView
+              showsVerticalScrollIndicator={true}
+              overScrollMode={'never'}
+              bounces={false}
+              style={[
+                SearchPage.catCheckScrollView,
+                {backgroundColor: lightTheme ? MAIN_LIGHT : 'black'},
+              ]}>
               <View
                 style={{
-                  width: width,
-                  height: width / 8,
+                  width: '100%',
                   flexDirection: 'row',
-                  left: 10,
-                  paddingRight: 25,
-                  paddingBottom: 10,
-                  justifyContent: 'space-between',
+                  paddingVertical: 10,
+                  justifyContent: 'flex-start',
                   alignItems: 'flex-start',
                 }}>
                 <Text
                   style={{
                     color: lightTheme ? 'black' : 'white',
                     fontWeight: 'bold',
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[8] : 22),
                     paddingLeft: 5,
                   }}>
-                  {enLang ? EN.filters : RO.filters}
+                  {enLang ? EN.searchType : RO.searchType}
                 </Text>
+              </View>
+              <View style={SearchPage.catCheckScrollContainer}>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? keySearch
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : keySearch
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? keySearch
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    keySearch ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onLongPress={showKeywordSearchInfo}
+                  onPress={setKeywordSearchType}>
+                  {enLang ? EN.keywordType : RO.keywordType}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? imdbSearch
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : imdbSearch
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? imdbSearch
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    imdbSearch ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onLongPress={showIMDbSearchInfo}
+                  onPress={setIMDbSearchType}>
+                  {enLang ? EN.imdbType : RO.imdbType}
+                </Chip>
+              </View>
+              <View
+                style={{
+                  width: '100%',
+                  flexDirection: 'row',
+                  paddingVertical: 10,
+                  justifyContent: 'flex-start',
+                  alignItems: 'flex-start',
+                }}>
+                <Text
+                  style={{
+                    color: lightTheme ? 'black' : 'white',
+                    fontWeight: 'bold',
+                    paddingLeft: 5,
+                  }}>
+                  {enLang ? EN.catType : RO.catType}
+                </Text>
+              </View>
+              <View style={SearchPage.catCheckScrollContainer}>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? animes
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : animes
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (animes ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    animes ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={animesSetCat}>
+                  Anime
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? audio
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : audio
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (audio ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    audio ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={audioSetCat}>
+                  Audio
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? desene
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : desene
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (desene ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    desene ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={deseneSetCat}>
+                  {enLang ? EN.cartoons : RO.cartoons}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? diverse
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : diverse
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (diverse ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    diverse ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={diverseSetCat}>
+                  {enLang ? EN.misc : RO.misc}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? doc
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : doc
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (doc ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    doc ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={docSetCat}>
+                  Docs
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? flacs
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : flacs
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (flacs ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    flacs ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={flacsSetCat}>
+                  FLAC
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? jocConsole
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : jocConsole
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? jocConsole
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    jocConsole ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={jocConsoleSetCat}>
+                  {enLang ? EN.console : RO.console}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? jocPc
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : jocPc
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (jocPc ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    jocPc ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={jocPcSetCat}>
+                  {enLang ? EN.pc : RO.pc}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? lin
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : lin
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (lin ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    lin ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={linSetCat}>
+                  Linux
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? mob
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : mob
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (mob ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    mob ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={mobSetCat}>
+                  Mobile
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? software
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : software
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? software
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    software ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={softwareSetCat}>
+                  {enLang ? EN.software : RO.software}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? sports
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : sports
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (sports ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    sports ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={sportsSetCat}>
+                  Sport
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? videos
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : videos
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (videos ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    videos ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={videosSetCat}>
+                  {enLang ? EN.clips : RO.clips}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? porn
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : porn
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (porn ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    porn ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={pornSetCat}>
+                  XXX
+                </Chip>
                 <View
-                  style={[
-                    SearchPage.catCheckOverlayErase,
-                    {bottom: Platform.OS === 'android' ? 0 : 10},
-                  ]}>
+                  style={{
+                    width: '100%',
+                    flexDirection: 'row',
+                    paddingVertical: 10,
+                    justifyContent: 'flex-start',
+                    alignItems: 'flex-start',
+                  }}>
+                  <Text
+                    style={{
+                      color: lightTheme ? 'black' : 'white',
+                      paddingLeft: 5,
+                    }}>
+                    {enLang ? EN.movTV : RO.movTV}
+                  </Text>
+                </View>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? filme3d
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : filme3d
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (filme3d ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    filme3d ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={filme3dSetCat}>
+                  {enLang ? EN.td : RO.td}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? filme4k
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : filme4k
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (filme4k ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    filme4k ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={filme4kSetCat}>
+                  {enLang ? EN.pk : RO.pk}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? filme4kbd
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : filme4kbd
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? filme4kbd
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    filme4kbd ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={filme4kbdSetCat}>
+                  {enLang ? EN.pkbd : RO.pkbd}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? filmeBD
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : filmeBD
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (filmeBD ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    filmeBD ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={filmeBDSetCat}>
+                  {enLang ? EN.bd : RO.bd}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? filmeDvd
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : filmeDvd
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? filmeDvd
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    filmeDvd ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={filmeDvdSetCat}>
+                  {enLang ? EN.dvd : RO.dvd}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? filmeDvdRo
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : filmeDvdRo
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? filmeDvdRo
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    filmeDvdRo ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={filmeDvdRoSetCat}>
+                  {enLang ? EN.dvdro : RO.dvdro}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? filmeHd
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : filmeHd
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (filmeHd ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    filmeHd ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={filmeHdSetCat}>
+                  {enLang ? EN.hd : RO.hd}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? filmeHdRo
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : filmeHdRo
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? filmeHdRo
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    filmeHdRo ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={filmeHdRoSetCat}>
+                  {enLang ? EN.hdro : RO.hdro}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? filmeSd
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : filmeSd
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme ? (filmeSd ? 'white' : 'black') : 'white',
+                  }}
+                  icon={() =>
+                    filmeSd ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={filmeSdSetCat}>
+                  {enLang ? EN.sd : RO.sd}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? seriale4k
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : seriale4k
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? seriale4k
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    seriale4k ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={seriale4kSetCat}>
+                  {enLang ? EN.pks : RO.pks}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? serialeHd
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : serialeHd
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? serialeHd
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    serialeHd ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={serialeHdSetCat}>
+                  {enLang ? EN.hds : RO.hds}
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? serialeSd
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : serialeSd
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? serialeSd
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    serialeSd ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={serialeSdSetCat}>
+                  {enLang ? EN.sds : RO.sds}
+                </Chip>
+              </View>
+              <View
+                style={{
+                  width: '100%',
+                  flexDirection: 'row',
+                  paddingVertical: 10,
+                  justifyContent: 'flex-start',
+                  alignItems: 'flex-start',
+                }}>
+                <Text
+                  style={{
+                    color: lightTheme ? 'black' : 'white',
+                    fontWeight: 'bold',
+                    paddingLeft: 5,
+                  }}>
+                  {enLang ? EN.tags : RO.tags}
+                </Text>
+              </View>
+              <View
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  justifyContent: 'flex-start',
+                  alignItems: 'flex-start',
+                }}>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? freeleech
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : freeleech
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? freeleech
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    freeleech ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={freeleechSetCat}>
+                  Freeleech
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? internal
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : internal
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? internal
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    internal ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={internalSetCat}>
+                  Internal
+                </Chip>
+                <Chip
+                  style={{
+                    backgroundColor: lightTheme
+                      ? doubleUp
+                        ? '#155778'
+                        : '#d4d2d2'
+                      : doubleUp
+                      ? '#155778'
+                      : '#202020',
+                    marginRight: 5,
+                    marginBottom: 5,
+                  }}
+                  textStyle={{
+                    color: lightTheme
+                      ? doubleUp
+                        ? 'white'
+                        : 'black'
+                      : 'white',
+                  }}
+                  icon={() =>
+                    doubleUp ? (
+                      <FontAwesomeIcon
+                        style={{color: ACCENT_COLOR}}
+                        size={14}
+                        icon={faCheckSquare}
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        style={{
+                          color: 'transparent',
+                          borderColor: 'grey',
+                          borderRadius: 1,
+                          borderWidth: 1,
+                        }}
+                        size={14}
+                        icon={faAngleDoubleUp}
+                      />
+                    )
+                  }
+                  onPress={doubleSetCat}>
+                  2x Upload
+                </Chip>
+              </View>
+            </ScrollView>
+            <View style={SearchPage.catCheckOverlayFooter}>
+              <Pressable
+                style={SearchPage.catCheckOverlayPressable}
+                android_ripple={{
+                  color: 'white',
+                  borderless: false,
+                }}
+                onPress={getIndexes}>
+                <FontAwesomeIcon color={'white'} size={20} icon={faCheck} />
+              </Pressable>
+            </View>
+          </View>
+        </>
+      </Overlay>
+      <View style={SearchPage.mainHeader}>
+        <Formik
+          innerRef={onRefChange}
+          initialValues={{search: ''}}
+          onSubmit={(values) => {
+            searchLoading ? null : handleSearch(values.search);
+          }}
+          validationSchema={yup.object().shape({
+            search: yup.string(),
+          })}>
+          {({
+            values,
+            handleChange,
+            errors,
+            setFieldTouched,
+            resetForm,
+            touched,
+            isValid,
+            handleSubmit,
+          }) => (
+            <>
+              <Input
+                style={[
+                  SearchPage.inputStyle,
+                  {
+                    fontSize: Adjust(12),
+                    color: 'white',
+                  },
+                ]}
+                inputContainerStyle={SearchPage.inputContainerInner}
+                onSubmitEditing={handleSubmit}
+                returnKeyType={'search'}
+                keyboardType={isDrawerOpen ? null : 'default'}
+                selectionColor="grey"
+                ref={searchRef}
+                autoFocus
+                onFocus={() => resetForm({})}
+                placeholder={
+                  keySearch
+                    ? enLang
+                      ? EN.placeholderK
+                      : RO.placeholderK
+                    : enLang
+                    ? EN.placeholderI
+                    : RO.placeholderI
+                }
+                placeholderTextColor={'rgba(255,255,255,0.8)'}
+                value={values.search}
+                onChangeText={handleChange('search')}
+                onBlur={() => setFieldTouched('search')}
+              />
+              <View style={SearchPage.mainHeaderSearch1Container}>
+                {values.search.length > 0 ? (
                   <Pressable
-                    style={SearchPage.catCheckOverlayPressableErase}
+                    style={SearchPage.mainHeaderCogPressable}
                     android_ripple={{
                       color: 'white',
-                      borderless: false,
+                      borderless: true,
+                      radius: width / 18,
                     }}
-                    onPress={resetFilters}>
+                    onPress={() => resetForm({})}>
                     <FontAwesomeIcon
+                      size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
                       color={'white'}
-                      size={20}
-                      icon={faEraser}
+                      icon={faTimes}
                     />
                   </Pressable>
-                </View>
+                ) : (
+                  <Pressable
+                    style={SearchPage.mainHeaderCogPressable}
+                    android_ripple={{
+                      color: 'white',
+                      borderless: true,
+                      radius: width / 18,
+                    }}
+                    onPress={goBack}>
+                    <FontAwesomeIcon
+                      size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+                      color={'white'}
+                      icon={faArrowLeft}
+                    />
+                  </Pressable>
+                )}
               </View>
-              <ScrollView
-                showsVerticalScrollIndicator={true}
-                overScrollMode={'never'}
-                bounces={false}
-                style={[
-                  SearchPage.catCheckScrollView,
-                  {backgroundColor: lightTheme ? MAIN_LIGHT : 'black'},
-                ]}>
-                <View
-                  style={{
-                    width: '100%',
-                    flexDirection: 'row',
-                    paddingVertical: 10,
-                    justifyContent: 'flex-start',
-                    alignItems: 'flex-start',
-                  }}>
-                  <Text
-                    style={{
-                      color: lightTheme ? 'black' : 'white',
-                      fontWeight: 'bold',
-                      paddingLeft: 5,
-                    }}>
-                    {enLang ? EN.searchType : RO.searchType}
-                  </Text>
-                </View>
-                <View style={SearchPage.catCheckScrollContainer}>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? keySearch
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : keySearch
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? keySearch
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      keySearch ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onLongPress={() => {
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.keywordInfo : RO.keywordInfo,
-                        [
-                          {
-                            text: 'OK',
-                            onPress: () => {},
-                          },
-                        ],
-                        {cancelable: true},
-                      );
-                    }}
-                    onPress={() => {
-                      setKeySearch(!keySearch);
-                      setImdbSearch(false);
-                    }}>
-                    {enLang ? EN.keywordType : RO.keywordType}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? imdbSearch
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : imdbSearch
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? imdbSearch
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      imdbSearch ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onLongPress={() => {
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.imdbInfo : RO.imdbInfo,
-                        [
-                          {
-                            text: 'OK',
-                            onPress: () => {},
-                          },
-                        ],
-                        {cancelable: true},
-                      );
-                    }}
-                    onPress={() => {
-                      setImdbSearch(!imdbSearch);
-                      setKeySearch(false);
-                    }}>
-                    {enLang ? EN.imdbType : RO.imdbType}
-                  </Chip>
-                </View>
-                <View
-                  style={{
-                    width: '100%',
-                    flexDirection: 'row',
-                    paddingVertical: 10,
-                    justifyContent: 'flex-start',
-                    alignItems: 'flex-start',
-                  }}>
-                  <Text
-                    style={{
-                      color: lightTheme ? 'black' : 'white',
-                      fontWeight: 'bold',
-                      paddingLeft: 5,
-                    }}>
-                    {enLang ? EN.catType : RO.catType}
-                  </Text>
-                </View>
-                <View style={SearchPage.catCheckScrollContainer}>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? animes
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : animes
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? animes
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      animes ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setAnimes(!animes)}>
-                    Anime
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? audio
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : audio
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme ? (audio ? 'white' : 'black') : 'white',
-                    }}
-                    icon={() =>
-                      audio ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setAudio(!audio)}>
-                    Audio
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? desene
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : desene
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? desene
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      desene ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setDesene(!desene)}>
-                    {enLang ? EN.cartoons : RO.cartoons}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? diverse
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : diverse
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? diverse
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      diverse ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setDiverse(!diverse)}>
-                    {enLang ? EN.misc : RO.misc}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? doc
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : doc
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme ? (doc ? 'white' : 'black') : 'white',
-                    }}
-                    icon={() =>
-                      doc ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setDoc(!doc)}>
-                    Docs
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? flacs
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : flacs
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme ? (flacs ? 'white' : 'black') : 'white',
-                    }}
-                    icon={() =>
-                      flacs ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFlacs(!flacs)}>
-                    FLAC
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? jocConsole
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : jocConsole
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? jocConsole
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      jocConsole ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setJocConsole(!jocConsole)}>
-                    {enLang ? EN.console : RO.console}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? jocPc
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : jocPc
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme ? (jocPc ? 'white' : 'black') : 'white',
-                    }}
-                    icon={() =>
-                      jocPc ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setJocPc(!jocPc)}>
-                    {enLang ? EN.pc : RO.pc}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? lin
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : lin
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme ? (lin ? 'white' : 'black') : 'white',
-                    }}
-                    icon={() =>
-                      lin ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setLin(!lin)}>
-                    Linux
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? mob
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : mob
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme ? (mob ? 'white' : 'black') : 'white',
-                    }}
-                    icon={() =>
-                      mob ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setMob(!mob)}>
-                    Mobile
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? software
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : software
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? software
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      software ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setSoftware(!software)}>
-                    {enLang ? EN.software : RO.software}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? sports
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : sports
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? sports
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      sports ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setSports(!sports)}>
-                    Sport
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? videos
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : videos
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? videos
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      videos ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setVideos(!videos)}>
-                    {enLang ? EN.clips : RO.clips}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? porn
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : porn
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme ? (porn ? 'white' : 'black') : 'white',
-                    }}
-                    icon={() =>
-                      porn ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setPorn(!porn)}>
-                    XXX
-                  </Chip>
-                  <View
-                    style={{
-                      width: '100%',
-                      flexDirection: 'row',
-                      paddingVertical: 10,
-                      justifyContent: 'flex-start',
-                      alignItems: 'flex-start',
-                    }}>
-                    <Text
-                      style={{
-                        color: lightTheme ? 'black' : 'white',
-                        paddingLeft: 5,
-                      }}>
-                      {enLang ? EN.movTV : RO.movTV}
-                    </Text>
-                  </View>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? filme3d
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : filme3d
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? filme3d
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      filme3d ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFilme3d(!filme3d)}>
-                    {enLang ? EN.td : RO.td}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? filme4k
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : filme4k
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? filme4k
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      filme4k ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFilme4k(!filme4k)}>
-                    {enLang ? EN.pk : RO.pk}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? filme4kbd
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : filme4kbd
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? filme4kbd
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      filme4kbd ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFilme4kBD(!filme4kbd)}>
-                    {enLang ? EN.pkbd : RO.pkbd}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? filmeBD
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : filmeBD
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? filmeBD
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      filmeBD ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFilmeBD(!filmeBD)}>
-                    {enLang ? EN.bd : RO.bd}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? filmeDvd
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : filmeDvd
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? filmeDvd
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      filmeDvd ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFilmeDvd(!filmeDvd)}>
-                    {enLang ? EN.dvd : RO.dvd}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? filmeDvdRo
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : filmeDvdRo
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? filmeDvdRo
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      filmeDvdRo ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFilmeDvdRo(!filmeDvdRo)}>
-                    {enLang ? EN.dvdro : RO.dvdro}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? filmeHd
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : filmeHd
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? filmeHd
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      filmeHd ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFilmeHd(!filmeHd)}>
-                    {enLang ? EN.hd : RO.hd}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? filmeHdRo
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : filmeHdRo
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? filmeHdRo
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      filmeHdRo ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFilmeHdRo(!filmeHdRo)}>
-                    {enLang ? EN.hdro : RO.hdro}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? filmeSd
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : filmeSd
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? filmeSd
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      filmeSd ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFilmeSd(!filmeSd)}>
-                    {enLang ? EN.sd : RO.sd}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? seriale4k
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : seriale4k
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? seriale4k
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      seriale4k ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setSeriale4k(!seriale4k)}>
-                    {enLang ? EN.pks : RO.pks}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? serialeHd
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : serialeHd
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? serialeHd
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      serialeHd ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setSerialeHd(!serialeHd)}>
-                    {enLang ? EN.hds : RO.hds}
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? serialeSd
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : serialeSd
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? serialeSd
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      serialeSd ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setSerialeSd(!serialeSd)}>
-                    {enLang ? EN.sds : RO.sds}
-                  </Chip>
-                </View>
-                <View
-                  style={{
-                    width: '100%',
-                    flexDirection: 'row',
-                    paddingVertical: 10,
-                    justifyContent: 'flex-start',
-                    alignItems: 'flex-start',
-                  }}>
-                  <Text
-                    style={{
-                      color: lightTheme ? 'black' : 'white',
-                      fontWeight: 'bold',
-                      paddingLeft: 5,
-                    }}>
-                    {enLang ? EN.tags : RO.tags}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    flex: 1,
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    justifyContent: 'flex-start',
-                    alignItems: 'flex-start',
-                  }}>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? freeleech
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : freeleech
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? freeleech
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      freeleech ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setFreeleech(!freeleech)}>
-                    Freeleech
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? internal
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : internal
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? internal
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      internal ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setInternal(!internal)}>
-                    Internal
-                  </Chip>
-                  <Chip
-                    style={{
-                      backgroundColor: lightTheme
-                        ? doubleUp
-                          ? '#155778'
-                          : '#d4d2d2'
-                        : doubleUp
-                        ? '#155778'
-                        : '#202020',
-                      marginRight: 5,
-                      marginBottom: 5,
-                    }}
-                    textStyle={{
-                      color: lightTheme
-                        ? doubleUp
-                          ? 'white'
-                          : 'black'
-                        : 'white',
-                    }}
-                    icon={() =>
-                      doubleUp ? (
-                        <FontAwesomeIcon
-                          style={{color: ACCENT_COLOR}}
-                          size={14}
-                          icon={faCheckSquare}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          style={{
-                            color: 'transparent',
-                            borderColor: 'grey',
-                            borderRadius: 1,
-                            borderWidth: 1,
-                          }}
-                          size={14}
-                          icon={faAngleDoubleUp}
-                        />
-                      )
-                    }
-                    onPress={() => setDoubleUp(!doubleUp)}>
-                    2x Upload
-                  </Chip>
-                </View>
-              </ScrollView>
-              <View style={SearchPage.catCheckOverlayFooter}>
+              <View style={SearchPage.mainHeaderSearch2Container}>
                 <Pressable
-                  style={SearchPage.catCheckOverlayPressable}
+                  style={SearchPage.mainHeaderCogPressable}
                   android_ripple={{
                     color: 'white',
-                    borderless: false,
+                    borderless: true,
+                    radius: width / 18,
                   }}
-                  onPress={getIndexes}>
-                  <FontAwesomeIcon color={'white'} size={20} icon={faCheck} />
+                  onPress={handleSubmit}>
+                  <FontAwesomeIcon
+                    size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+                    color={'white'}
+                    icon={faSearch}
+                  />
                 </Pressable>
               </View>
-            </View>
-          </>
-        </Overlay>
-        <View style={SearchPage.mainHeader}>
-          <Formik
-            innerRef={onRefChange}
-            initialValues={{search: ''}}
-            onSubmit={(values) => {
-              searchLoading ? null : handleSearch(values.search);
-            }}
-            validationSchema={yup.object().shape({
-              search: yup.string(),
-            })}>
-            {({
-              values,
-              handleChange,
-              errors,
-              setFieldTouched,
-              resetForm,
-              touched,
-              isValid,
-              handleSubmit,
-            }) => (
-              <>
-                <Input
-                  style={[
-                    SearchPage.inputStyle,
-                    {
-                      fontSize: Adjust(12),
-                      color: 'white',
-                    },
-                  ]}
-                  inputContainerStyle={SearchPage.inputContainerInner}
-                  onSubmitEditing={handleSubmit}
-                  returnKeyType={'search'}
-                  keyboardType={isDrawerOpen ? null : 'default'}
-                  selectionColor="grey"
-                  ref={searchRef}
-                  autoFocus
-                  onFocus={() => resetForm({})}
-                  placeholder={
-                    keySearch
-                      ? enLang
-                        ? EN.placeholderK
-                        : RO.placeholderK
-                      : enLang
-                      ? EN.placeholderI
-                      : RO.placeholderI
-                  }
-                  placeholderTextColor={'rgba(255,255,255,0.8)'}
-                  value={values.search}
-                  onChangeText={handleChange('search')}
-                  onBlur={() => setFieldTouched('search')}
+              <View style={SearchPage.mainHeaderSearch3Container}>
+                <Badge
+                  containerStyle={SearchPage.mainHeaderSearch3Badge}
+                  badgeStyle={{
+                    borderWidth: 0,
+                    backgroundColor:
+                      selectedFilters === '0' ? 'transparent' : 'black',
+                  }}
+                  textStyle={{
+                    color: selectedFilters === '0' ? 'transparent' : 'white',
+                    fontWeight: 'bold',
+                  }}
+                  value={selectedFilters}
                 />
-                <View style={SearchPage.mainHeaderSearch1Container}>
-                  {values.search.length > 0 ? (
-                    <Pressable
-                      style={SearchPage.mainHeaderCogPressable}
-                      android_ripple={{
-                        color: 'white',
-                        borderless: true,
-                        radius: width / 18,
-                      }}
-                      onPress={() => {
-                        resetForm({});
-                      }}>
-                      <FontAwesomeIcon
-                        size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                        color={'white'}
-                        icon={faTimes}
-                      />
-                    </Pressable>
-                  ) : (
-                    <Pressable
-                      style={SearchPage.mainHeaderCogPressable}
-                      android_ripple={{
-                        color: 'white',
-                        borderless: true,
-                        radius: width / 18,
-                      }}
-                      onPress={goBack}>
-                      <FontAwesomeIcon
-                        size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                        color={'white'}
-                        icon={faArrowLeft}
-                      />
-                    </Pressable>
-                  )}
-                </View>
-                <View style={SearchPage.mainHeaderSearch2Container}>
-                  <Pressable
-                    style={SearchPage.mainHeaderCogPressable}
-                    android_ripple={{
-                      color: 'white',
-                      borderless: true,
-                      radius: width / 18,
-                    }}
-                    onPress={handleSubmit}>
-                    <FontAwesomeIcon
-                      size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                      color={'white'}
-                      icon={faSearch}
-                    />
-                  </Pressable>
-                </View>
-                <View style={SearchPage.mainHeaderSearch3Container}>
-                  <Badge
-                    containerStyle={SearchPage.mainHeaderSearch3Badge}
-                    badgeStyle={{
-                      borderWidth: 0,
-                      backgroundColor:
-                        selectedFilters === '0' ? 'transparent' : 'black',
-                    }}
-                    textStyle={{
-                      color: selectedFilters === '0' ? 'transparent' : 'white',
-                      fontWeight: 'bold',
-                    }}
-                    value={selectedFilters}
+                <Pressable
+                  style={SearchPage.mainHeaderCogPressable}
+                  android_ripple={{
+                    color: 'white',
+                    borderless: true,
+                    radius: width / 18,
+                  }}
+                  onPress={displayCatList}>
+                  <FontAwesomeIcon
+                    size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+                    color={'white'}
+                    icon={faFilter}
                   />
-                  <Pressable
-                    style={SearchPage.mainHeaderCogPressable}
-                    android_ripple={{
-                      color: 'white',
-                      borderless: true,
-                      radius: width / 18,
-                    }}
-                    onPress={() => {
-                      setCatListLatest(!catListLatest);
-                    }}>
-                    <FontAwesomeIcon
-                      size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                      color={'white'}
-                      icon={faFilter}
-                    />
-                  </Pressable>
-                </View>
-              </>
-            )}
-          </Formik>
-        </View>
-        {searchRef.current &&
-        searchRef.current.isFocused() &&
-        historyHidden &&
-        historyList.length > 0 ? (
-          <KeyboardAvoidingView
-            style={{height: height + statusHeight * 1.5, width: width}}>
-            <ScrollView
-              style={{
-                marginBottom:
-                  keyboardHeight > 0
-                    ? keyboardHeight + statusHeight * 6
-                    : statusHeight * 5.1,
-                paddingTop: 5,
-                height: height,
-                width: width,
-                backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
-              }}
-              keyboardShouldPersistTaps="always"
-              showsVerticalScrollIndicator={false}>
-              <>
-                <View
-                  style={[
-                    SearchPage.itemHistoryNav,
-                    {
-                      width: width,
-                      backgroundColor: 'transparent',
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    },
-                  ]}>
-                  <TouchableOpacity
-                    style={{
-                      height: statusHeight * 1.5,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      backgroundColor: 'transparent',
-                    }}
-                    onPress={() => clearSearchHistory()}>
-                    <Text
-                      style={{
-                        color: ACCENT_COLOR,
-                        fontSize: Adjust(
-                          fontSizes !== null ? fontSizes[3] : 11,
-                        ),
-                      }}>
-                      {enLang ? EN.clearSearchHistory : RO.clearSearchHistory}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{
-                      height: statusHeight * 1.5,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      backgroundColor: 'transparent',
-                    }}
-                    onPress={() => setHistoryHidden(false)}>
-                    <Text
-                      style={{
-                        color: 'crimson',
-                        fontSize: Adjust(
-                          fontSizes !== null ? fontSizes[3] : 11,
-                        ),
-                      }}>
-                      {enLang ? EN.close : RO.close}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                {historyList.map((item, i) => (
-                  <Pressable
-                    key={item.id}
-                    onPress={() => handleSearch(item.query)}
-                    android_ripple={{
-                      color: 'grey',
-                      borderless: false,
-                    }}
-                    style={[
-                      SearchPage.itemPressableHistory,
-                      {marginBottom: i === historyList.length - 1 ? 10 : 5},
-                    ]}>
-                    <View style={SearchPage.itemPressableHistoryContainer}>
-                      <Text
-                        style={[
-                          SearchPage.historyText,
-                          {
-                            color: lightTheme ? 'black' : 'white',
-                            fontSize: Adjust(
-                              fontSizes !== null ? fontSizes[4] : 12,
-                            ),
-                          },
-                        ]}>
-                        {item.query}
-                      </Text>
-                      <Pressable
-                        style={{
-                          width: statusHeight * 1.5,
-                          height: statusHeight * 1.5,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          marginRight: statusHeight / 3,
-                          backgroundColor: 'transparent',
-                        }}
-                        android_ripple={{
-                          color: 'grey',
-                          borderless: true,
-                          radius: width / 18,
-                        }}
-                        onPress={() =>
-                          formikRef.current.setFieldValue('search', item.query)
-                        }>
-                        <FontAwesomeIcon
-                          style={{transform: [{rotate: '-45deg'}]}}
-                          size={Adjust(fontSizes !== null ? fontSizes[7] : 16)}
-                          color={lightTheme ? 'black' : 'white'}
-                          icon={faArrowUp}
-                        />
-                      </Pressable>
-                    </View>
-                  </Pressable>
-                ))}
-              </>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        ) : null}
-        <FlatList
-          data={
-            searchLoading
-              ? [
-                  {id: '1'},
-                  {id: '2'},
-                  {id: '3'},
-                  {id: '4'},
-                  {id: '5'},
-                  {id: '6'},
-                  {id: '7'},
-                  {id: '8'},
-                  {id: '9'},
-                  {id: '10'},
-                  {id: '11'},
-                  {id: '12'},
-                  {id: '13'},
-                  {id: '14'},
-                  {id: '15'},
-                ]
-              : listSearch !== null
-              ? listSearch.slice(0, 30)
-              : listSearch
-          }
-          renderItem={searchLoading ? () => <SkeletonLoading /> : renderItem}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            padding: 9,
-            width: width,
-          }}
-          ListHeaderComponent={() =>
-            listSearch === null ? null : JSON.stringify(listSearch) === '[]' ? (
-              <View
-                style={{
-                  width: '100%',
-                  padding: 5,
-                }}>
-                <Text
-                  style={{
-                    color: lightTheme ? 'black' : 'white',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                  }}>
-                  {enLang ? EN.resAfterA : RO.resAfterA}
-                  {searchText}"
-                </Text>
-                <Text
-                  style={{
-                    color: lightTheme ? 'black' : 'white',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                  }}>
-                  {enLang ? EN.resNo : RO.resNo}
-                </Text>
-                <Text
-                  style={{
-                    color: lightTheme ? 'black' : 'white',
-                    textAlign: 'center',
-                  }}>
-                  {enLang ? EN.resTry : RO.resTry}
-                </Text>
+                </Pressable>
               </View>
-            ) : listSearch.length > 1 ? (
-              <View
-                style={{
-                  width: '100%',
-                  padding: 5,
-                }}>
-                <Text
-                  style={{
-                    color: lightTheme ? 'black' : 'white',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                  }}>
-                  {enLang ? EN.resAfterB : RO.resAfterB}{' '}
-                  {searchText === ''
-                    ? enLang
-                      ? EN.resAfterFilters
-                      : RO.resAfterFilters
-                    : '"' + searchText + '"'}
-                </Text>
-              </View>
-            ) : null
-          }
-          keyExtractor={(item) => item.id.toString()}
-        />
-        {isNetReachable ? (
-          <Animated.View
-            style={[
-              SearchPage.networkAlertContainer,
-              {
-                height:
-                  Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
-                backgroundColor: 'limegreen',
-                transform: [
-                  {
-                    translateY: showNetworkAlertOn,
-                  },
-                ],
-              },
-            ]}>
-            <Animated.Text
-              style={{
-                fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
-                fontWeight: 'bold',
-                opacity: showNetworkAlertTextOn,
-                color: 'white',
-              }}>
-              ONLINE
-            </Animated.Text>
-          </Animated.View>
-        ) : (
-          <Animated.View
-            style={[
-              SearchPage.networkAlertContainer,
-              {
-                height:
-                  Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
-                backgroundColor: 'crimson',
-                transform: [
-                  {
-                    translateY: showNetworkAlertOff,
-                  },
-                ],
-              },
-            ]}>
-            <Animated.Text
-              style={{
-                fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
-                fontWeight: 'bold',
-                opacity: showNetworkAlertTextOff,
-                color: 'white',
-              }}>
-              OFFLINE
-            </Animated.Text>
-          </Animated.View>
-        )}
+            </>
+          )}
+        </Formik>
       </View>
-    </>
+      {searchRef.current &&
+      searchRef.current.isFocused() &&
+      historyHidden &&
+      historyList.length > 0 ? (
+        <KeyboardAvoidingView
+          style={{height: height + statusHeight * 1.5, width: width}}>
+          <ScrollView
+            style={{
+              marginBottom:
+                keyboardHeight > 0
+                  ? keyboardHeight + statusHeight * 6
+                  : statusHeight * 5.1,
+              paddingTop: 5,
+              height: height,
+              width: width,
+              backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
+            }}
+            keyboardShouldPersistTaps="always"
+            showsVerticalScrollIndicator={false}>
+            <>
+              <View
+                style={[
+                  SearchPage.itemHistoryNav,
+                  {
+                    width: width,
+                    backgroundColor: 'transparent',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  },
+                ]}>
+                <TouchableOpacity
+                  style={{
+                    height: statusHeight * 1.5,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'transparent',
+                  }}
+                  onPress={clearSearchHistory}>
+                  <Text
+                    style={{
+                      color: ACCENT_COLOR,
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
+                    }}>
+                    {enLang ? EN.clearSearchHistory : RO.clearSearchHistory}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{
+                    height: statusHeight * 1.5,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: 'transparent',
+                  }}
+                  onPress={closeSuggestions}>
+                  <Text
+                    style={{
+                      color: 'crimson',
+                      fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
+                    }}>
+                    {enLang ? EN.close : RO.close}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {historyList.map((item, i) => (
+                <Pressable
+                  key={item.id}
+                  onPress={() => handleSearch(item.query)}
+                  android_ripple={{
+                    color: 'grey',
+                    borderless: false,
+                  }}
+                  style={[
+                    SearchPage.itemPressableHistory,
+                    {marginBottom: i === historyList.length - 1 ? 10 : 5},
+                  ]}>
+                  <View style={SearchPage.itemPressableHistoryContainer}>
+                    <Text
+                      style={[
+                        SearchPage.historyText,
+                        {
+                          color: lightTheme ? 'black' : 'white',
+                          fontSize: Adjust(
+                            fontSizes !== null ? fontSizes[4] : 12,
+                          ),
+                        },
+                      ]}>
+                      {item.query}
+                    </Text>
+                    <Pressable
+                      style={{
+                        width: statusHeight * 1.5,
+                        height: statusHeight * 1.5,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginRight: statusHeight / 3,
+                        backgroundColor: 'transparent',
+                      }}
+                      android_ripple={{
+                        color: 'grey',
+                        borderless: true,
+                        radius: width / 18,
+                      }}
+                      onPress={() =>
+                        formikRef.current.setFieldValue('search', item.query)
+                      }>
+                      <FontAwesomeIcon
+                        style={{transform: [{rotate: '-45deg'}]}}
+                        size={Adjust(fontSizes !== null ? fontSizes[7] : 16)}
+                        color={lightTheme ? 'black' : 'white'}
+                        icon={faArrowUp}
+                      />
+                    </Pressable>
+                  </View>
+                </Pressable>
+              ))}
+            </>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      ) : null}
+      {downloadNotice ? (
+        <View
+          style={{
+            zIndex: 999,
+            elevation: 999,
+            width: '100%',
+            height: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0,0,0,0.8)',
+          }}>
+          <Animated.View
+            style={{
+              transform: [
+                {
+                  scale: downloadAnimation,
+                },
+              ],
+            }}>
+            <FontAwesomeIcon
+              size={Adjust(80)}
+              color={ACCENT_COLOR}
+              icon={faFileDownload}
+            />
+          </Animated.View>
+          <Text
+            style={{
+              fontSize: Adjust(16),
+              textAlign: 'center',
+              color: 'white',
+              marginTop: statusHeight,
+              paddingHorizontal: statusHeight,
+            }}>
+            {enLang ? EN.download : RO.download}
+          </Text>
+        </View>
+      ) : null}
+      <FlatList
+        data={
+          searchLoading
+            ? [
+                {id: '1'},
+                {id: '2'},
+                {id: '3'},
+                {id: '4'},
+                {id: '5'},
+                {id: '6'},
+                {id: '7'},
+                {id: '8'},
+                {id: '9'},
+                {id: '10'},
+                {id: '11'},
+                {id: '12'},
+                {id: '13'},
+                {id: '14'},
+                {id: '15'},
+              ]
+            : listSearch !== null
+            ? listSearch.slice(0, 30)
+            : listSearch
+        }
+        renderItem={searchLoading ? () => <SkeletonLoading /> : renderItem}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          padding: 9,
+          width: width,
+        }}
+        ListHeaderComponent={() =>
+          listSearch === null ? null : JSON.stringify(listSearch) === '[]' ? (
+            <View
+              style={{
+                width: '100%',
+                padding: 5,
+              }}>
+              <Text
+                style={{
+                  color: lightTheme ? 'black' : 'white',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                }}>
+                {enLang ? EN.resAfterA : RO.resAfterA}
+                {searchText}"
+              </Text>
+              <Text
+                style={{
+                  color: lightTheme ? 'black' : 'white',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                }}>
+                {enLang ? EN.resNo : RO.resNo}
+              </Text>
+              <Text
+                style={{
+                  color: lightTheme ? 'black' : 'white',
+                  textAlign: 'center',
+                }}>
+                {enLang ? EN.resTry : RO.resTry}
+              </Text>
+            </View>
+          ) : listSearch.length > 1 ? (
+            <View
+              style={{
+                width: '100%',
+                padding: 5,
+              }}>
+              <Text
+                style={{
+                  color: lightTheme ? 'black' : 'white',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                }}>
+                {enLang ? EN.resAfterB : RO.resAfterB}{' '}
+                {searchText === ''
+                  ? enLang
+                    ? EN.resAfterFilters
+                    : RO.resAfterFilters
+                  : '"' + searchText + '"'}
+              </Text>
+            </View>
+          ) : null
+        }
+        keyExtractor={(item) => item.id.toString()}
+      />
+      {isNetReachable ? (
+        <Animated.View
+          style={[
+            SearchPage.networkAlertContainer,
+            {
+              height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+              backgroundColor: 'limegreen',
+              transform: [
+                {
+                  translateY: showNetworkAlertOn,
+                },
+              ],
+            },
+          ]}>
+          <Animated.Text
+            style={{
+              fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
+              fontWeight: 'bold',
+              opacity: showNetworkAlertTextOn,
+              color: 'white',
+            }}>
+            ONLINE
+          </Animated.Text>
+        </Animated.View>
+      ) : (
+        <Animated.View
+          style={[
+            SearchPage.networkAlertContainer,
+            {
+              height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+              backgroundColor: 'crimson',
+              transform: [
+                {
+                  translateY: showNetworkAlertOff,
+                },
+              ],
+            },
+          ]}>
+          <Animated.Text
+            style={{
+              fontSize: Adjust(fontSizes !== null ? fontSizes[5] : 13),
+              fontWeight: 'bold',
+              opacity: showNetworkAlertTextOff,
+              color: 'white',
+            }}>
+            OFFLINE
+          </Animated.Text>
+        </Animated.View>
+      )}
+    </View>
   );
 }
 
@@ -3578,73 +3347,14 @@ const SearchPage = EStyleSheet.create({
     paddingLeft: '2.5rem',
     paddingRight: '5rem',
   },
-  infoOverlay: {
-    width: '90%',
-    height: '50%',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 0,
-    padding: 5,
-  },
-  infoOverlayCloseContainer: {
-    width: '100%',
-    height: '100%',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoOverlayScrollView: {
-    width: '100%',
-    paddingBottom: statusHeight,
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  infoTitleContainer: {
-    width: '100%',
-    padding: '1rem',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  accordionContainer: {
-    width: '100%',
-    paddingHorizontal: '1rem',
-  },
-  renderContent: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    paddingHorizontal: '1rem',
-  },
   mainHeader: {
-    height: statusHeight * 4.5,
+    height: statusHeight * 3.5,
     width: width,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-end',
     backgroundColor: ACCENT_COLOR,
-  },
-  mainHeaderContainer: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mainHeaderText: {
-    color: 'white',
-    fontWeight: 'bold',
-    paddingBottom: '1.35rem',
-  },
-  mainHeaderSearchContainer: {
-    position: 'absolute',
-    right: '0.3rem',
-    bottom: '1rem',
-    width: '3rem',
-    height: '2.5rem',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   mainHeaderSearch1Container: {
     position: 'absolute',
@@ -3679,15 +3389,6 @@ const SearchPage = EStyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
-  },
-  mainHeaderCogContainer: {
-    position: 'absolute',
-    left: '0.3rem',
-    bottom: '1rem',
-    width: '3rem',
-    height: '2.5rem',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   mainHeaderCogPressable: {
     width: '100%',

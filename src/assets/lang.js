@@ -22,14 +22,6 @@ export const RO = {
   infoT2: 'Semnificaţie Freeleech, Internal şi 2x Upload',
   infoC2:
     'Freeleech: descărcarea torrentelor din această categorie îţi va creşte Upload-ul fără să adăuge Download astfel nu-ţi va afecta negativ Raţia\n\nInternal: torrente care fac parte din grupuri interne ale trackerului printre care Play(HD|BD|SD|XD)\n\n2x Upload: acest tip de torrente odată descărcate şi ţinute la Seed îţi oferă de 2 ori mai mult upload',
-  infoT3: 'Reactualizarea listei cu torrente recent adăugate',
-  infoC3: 'Se efectuează prin tragerea în jos (pull down) din capul listei',
-  infoT4: 'Pentru a descărca un fişier torrent',
-  infoC4:
-    'Ţine apăsat 2 secunde (long press) pe torrentul respectiv ori dacă deschizi obiectul torrentului pentru detalii, prin butonul Download',
-  infoT5: 'Pentru redirecţionare spre IMDb',
-  infoC5:
-    'Se aplică doar în cazul torrentelor care conţin Cod IMDb şi se efectuează prin atingerea posterului',
   infoT6: 'Dacă mărimea textului este prea mică / mare',
   infoC6:
     'Se poate schimba din meniu pe mărimile mic, mediu ori mare în funcţie de preferinţă',
@@ -44,9 +36,14 @@ export const RO = {
   l: 'Mare',
   theme: 'Temă culori',
   lang: 'Limba',
+  autoplay: 'Autoplay trailer',
+  settings: 'Setări',
+  logoutPrompt: 'Ai ales să te deloghezi. Doreşti să continui ?',
   // Home screen
   refreshComplete: 'Actualizare completă',
-  download: 'Doreşti să descarci fişierul torrent ?',
+  download: 'Fişierul torrent a fost descărcat în directorul Download',
+  downloadSuccess: 'Torrentul a fost descărcat',
+  permissionDenied: 'Permisiuni descărcare neacceptate',
   downloadErr:
     'Acest torrent nu poate fi descărcat prin intermediul aplicaţiei.',
   torrSize: 'Mărimea totală a fişierelor din torrent',
@@ -59,7 +56,7 @@ export const RO = {
   imdbETA: 'Durată:',
   imdbNetErrH: 'Eroare conexiune',
   imdbNetErrP:
-    'Verifică conexiunea ori revino mai târziu pentru informaţii despre acest material',
+    'Verifică conexiunea ori revino mai târziu pentru informaţii legate de acest titlu IMDb',
   latest: 'Recent adăugate',
   // Search screen
   close: 'Închide',
@@ -131,14 +128,6 @@ export const EN = {
   infoT2: 'About Freeleech, Internal and 2x Upload',
   infoC2:
     "Freeleech: when downloading these type torrents, you will get Upload only without adding to your Download quota therefore your Ratio WON'T be negatively affected\n\nInternal: these type of torrents are part of Filelist internal groups like Play(HD|BD|SD|XD)\n\n2x Upload: these type of torrents once downloaded and held on Seed in your torrent client will get you 2x more Upload which will grow your Ratio 2 times faster then Seeding regular torrents",
-  infoT3: 'Refreshing the latest torrents list',
-  infoC3: 'This can be done by (pull-down) from the top of the list',
-  infoT4: 'How to download a torrent',
-  infoC4:
-    '(Long press) over the torrent you want to download or if you touch and open the torrent object for more details it can be done by pressing the Download button',
-  infoT5: 'Redirecting to IMDb',
-  infoC5:
-    'This applies only for those torrents that have the IMDb button and can be done by touching the movie poster',
   infoT6: 'Text size is too small / large',
   infoC6:
     'You can change it from the menu, having 3 sizes at your disposal: small, medium and large as per your preference',
@@ -153,9 +142,14 @@ export const EN = {
   l: 'Large',
   theme: 'Color theme',
   lang: 'Language',
+  autoplay: 'Trailer autoplay',
+  settings: 'Settings',
+  logoutPrompt: 'You are about to logout. Do you want to proceed ?',
   // Home screen
   refreshComplete: 'Actualization complete',
-  download: 'Do you want to download this torrent ?',
+  download: 'The torrent file was downloaded in the Download directory',
+  downloadSuccess: 'Torrent file downloaded',
+  permissionDenied: 'Download permissions denied',
   downloadErr: "This torrent can't be downloaded on your device.",
   torrSize: 'The total size of the torrent content',
   torrSeeds: 'The number of Seeders this torrent has right now',

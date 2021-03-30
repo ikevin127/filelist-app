@@ -12,17 +12,15 @@ import {
   Pressable,
   Platform,
   Keyboard,
-  Linking,
+  PermissionsAndroid,
+  ToastAndroid,
 } from 'react-native';
-import {useIsDrawerOpen} from '@react-navigation/drawer';
+import RNFS from 'react-native-fs';
 import Collapsible from 'react-native-collapsible';
-import {Overlay} from 'react-native-elements';
 import FastImage from 'react-native-fast-image';
 import NetInfo from '@react-native-community/netinfo';
 import SkeletonContent from 'react-native-skeleton-content-nonexpo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// Fetch & firebase
-import Axios from 'axios';
 // Redux
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
@@ -37,14 +35,20 @@ import {
   faCopy,
   faDownload,
   faDatabase,
-  faStar,
   faSearch,
   faFileDownload,
-  faFilm,
   faBars,
   faCheck,
 } from '@fortawesome/free-solid-svg-icons';
-// Assets
+import {faImdb} from '@fortawesome/free-brands-svg-icons';
+// Variables & assets
+import {
+  width,
+  MAIN_LIGHT,
+  ACCENT_COLOR,
+  statusHeight,
+} from '../assets/variables';
+import {RO, EN} from '../assets/lang';
 import a3d from '../assets/cat/3d.png';
 import a4k from '../assets/cat/4k.png';
 import a4kbd from '../assets/cat/4kBD.png';
@@ -71,25 +75,15 @@ import sdtv from '../assets/cat/sdtv.png';
 import sport from '../assets/cat/sport.png';
 import vids from '../assets/cat/vids.png';
 import xxx from '../assets/cat/xxx.png';
-// Variables
-import {
-  width,
-  height,
-  MAIN_LIGHT,
-  ACCENT_COLOR,
-  statusHeight,
-} from '../assets/variables';
-import {RO, EN} from '../assets/lang';
 
 export default function Home({navigation}) {
-  // State
-  const [imdbModal, setIMDbModal] = useState(false);
-  const [IMDbData, setIMDbData] = useState(null);
-  const [isNetReachable, setIsNetReachable] = useState(true);
+  const netRef = useRef(false);
   const [refreshing] = useState(false);
-  const [IMDbLoading, setIMDbLoading] = useState(false);
   const [listEndMsg, setListEndMsg] = useState(false);
+  const [isNetReachable, setIsNetReachable] = useState(true);
+  const [downloadNotice, setDownloadNotice] = useState(false);
   // Animations
+  const [downloadAnimation] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
   const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
@@ -106,10 +100,6 @@ export default function Home({navigation}) {
     latestError,
     enLang,
   } = useSelector((state) => state.appConfig);
-  // Refs
-  const netRef = useRef(false);
-  // Check drawer open/closed
-  let isDrawerOpen = useIsDrawerOpen();
 
   // Component mount
   useEffect(() => {
@@ -127,7 +117,7 @@ export default function Home({navigation}) {
     }
     // Screen focus listener
     const screenFocusListener = navigation.addListener('focus', () => {
-      // Dismiss keyboard everytime screen gets focus
+      // Dismiss keyboard everytime screen is focused
       Keyboard.dismiss();
     });
     return () => {
@@ -158,6 +148,29 @@ export default function Home({navigation}) {
   }, [isNetReachable]);
 
   // FUNCTIONS
+  const goSearch = () => {
+    navigation.navigate('Search');
+  };
+
+  function downAnimation() {
+    return Animated.loop(
+      Animated.sequence([
+        Animated.timing(downloadAnimation, {
+          toValue: 0.5,
+          duration: 350,
+          useNativeDriver: true,
+        }),
+        Animated.timing(downloadAnimation, {
+          toValue: 1,
+          duration: 350,
+          useNativeDriver: true,
+        }),
+      ]),
+      {
+        iterations: 4,
+      },
+    ).start();
+  }
 
   const onRefresh = useCallback(async () => {
     dispatch(AppConfigActions.setCollItems([]));
@@ -169,14 +182,18 @@ export default function Home({navigation}) {
   }, [dispatch]);
 
   const getMore = async () => {
-    if (listLatest && listLatest.length > 35) {
-      setListEndMsg(true);
+    if (!isNetReachable) {
+      netOff();
     } else {
-      setListEndMsg(false);
-      const value0 = await AsyncStorage.getItem('username');
-      const value1 = await AsyncStorage.getItem('passkey');
-      if (value0 !== null && value1 !== null) {
-        dispatch(AppConfigActions.getPlusLatest(value0, value1, 50));
+      if (listLatest && listLatest.length > 35) {
+        setListEndMsg(true);
+      } else {
+        setListEndMsg(false);
+        const value0 = await AsyncStorage.getItem('username');
+        const value1 = await AsyncStorage.getItem('passkey');
+        if (value0 !== null && value1 !== null) {
+          dispatch(AppConfigActions.getPlusLatest(value0, value1, 50));
+        }
       }
     }
   };
@@ -184,7 +201,6 @@ export default function Home({navigation}) {
   const setCollapsible = (id) => {
     const newIds = [...collItems];
     const index = newIds.indexOf(id);
-
     if (index > -1) {
       newIds.splice(index, 1);
     } else {
@@ -205,23 +221,6 @@ export default function Home({navigation}) {
       ' ' +
       ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
     );
-  };
-
-  const fetchIMDbInfo = async (id) => {
-    if (isNetReachable) {
-      setIMDbLoading(true);
-      await Axios.get('https://inkthatquote.com/' + id)
-        .then((res) => {
-          setIMDbData(Array(res.data));
-          setIMDbLoading(false);
-        })
-        .catch((e) => {
-          setIMDbLoading(false);
-        });
-    } else {
-      setIMDbLoading(false);
-      setIMDbData(null);
-    }
   };
 
   const setLimitReached = () => {
@@ -254,37 +253,34 @@ export default function Home({navigation}) {
     );
   };
 
-  const downloadTorrent = async (link) => {
-    const supported = await Linking.canOpenURL(link);
-    if (supported) {
-      Alert.alert(
-        'Info',
-        enLang ? EN.download : RO.download,
-        [
-          {
-            text: enLang ? EN.yes : RO.yes,
-            onPress: () => Linking.openURL(link),
-          },
-          {
-            text: enLang ? EN.no : RO.no,
-            onPress: () => {},
-            style: 'cancel',
-          },
-        ],
-        {cancelable: true},
-      );
+  const downloadTorrent = async (name, link) => {
+    const request = await PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+    ]);
+    if (
+      request['android.permission.READ_EXTERNAL_STORAGE'] &&
+      request['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
+    ) {
+      if (isNetReachable) {
+        RNFS.downloadFile({
+          fromUrl: link,
+          toFile: `${RNFS.DownloadDirectoryPath}/${name}.torrent`,
+        }).promise.then(() => {
+          setDownloadNotice(true);
+          downAnimation();
+          setTimeout(() => {
+            setDownloadNotice(false);
+          }, 4000);
+        });
+      } else {
+        netOff();
+      }
     } else {
-      Alert.alert(
-        'Info',
-        enLang ? EN.downloadErr : RO.downloadErr,
-        [
-          {
-            text: 'OK',
-            onPress: () => {},
-            style: 'cancel',
-          },
-        ],
-        {cancelable: true},
+      ToastAndroid.showWithGravity(
+        enLang ? EN.permissionDenied : RO.permissionDenied,
+        ToastAndroid.SHORT,
+        ToastAndroid.CENTER,
       );
     }
   };
@@ -341,6 +337,79 @@ export default function Home({navigation}) {
         useNativeDriver: true,
       }).start();
     }, 4000);
+  };
+
+  const sizeInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrSize : RO.torrSize,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const seedersInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrSeeds : RO.torrSeeds,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const downloadInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrDown : RO.torrDown,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const filesInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrFiles : RO.torrFiles,
+      [
+        {
+          text: 'OK',
+        },
+      ],
+      {onDismiss: () => {}, cancelable: true},
+    );
+  };
+
+  const leechersInfo = () => {
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrLeech : RO.torrLeech,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const openDrawer = () => {
+    navigation.openDrawer();
   };
 
   // Skeleton loading component
@@ -421,12 +490,9 @@ export default function Home({navigation}) {
     );
   };
 
-  // Torrent pressable component
+  // Pressable component
   const Item = ({item, onPress, style}) => (
     <Pressable
-      onLongPress={() => {
-        downloadTorrent(item.download_link);
-      }}
       onPress={() => setCollapsible(item.id)}
       android_ripple={{
         color: 'grey',
@@ -549,7 +615,7 @@ export default function Home({navigation}) {
     </Pressable>
   );
 
-  // Torrent pressable collapsible
+  // Collapsible component
   const renderItem = ({item}) => {
     return (
       <>
@@ -679,9 +745,9 @@ export default function Home({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() => {
-                      downloadTorrent(item.download_link);
-                    }}>
+                    onPress={() =>
+                      downloadTorrent(item.name, item.download_link)
+                    }>
                     <FontAwesomeIcon
                       size={14}
                       icon={faFileDownload}
@@ -715,19 +781,7 @@ export default function Home({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.torrSize : RO.torrSize,
-                        [
-                          {
-                            text: 'OK',
-                            onPress: () => {},
-                          },
-                        ],
-                        {cancelable: true},
-                      )
-                    }>
+                    onPress={sizeInfo}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faDatabase}
@@ -761,19 +815,7 @@ export default function Home({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.torrSeeds : RO.torrSeeds,
-                        [
-                          {
-                            text: 'OK',
-                            onPress: () => {},
-                          },
-                        ],
-                        {cancelable: true},
-                      )
-                    }>
+                    onPress={seedersInfo}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faChevronCircleUp}
@@ -822,19 +864,7 @@ export default function Home({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.torrDown : RO.torrDown,
-                        [
-                          {
-                            text: 'OK',
-                            onPress: () => {},
-                          },
-                        ],
-                        {cancelable: true},
-                      )
-                    }>
+                    onPress={downloadInfo}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faDownload}
@@ -868,18 +898,7 @@ export default function Home({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.torrFiles : RO.torrFiles,
-                        [
-                          {
-                            text: 'OK',
-                          },
-                        ],
-                        {onDismiss: () => {}, cancelable: true},
-                      )
-                    }>
+                    onPress={filesInfo}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faCopy}
@@ -913,19 +932,7 @@ export default function Home({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      Alert.alert(
-                        'Info',
-                        enLang ? EN.torrLeech : RO.torrLeech,
-                        [
-                          {
-                            text: 'OK',
-                            onPress: () => {},
-                          },
-                        ],
-                        {cancelable: true},
-                      )
-                    }>
+                    onPress={leechersInfo}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faChevronCircleDown}
@@ -985,27 +992,15 @@ export default function Home({navigation}) {
                         color: 'grey',
                       }}
                       onPress={() => {
-                        fetchIMDbInfo(item.imdb);
-                        setIMDbModal(true);
+                        navigation.navigate('IMDb', {
+                          id: item.imdb,
+                        });
                       }}>
                       <FontAwesomeIcon
-                        size={14}
-                        icon={faFilm}
+                        size={Adjust(35)}
+                        icon={faImdb}
                         color={'black'}
                       />
-                      <Text
-                        style={[
-                          {
-                            fontSize: Adjust(
-                              fontSizes !== null ? fontSizes[1] : 9,
-                            ),
-                            fontWeight: 'bold',
-                            color: 'black',
-                            marginLeft: 5,
-                          },
-                        ]}>
-                        IMDb
-                      </Text>
                     </Pressable>
                   </View>
                 </View>
@@ -1021,15 +1016,9 @@ export default function Home({navigation}) {
   return (
     <>
       <StatusBar
-        barStyle={
-          isDrawerOpen
-            ? lightTheme
-              ? 'dark-content'
-              : 'light-content'
-            : 'light-content'
-        }
-        backgroundColor={'transparent'}
-        translucent={true}
+        barStyle={'light-content'}
+        backgroundColor={ACCENT_COLOR}
+        translucent={false}
       />
       <View
         style={[
@@ -1038,241 +1027,6 @@ export default function Home({navigation}) {
             backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
           },
         ]}>
-        <Overlay
-          statusBarTranslucent
-          animationType="fade"
-          overlayStyle={{
-            width: '90%',
-            height: fontSizes[0] === 8 ? height / 2 : height / 3,
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: 0,
-            padding: 5,
-            backgroundColor: lightTheme ? MAIN_LIGHT : '#101010',
-          }}
-          isVisible={imdbModal}
-          onBackdropPress={() => {
-            setIMDbData(null);
-            setIMDbModal(false);
-          }}>
-          <View
-            style={{
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            {IMDbLoading ? (
-              <ActivityIndicator
-                style={{marginVertical: statusHeight}}
-                size="large"
-                color={ACCENT_COLOR}
-              />
-            ) : IMDbData ? (
-              IMDbData.map((item) => {
-                return (
-                  <View
-                    style={{
-                      height: width / 2,
-                      width: '100%',
-                      flexDirection: 'row',
-                      justifyContent: 'flex-start',
-                      alignItems: 'flex-start',
-                      marginVertical: 20,
-                      paddingRight: 20,
-                    }}
-                    key={item.link}>
-                    <View
-                      style={{
-                        width: '45%',
-                        height: '100%',
-                        flexDirection: 'column',
-                        justifyContent: 'flex-start',
-                        alignItems: 'flex-start',
-                      }}>
-                      <Pressable
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          flexDirection: 'column',
-                          justifyContent: 'flex-start',
-                          alignItems: 'flex-start',
-                        }}
-                        onPress={() =>
-                          typeof item.link === 'function'
-                            ? {}
-                            : Alert.alert(
-                                'Info',
-                                enLang ? EN.imdbNav : RO.imdbNav,
-                                [
-                                  {
-                                    text: enLang ? EN.yes : RO.yes,
-                                    onPress: () => Linking.openURL(item.link),
-                                  },
-                                  {
-                                    text: enLang ? EN.no : RO.no,
-                                    onPress: () => {},
-                                    style: 'cancel',
-                                  },
-                                ],
-                                {cancelable: true},
-                              )
-                        }>
-                        <FastImage
-                          style={{width: '100%', height: '80%'}}
-                          resizeMode={FastImage.resizeMode.contain}
-                          source={{
-                            uri: item.poster,
-                          }}
-                        />
-                        {item.rating === '' ||
-                        item.rating === undefined ? null : (
-                          <>
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                width: '100%',
-                                height: '20%',
-                              }}>
-                              <Text
-                                style={[
-                                  {
-                                    fontSize: Adjust(
-                                      fontSizes !== null ? fontSizes[6] : 14,
-                                    ),
-                                    color: lightTheme ? 'black' : 'white',
-                                    fontWeight: 'bold',
-                                  },
-                                ]}>
-                                {item.rating}
-                              </Text>
-                              <FontAwesomeIcon
-                                size={Adjust(
-                                  fontSizes !== null ? fontSizes[6] : 14,
-                                )}
-                                style={{marginLeft: 5}}
-                                color={lightTheme ? 'goldenrod' : 'gold'}
-                                icon={faStar}
-                              />
-                            </View>
-                          </>
-                        )}
-                      </Pressable>
-                    </View>
-                    <View
-                      style={{
-                        width: '55%',
-                        height: '100%',
-                        flexDirection: 'column',
-                        justifyContent: 'flex-start',
-                        alignItems: 'flex-start',
-                      }}>
-                      <View
-                        style={{
-                          flex: 1,
-                          flexDirection: 'column',
-                          flexWrap: 'wrap',
-                          justifyContent: 'flex-start',
-                          alignItems: 'flex-start',
-                          paddingHorizontal: 10,
-                        }}>
-                        <Text
-                          style={[
-                            {
-                              fontSize: Adjust(
-                                fontSizes !== null ? fontSizes[1] : 8,
-                              ),
-                              color: lightTheme ? 'black' : 'white',
-                              fontWeight: 'bold',
-                            },
-                          ]}>
-                          Plot
-                        </Text>
-                        <Text
-                          selectable
-                          style={[
-                            {
-                              fontSize: Adjust(
-                                fontSizes !== null ? fontSizes[1] : 8,
-                              ),
-                              color: lightTheme ? 'black' : MAIN_LIGHT,
-                              flexWrap: 'wrap',
-                              marginBottom: 3,
-                            },
-                          ]}>
-                          {item.plot === undefined
-                            ? enLang
-                              ? EN.imdbNoPlot
-                              : RO.imdbNoPlot
-                            : item.plot.split('\n')[0]}
-                        </Text>
-                        {item.duration === '' ? null : (
-                          <>
-                            <View style={{width: '100%', flexDirection: 'row'}}>
-                              <Text
-                                style={[
-                                  {
-                                    fontSize: Adjust(
-                                      fontSizes !== null ? fontSizes[1] : 8,
-                                    ),
-                                    color: lightTheme ? 'black' : 'white',
-                                    fontWeight: 'bold',
-                                  },
-                                ]}>
-                                {enLang ? EN.imdbETA : RO.imdbETA}
-                              </Text>
-                              <Text
-                                style={[
-                                  {
-                                    fontSize: Adjust(
-                                      fontSizes !== null ? fontSizes[1] : 8,
-                                    ),
-                                    color: lightTheme ? 'black' : MAIN_LIGHT,
-                                  },
-                                ]}>
-                                {' '}
-                                {item.duration === undefined
-                                  ? '∞'
-                                  : item.duration}
-                              </Text>
-                            </View>
-                          </>
-                        )}
-                      </View>
-                    </View>
-                  </View>
-                );
-              })
-            ) : (
-              <View
-                style={{
-                  width: '80%',
-                  height: '100%',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <Text
-                  style={{
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[2] : 10),
-                    textAlign: 'center',
-                    color: lightTheme ? 'black' : MAIN_LIGHT,
-                  }}>
-                  {enLang ? EN.imdbNetErrH : RO.imdbNetErrH}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: Adjust(fontSizes !== null ? fontSizes[2] : 10),
-                    textAlign: 'center',
-                    color: lightTheme ? 'black' : MAIN_LIGHT,
-                  }}>
-                  {enLang ? EN.imdbNetErrP : RO.imdbNetErrP}
-                </Text>
-              </View>
-            )}
-          </View>
-        </Overlay>
         <View style={HomePage.mainHeader}>
           <View style={HomePage.mainHeaderContainer}>
             <View style={HomePage.mainHeaderCogContainer}>
@@ -1283,7 +1037,7 @@ export default function Home({navigation}) {
                   borderless: true,
                   radius: width / 18,
                 }}
-                onPress={() => navigation.openDrawer()}>
+                onPress={openDrawer}>
                 <FontAwesomeIcon
                   size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
                   color={'white'}
@@ -1299,7 +1053,7 @@ export default function Home({navigation}) {
                   borderless: true,
                   radius: width / 18,
                 }}
-                onPress={() => navigation.navigate('Search')}>
+                onPress={goSearch}>
                 <FontAwesomeIcon
                   size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
                   color={'white'}
@@ -1316,6 +1070,46 @@ export default function Home({navigation}) {
             </Text>
           </View>
         </View>
+        {downloadNotice ? (
+          <View
+            style={{
+              zIndex: 999,
+              elevation: 999,
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'rgba(0,0,0,0.8)',
+            }}>
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    scale: downloadAnimation,
+                  },
+                ],
+              }}>
+              <FontAwesomeIcon
+                size={Adjust(80)}
+                color={ACCENT_COLOR}
+                icon={faFileDownload}
+              />
+            </Animated.View>
+            <Text
+              style={{
+                fontSize: Adjust(16),
+                textAlign: 'center',
+                color: 'white',
+                marginTop: statusHeight,
+                paddingHorizontal: statusHeight,
+              }}>
+              {enLang ? EN.download : RO.download}
+            </Text>
+          </View>
+        ) : null}
         <FlatList
           refreshControl={
             latestLoading ? null : (
@@ -1516,7 +1310,7 @@ const HomePage = EStyleSheet.create({
     alignItems: 'center',
   },
   mainHeader: {
-    height: statusHeight * 4.5,
+    height: statusHeight * 3.5,
     width: width,
     display: 'flex',
     flexDirection: 'row',
@@ -1538,7 +1332,7 @@ const HomePage = EStyleSheet.create({
   },
   mainHeaderSearchContainer: {
     position: 'absolute',
-    right: '0.3rem',
+    right: statusHeight / 2.5,
     bottom: '1rem',
     width: '3rem',
     height: '2.5rem',
@@ -1547,7 +1341,7 @@ const HomePage = EStyleSheet.create({
   },
   mainHeaderCogContainer: {
     position: 'absolute',
-    left: '0.3rem',
+    left: statusHeight / 2.5,
     bottom: '1rem',
     width: '3rem',
     height: '2.5rem',

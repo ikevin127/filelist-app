@@ -5,7 +5,6 @@ import {
   Pressable,
   ScrollView,
   TouchableOpacity,
-  ToastAndroid,
   Animated,
   TouchableWithoutFeedback,
   Keyboard,
@@ -191,11 +190,6 @@ export default function Login() {
     if (currentLang === 'true') {
       await AsyncStorage.setItem('enLang', 'false');
       dispatch(AppConfigActions.toggleEnLang());
-      ToastAndroid.showWithGravity(
-        'Limba: Română',
-        ToastAndroid.SHORT,
-        ToastAndroid.TOP,
-      );
     }
   };
 
@@ -204,11 +198,6 @@ export default function Login() {
     if (currentLang === 'false') {
       await AsyncStorage.setItem('enLang', 'true');
       dispatch(AppConfigActions.toggleEnLang());
-      ToastAndroid.showWithGravity(
-        'Language: English',
-        ToastAndroid.SHORT,
-        ToastAndroid.TOP,
-      );
     }
   };
 

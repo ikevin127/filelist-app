@@ -8,6 +8,8 @@ import Axios from 'axios';
 
 const initState = {
   lightTheme: false,
+  autoplay: true,
+  autofocusScreen: true,
   enLang: false,
   appInfo: false,
   fontSizes: null,
@@ -31,6 +33,12 @@ export const actions = {
   }),
   toggleAppInfo: () => ({
     type: types.APP_CONFIG.APP_INFO,
+  }),
+  toggleAutoplay: () => ({
+    type: types.APP_CONFIG.AUTOPLAY,
+  }),
+  toggleAutofocusScreen: () => ({
+    type: types.APP_CONFIG.AUTOFOCUS_SCREEN,
   }),
   setFonts: () => async (dispatch) => {
     const size = await AsyncStorage.getItem('fontSizes');
@@ -88,6 +96,7 @@ export const actions = {
             type: types.APP_CONFIG.GET_LATEST,
             payload: data,
           });
+          await AsyncStorage.setItem('latest', JSON.stringify(data));
           const enLang = await AsyncStorage.getItem('enLang');
           dispatch({
             type: types.APP_CONFIG.LATEST_LOADING,
@@ -142,7 +151,7 @@ export const actions = {
           });
         });
     } catch (e) {
-      crashlytics().log('ducks -> getPlus30()');
+      crashlytics().log('ducks -> getPlusLatest()');
       crashlytics().recordError(e);
     }
   },
@@ -243,6 +252,10 @@ export function reducer(state = initState, action) {
   switch (action.type) {
     case types.APP_CONFIG.LIGHT_THEME:
       return {...state, lightTheme: !state.lightTheme};
+    case types.APP_CONFIG.AUTOPLAY:
+      return {...state, autoplay: !state.autoplay};
+    case types.APP_CONFIG.AUTOFOCUS_SCREEN:
+      return {...state, autofocusScreen: !state.autofocusScreen};
     case types.APP_CONFIG.EN_LANG:
       return {...state, enLang: !state.enLang};
     case types.APP_CONFIG.APP_INFO:
