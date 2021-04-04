@@ -6,7 +6,6 @@ import {
   Animated,
   Alert,
   FlatList,
-  KeyboardAvoidingView,
   TouchableOpacity,
   ScrollView,
   Pressable,
@@ -14,9 +13,10 @@ import {
   Keyboard,
   PermissionsAndroid,
   ToastAndroid,
+  BackHandler,
+  Linking,
 } from 'react-native';
-import RNFS from 'react-native-fs';
-import {useIsDrawerOpen} from '@react-navigation/drawer';
+import RNFetchBlob from 'rn-fetch-blob';
 import Collapsible from 'react-native-collapsible';
 import {Input, Overlay, Badge} from 'react-native-elements';
 import Chip from 'react-native-paper/lib/commonjs/components/Chip';
@@ -51,6 +51,8 @@ import {
   faArrowLeft,
   faTimes,
   faArrowUp,
+  faExclamationCircle,
+  faSync,
 } from '@fortawesome/free-solid-svg-icons';
 import {faImdb} from '@fortawesome/free-brands-svg-icons';
 // Assets
@@ -92,7 +94,7 @@ import {
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
-export default function Search({route, navigation}) {
+export default function Search({navigation}) {
   const [catIndex, setCatIndex] = useState('');
   const [searchText, setSearchText] = useState('');
   const [inputKeyword, setInputKeyword] = useState('');
@@ -101,8 +103,7 @@ export default function Search({route, navigation}) {
   const [keySearch, setKeySearch] = useState(true);
   const [isNetReachable, setIsNetReachable] = useState(true);
   const [historyHidden, setHistoryHidden] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [downloadNotice, setDownloadNotice] = useState(false);
+  const [downloadClient, setDownloadClient] = useState(false);
   // Categories
   const [animes, setAnimes] = useState(false);
   const [audio, setAudio] = useState(false);
@@ -134,7 +135,6 @@ export default function Search({route, navigation}) {
   const [freeleech, setFreeleech] = useState(false);
   const [internal, setInternal] = useState(false);
   // Animations
-  const [downloadAnimation] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
   const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
@@ -142,7 +142,6 @@ export default function Search({route, navigation}) {
   // Redux
   const dispatch = useDispatch();
   const {
-    autofocusScreen,
     lightTheme,
     fontSizes,
     collItems,
@@ -157,13 +156,11 @@ export default function Search({route, navigation}) {
   const netRef = useRef(false);
   const searchRef = useRef(null);
   const formikRef = useRef(null);
-  // Check drawer open/closed
-  let isDrawerOpen = useIsDrawerOpen();
 
   // Component mount
   useEffect(() => {
-    inputKeyword.length > 1 &&
-      historyList.length > 1 &&
+    inputKeyword.length &&
+      historyList.length &&
       sortArrayHistory(historyList, inputKeyword);
     // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, [inputKeyword]);
@@ -200,55 +197,192 @@ export default function Search({route, navigation}) {
         setAPIDown();
       }
     }
-    // Screen focus listener
-    const screenFocusListener = navigation.addListener('focus', () => {
-      // Get search history list everytime screen gets focus
-      dispatch(AppConfigActions.getHistoryList());
-      // Focus search input when screen gets focus but not when coming back from IMDb Info
-      autofocusScreen && searchRef.current.focus();
-    });
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
-      (e) => {
-        setKeyboardHeight(e.endCoordinates.height);
-        setHistoryHidden(true);
-      },
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
       () => {
-        setKeyboardHeight(0);
+        // Get search history list everytime screen gets focus
+        dispatch(AppConfigActions.getHistoryList());
+        setHistoryHidden(true);
       },
     );
 
     return () => {
-      screenFocusListener();
-      keyboardDidHideListener.remove();
       keyboardDidShowListener.remove();
     };
     // eslint-disable-next-line  react-hooks/exhaustive-deps
-  }, [searchError, inputKeyword]);
+  }, [searchError]);
+
+  useEffect(() => {
+    BackHandler.addEventListener('hardwareBackPress', () => {
+      if (downloadClient) {
+        setDownloadClient(!downloadClient);
+      }
+      return true;
+    });
+
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress');
+    };
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, []);
 
   // FUNCTIONS
-  function downAnimation() {
-    return Animated.loop(
-      Animated.sequence([
-        Animated.timing(downloadAnimation, {
-          toValue: 0.5,
-          duration: 350,
-          useNativeDriver: true,
-        }),
-        Animated.timing(downloadAnimation, {
-          toValue: 1,
-          duration: 350,
-          useNativeDriver: true,
-        }),
-      ]),
-      {
-        iterations: 4,
-      },
-    ).start();
-  }
+  const closeSuggestions = () => setHistoryHidden(false);
+  const closeDownloadClient = () => setDownloadClient(!downloadClient);
+  const animesSetCat = () => setAnimes(!animes);
+  const audioSetCat = () => setAudio(!audio);
+  const deseneSetCat = () => setDesene(!desene);
+  const diverseSetCat = () => setDiverse(!diverse);
+  const docSetCat = () => setDoc(!doc);
+  const filme3dSetCat = () => setFilme3d(!filme3d);
+  const filme4kSetCat = () => setFilme4k(!filme4k);
+  const filme4kbdSetCat = () => setFilme4kBD(!filme4kbd);
+  const filmeBDSetCat = () => setFilmeBD(!filmeBD);
+  const filmeDvdSetCat = () => setFilmeDvd(!filmeDvd);
+  const filmeDvdRoSetCat = () => setFilmeDvdRo(!filmeDvdRo);
+  const filmeHdSetCat = () => setFilmeHd(!filmeHd);
+  const filmeHdRoSetCat = () => setFilmeHdRo(!filmeHdRo);
+  const filmeSdSetCat = () => setFilmeSd(!filmeSd);
+  const flacsSetCat = () => setFlacs(!flacs);
+  const jocConsoleSetCat = () => setJocConsole(!jocConsole);
+  const jocPcSetCat = () => setJocPc(!jocPc);
+  const linSetCat = () => setLin(!lin);
+  const mobSetCat = () => setMob(!mob);
+  const softwareSetCat = () => setSoftware(!software);
+  const seriale4kSetCat = () => setSeriale4k(!seriale4k);
+  const serialeHdSetCat = () => setSerialeHd(!serialeHd);
+  const serialeSdSetCat = () => setSerialeSd(!serialeSd);
+  const sportsSetCat = () => setSports(!sports);
+  const videosSetCat = () => setVideos(!videos);
+  const pornSetCat = () => setPorn(!porn);
+  const freeleechSetCat = () => setFreeleech(!freeleech);
+  const internalSetCat = () => setInternal(!internal);
+  const doubleSetCat = () => setDoubleUp(!doubleUp);
+  const displayCatList = () => setCatListLatest(!catListLatest);
+  const setSearchValue = (query) => () =>
+    formikRef.current.setFieldValue('search', query);
+  const openGooglePlay = () => {
+    Linking.openURL('market://details?id=intelligems.torrdroid');
+    closeDownloadClient();
+  };
+
+  const setLimitReached = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.alert150S : RO.alert150S,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const setAPIDown = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.alertAPI : RO.alertAPI,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const sizeInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrSize : RO.torrSize,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const seedersInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrSeeds : RO.torrSeeds,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const downloadInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrDown : RO.torrDown,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const filesInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrFiles : RO.torrFiles,
+      [
+        {
+          text: 'OK',
+        },
+      ],
+      {onDismiss: () => {}, cancelable: true},
+    );
+
+  const leechersInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrLeech : RO.torrLeech,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const showKeywordSearchInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.keywordInfo : RO.keywordInfo,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const showIMDbSearchInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.imdbInfo : RO.imdbInfo,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
 
   const onRefChange = useCallback((node) => {
     if (node === null) {
@@ -266,6 +400,12 @@ export default function Search({route, navigation}) {
     dispatch(AppConfigActions.getHistoryList());
   };
 
+  const goIMDb = (id) => async () => {
+    navigation.navigate('IMDb', {
+      id,
+    });
+  };
+
   const addHistoryItem = async (item) => {
     let currentHistory = await AsyncStorage.getItem('history');
     let currentData = JSON.parse(currentHistory || '[]');
@@ -276,46 +416,14 @@ export default function Search({route, navigation}) {
     };
     currentData.push(newItem);
     await AsyncStorage.setItem('history', JSON.stringify(currentData));
-  };
-
-  const setLimitReached = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.alert150S : RO.alert150S,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-          style: 'cancel',
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const setAPIDown = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.alertAPI : RO.alertAPI,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-          style: 'cancel',
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const closeSuggestions = () => {
-    setHistoryHidden(false);
+    // get search history after new search
+    dispatch(AppConfigActions.getHistoryList());
   };
 
   const goBack = () => {
     setTimeout(() => {
       Keyboard.dismiss();
-    }, 100);
+    }, 10);
     resetFilters();
     dispatch(AppConfigActions.clearSearchStorage());
     navigation.navigate('Home');
@@ -335,10 +443,9 @@ export default function Search({route, navigation}) {
     );
   };
 
-  const setCollapsible = (id) => {
+  const setCollapsible = (id) => () => {
     const newIds = [...collItems];
     const index = newIds.indexOf(id);
-
     if (index > -1) {
       newIds.splice(index, 1);
     } else {
@@ -381,6 +488,8 @@ export default function Search({route, navigation}) {
   };
 
   const handleSearch = async (query) => {
+    formikRef.current.setFieldValue('search', query);
+    setHistoryHidden(false);
     Keyboard.dismiss();
     // if user network connection is online
     if (isNetReachable) {
@@ -420,15 +529,25 @@ export default function Search({route, navigation}) {
           );
         }
       }
-      // get search history after search
-      dispatch(AppConfigActions.getHistoryList());
       // if user network connection is offline
     } else {
       netOff();
     }
   };
 
-  const downloadTorrent = async (name, link) => {
+  const downloadTorrent = (name, link) => async () => {
+    const {android, config, fs} = RNFetchBlob;
+    const downloadDir = fs.dirs.DownloadDir;
+    const options = {
+      fileCache: true,
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        mime: 'application/x-bittorrent',
+        path: `${downloadDir}/${name}.torrent`,
+        mediaScannable: true,
+      },
+    };
     const request = await PermissionsAndroid.requestMultiple([
       PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
       PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
@@ -438,16 +557,16 @@ export default function Search({route, navigation}) {
       request['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
     ) {
       if (isNetReachable) {
-        RNFS.downloadFile({
-          fromUrl: link,
-          toFile: `${RNFS.DownloadDirectoryPath}/${name}.torrent`,
-        }).promise.then(() => {
-          setDownloadNotice(true);
-          downAnimation();
-          setTimeout(() => {
-            setDownloadNotice(false);
-          }, 4000);
-        });
+        config(options)
+          .fetch('GET', link)
+          .then((res) => {
+            android
+              .actionViewIntent(res.path(), 'application/x-bittorrent')
+              .then(
+                (response) =>
+                  response === null && setDownloadClient(!downloadClient),
+              );
+          });
       } else {
         netOff();
       }
@@ -618,143 +737,15 @@ export default function Search({route, navigation}) {
     }, 4000);
   };
 
-  const sizeInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.torrSize : RO.torrSize,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const seedersInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.torrSeeds : RO.torrSeeds,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const downloadInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.torrDown : RO.torrDown,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const filesInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.torrFiles : RO.torrFiles,
-      [
-        {
-          text: 'OK',
-        },
-      ],
-      {onDismiss: () => {}, cancelable: true},
-    );
-  };
-
-  const leechersInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.torrLeech : RO.torrLeech,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const showKeywordSearchInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.keywordInfo : RO.keywordInfo,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
   const setKeywordSearchType = () => {
     setKeySearch(!keySearch);
     setImdbSearch(false);
-  };
-
-  const showIMDbSearchInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.imdbInfo : RO.imdbInfo,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );
   };
 
   const setIMDbSearchType = () => {
     setImdbSearch(!imdbSearch);
     setKeySearch(false);
   };
-
-  const animesSetCat = () => setAnimes(!animes);
-  const audioSetCat = () => setAudio(!audio);
-  const deseneSetCat = () => setDesene(!desene);
-  const diverseSetCat = () => setDiverse(!diverse);
-  const docSetCat = () => setDoc(!doc);
-  const filme3dSetCat = () => setFilme3d(!filme3d);
-  const filme4kSetCat = () => setFilme4k(!filme4k);
-  const filme4kbdSetCat = () => setFilme4kBD(!filme4kbd);
-  const filmeBDSetCat = () => setFilmeBD(!filmeBD);
-  const filmeDvdSetCat = () => setFilmeDvd(!filmeDvd);
-  const filmeDvdRoSetCat = () => setFilmeDvdRo(!filmeDvdRo);
-  const filmeHdSetCat = () => setFilmeHd(!filmeHd);
-  const filmeHdRoSetCat = () => setFilmeHdRo(!filmeHdRo);
-  const filmeSdSetCat = () => setFilmeSd(!filmeSd);
-  const flacsSetCat = () => setFlacs(!flacs);
-  const jocConsoleSetCat = () => setJocConsole(!jocConsole);
-  const jocPcSetCat = () => setJocPc(!jocPc);
-  const linSetCat = () => setLin(!lin);
-  const mobSetCat = () => setMob(!mob);
-  const softwareSetCat = () => setSoftware(!software);
-  const seriale4kSetCat = () => setSeriale4k(!seriale4k);
-  const serialeHdSetCat = () => setSerialeHd(!serialeHd);
-  const serialeSdSetCat = () => setSerialeSd(!serialeSd);
-  const sportsSetCat = () => setSports(!sports);
-  const videosSetCat = () => setVideos(!videos);
-  const pornSetCat = () => setPorn(!porn);
-  const freeleechSetCat = () => setFreeleech(!freeleech);
-  const internalSetCat = () => setInternal(!internal);
-  const doubleSetCat = () => setDoubleUp(!doubleUp);
-  const displayCatList = () => setCatListLatest(!catListLatest);
 
   const SkeletonLoading = () => {
     return (
@@ -836,7 +827,7 @@ export default function Search({route, navigation}) {
   // Torrent pressable
   const Item = ({item, onPress, style}) => (
     <Pressable
-      onPress={() => setCollapsible(item.id)}
+      onPress={setCollapsible(item.id)}
       android_ripple={{
         color: 'grey',
         borderless: false,
@@ -1087,9 +1078,7 @@ export default function Search({route, navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      downloadTorrent(item.name, item.download_link)
-                    }>
+                    onPress={downloadTorrent(item.name, item.download_link)}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faFileDownload}
@@ -1333,14 +1322,9 @@ export default function Search({route, navigation}) {
                       android_ripple={{
                         color: 'grey',
                       }}
-                      onPress={() =>
-                        navigation.navigate('IMDb', {
-                          id: item.imdb,
-                          screen: 'Search',
-                        })
-                      }>
+                      onPress={goIMDb(item.imdb)}>
                       <FontAwesomeIcon
-                        size={Adjust(35)}
+                        size={Adjust(32)}
                         icon={faImdb}
                         color={'black'}
                       />
@@ -1383,7 +1367,7 @@ export default function Search({route, navigation}) {
           <View style={SearchPage.catCheckContainer}>
             <View
               style={{
-                width: width,
+                width,
                 height: width / 8,
                 flexDirection: 'row',
                 left: 10,
@@ -2786,13 +2770,13 @@ export default function Search({route, navigation}) {
                   },
                 ]}
                 inputContainerStyle={SearchPage.inputContainerInner}
+                underlineColorAndroid="transparent"
                 onSubmitEditing={handleSubmit}
                 returnKeyType={'search'}
-                keyboardType={isDrawerOpen ? null : 'default'}
                 selectionColor="grey"
                 ref={searchRef}
                 autoFocus
-                onFocus={() => resetForm({})}
+                onFocus={resetForm}
                 placeholder={
                   keySearch
                     ? enLang
@@ -2814,9 +2798,9 @@ export default function Search({route, navigation}) {
                     android_ripple={{
                       color: 'white',
                       borderless: true,
-                      radius: width / 18,
+                      radius: statusHeight / 1.3,
                     }}
-                    onPress={() => resetForm({})}>
+                    onPress={resetForm}>
                     <FontAwesomeIcon
                       size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
                       color={'white'}
@@ -2829,7 +2813,7 @@ export default function Search({route, navigation}) {
                     android_ripple={{
                       color: 'white',
                       borderless: true,
-                      radius: width / 18,
+                      radius: statusHeight / 1.3,
                     }}
                     onPress={goBack}>
                     <FontAwesomeIcon
@@ -2846,7 +2830,7 @@ export default function Search({route, navigation}) {
                   android_ripple={{
                     color: 'white',
                     borderless: true,
-                    radius: width / 18,
+                    radius: statusHeight / 1.3,
                   }}
                   onPress={handleSubmit}>
                   <FontAwesomeIcon
@@ -2875,7 +2859,7 @@ export default function Search({route, navigation}) {
                   android_ripple={{
                     color: 'white',
                     borderless: true,
-                    radius: width / 18,
+                    radius: statusHeight / 1.3,
                   }}
                   onPress={displayCatList}>
                   <FontAwesomeIcon
@@ -2889,127 +2873,121 @@ export default function Search({route, navigation}) {
           )}
         </Formik>
       </View>
-      {searchRef.current &&
-      searchRef.current.isFocused() &&
-      historyHidden &&
-      historyList.length > 0 ? (
-        <KeyboardAvoidingView
-          style={{height: height + statusHeight * 1.5, width: width}}>
-          <ScrollView
-            style={{
-              marginBottom:
-                keyboardHeight > 0
-                  ? keyboardHeight + statusHeight * 6
-                  : statusHeight * 5.1,
-              paddingTop: 5,
-              height: height,
-              width: width,
-              backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
-            }}
-            keyboardShouldPersistTaps="always"
-            showsVerticalScrollIndicator={false}>
-            <>
+      {historyList.length && historyHidden && (
+        <FlatList
+          keyboardShouldPersistTaps="always"
+          contentContainerStyle={{
+            width,
+          }}
+          data={historyList}
+          ListHeaderComponent={() => (
+            <View
+              style={[
+                SearchPage.itemHistoryNav,
+                {
+                  width,
+                  backgroundColor: 'transparent',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                },
+              ]}>
+              <TouchableOpacity
+                style={{
+                  height: statusHeight * 1.5,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'transparent',
+                }}
+                onPress={clearSearchHistory}>
+                <Text
+                  style={{
+                    color: ACCENT_COLOR,
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
+                  }}>
+                  {enLang ? EN.clearSearchHistory : RO.clearSearchHistory}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  height: statusHeight * 1.5,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'transparent',
+                }}
+                onPress={closeSuggestions}>
+                <Text
+                  style={{
+                    color: 'crimson',
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
+                  }}>
+                  {enLang ? EN.close : RO.close}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          renderItem={({item}) => (
+            <Pressable
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width,
+                height: statusHeight * 1.6,
+                paddingLeft: statusHeight / 2,
+              }}
+              android_ripple={{
+                color: 'silver',
+                borderless: false,
+              }}
+              onPress={() => handleSearch(item.query)}>
               <View
-                style={[
-                  SearchPage.itemHistoryNav,
-                  {
-                    width: width,
-                    backgroundColor: 'transparent',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  },
-                ]}>
-                <TouchableOpacity
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                }}>
+                <FontAwesomeIcon
+                  size={Adjust(18)}
+                  color={lightTheme ? 'black' : 'white'}
+                  icon={faSync}
                   style={{
-                    height: statusHeight * 1.5,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: 'transparent',
+                    marginRight: statusHeight,
+                    transform: [{rotateY: '180deg'}],
                   }}
-                  onPress={clearSearchHistory}>
-                  <Text
-                    style={{
-                      color: ACCENT_COLOR,
-                      fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
-                    }}>
-                    {enLang ? EN.clearSearchHistory : RO.clearSearchHistory}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
+                />
+                <Text
                   style={{
-                    height: statusHeight * 1.5,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: 'transparent',
-                  }}
-                  onPress={closeSuggestions}>
-                  <Text
-                    style={{
-                      color: 'crimson',
-                      fontSize: Adjust(fontSizes !== null ? fontSizes[3] : 11),
-                    }}>
-                    {enLang ? EN.close : RO.close}
-                  </Text>
-                </TouchableOpacity>
+                    fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
+                    fontWeight: 'bold',
+                    color: lightTheme ? 'black' : 'white',
+                  }}>
+                  {item.query}
+                </Text>
               </View>
-              {historyList.map((item, i) => (
-                <Pressable
-                  key={item.id}
-                  onPress={() => handleSearch(item.query)}
-                  android_ripple={{
-                    color: 'grey',
-                    borderless: false,
-                  }}
-                  style={[
-                    SearchPage.itemPressableHistory,
-                    {marginBottom: i === historyList.length - 1 ? 10 : 5},
-                  ]}>
-                  <View style={SearchPage.itemPressableHistoryContainer}>
-                    <Text
-                      style={[
-                        SearchPage.historyText,
-                        {
-                          color: lightTheme ? 'black' : 'white',
-                          fontSize: Adjust(
-                            fontSizes !== null ? fontSizes[4] : 12,
-                          ),
-                        },
-                      ]}>
-                      {item.query}
-                    </Text>
-                    <Pressable
-                      style={{
-                        width: statusHeight * 1.5,
-                        height: statusHeight * 1.5,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginRight: statusHeight / 3,
-                        backgroundColor: 'transparent',
-                      }}
-                      android_ripple={{
-                        color: 'grey',
-                        borderless: true,
-                        radius: width / 18,
-                      }}
-                      onPress={() =>
-                        formikRef.current.setFieldValue('search', item.query)
-                      }>
-                      <FontAwesomeIcon
-                        style={{transform: [{rotate: '-45deg'}]}}
-                        size={Adjust(fontSizes !== null ? fontSizes[7] : 16)}
-                        color={lightTheme ? 'black' : 'white'}
-                        icon={faArrowUp}
-                      />
-                    </Pressable>
-                  </View>
-                </Pressable>
-              ))}
-            </>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      ) : null}
-      {downloadNotice ? (
+              <TouchableOpacity
+                style={{
+                  width: statusHeight * 2,
+                  height: '100%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+                onPress={setSearchValue(item.query)}>
+                <FontAwesomeIcon
+                  style={{transform: [{rotate: '-45deg'}], marginLeft: 15}}
+                  size={Adjust(18)}
+                  color={lightTheme ? 'black' : 'white'}
+                  icon={faArrowUp}
+                />
+              </TouchableOpacity>
+            </Pressable>
+          )}
+          keyExtractor={(item) => item.id.toString()}
+        />
+      )}
+      {downloadClient ? (
         <View
           style={{
             zIndex: 999,
@@ -3021,120 +2999,147 @@ export default function Search({route, navigation}) {
             left: 0,
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: 'rgba(0,0,0,0.8)',
+            backgroundColor: 'rgba(0,0,0,0.9)',
           }}>
-          <Animated.View
-            style={{
-              transform: [
-                {
-                  scale: downloadAnimation,
-                },
-              ],
-            }}>
+          <View style={{}}>
             <FontAwesomeIcon
               size={Adjust(80)}
               color={ACCENT_COLOR}
-              icon={faFileDownload}
+              icon={faExclamationCircle}
             />
-          </Animated.View>
+          </View>
           <Text
             style={{
-              fontSize: Adjust(16),
+              fontSize: Adjust(14),
               textAlign: 'center',
               color: 'white',
               marginTop: statusHeight,
               paddingHorizontal: statusHeight,
             }}>
-            {enLang ? EN.download : RO.download}
+            {enLang ? EN.downloadClient : RO.downloadClient}
           </Text>
+          <View style={{width, height: 50, marginTop: statusHeight}}>
+            <FastImage
+              style={SearchPage.itemPresssableFastImage}
+              resizeMode={FastImage.resizeMode.contain}
+              source={require('../assets/td.png')}
+            />
+            <Text
+              style={{
+                fontSize: Adjust(12),
+                textAlign: 'center',
+                color: 'white',
+                fontWeight: 'bold',
+                marginTop: statusHeight / 3,
+                paddingHorizontal: statusHeight,
+              }}>
+              TorrDroid - Torrent Downloader
+            </Text>
+            <View style={{width, height: 40, marginTop: statusHeight}}>
+              <TouchableOpacity activeOpacity={0.8} onPress={openGooglePlay}>
+                <FastImage
+                  style={SearchPage.itemPresssableFastImage}
+                  resizeMode={FastImage.resizeMode.contain}
+                  source={require('../assets/gp.png')}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={{height: 100, marginTop: statusHeight * 8}}>
+            <TouchableOpacity activeOpacity={0.6} onPress={closeDownloadClient}>
+              <FontAwesomeIcon size={Adjust(40)} color={'red'} icon={faTimes} />
+            </TouchableOpacity>
+          </View>
         </View>
       ) : null}
-      <FlatList
-        data={
-          searchLoading
-            ? [
-                {id: '1'},
-                {id: '2'},
-                {id: '3'},
-                {id: '4'},
-                {id: '5'},
-                {id: '6'},
-                {id: '7'},
-                {id: '8'},
-                {id: '9'},
-                {id: '10'},
-                {id: '11'},
-                {id: '12'},
-                {id: '13'},
-                {id: '14'},
-                {id: '15'},
-              ]
-            : listSearch !== null
-            ? listSearch.slice(0, 30)
-            : listSearch
-        }
-        renderItem={searchLoading ? () => <SkeletonLoading /> : renderItem}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          padding: 9,
-          width: width,
-        }}
-        ListHeaderComponent={() =>
-          listSearch === null ? null : JSON.stringify(listSearch) === '[]' ? (
-            <View
-              style={{
-                width: '100%',
-                padding: 5,
-              }}>
-              <Text
+      {!historyHidden && (
+        <FlatList
+          data={
+            searchLoading
+              ? [
+                  {id: '1'},
+                  {id: '2'},
+                  {id: '3'},
+                  {id: '4'},
+                  {id: '5'},
+                  {id: '6'},
+                  {id: '7'},
+                  {id: '8'},
+                  {id: '9'},
+                  {id: '10'},
+                  {id: '11'},
+                  {id: '12'},
+                  {id: '13'},
+                  {id: '14'},
+                  {id: '15'},
+                ]
+              : listSearch !== null
+              ? listSearch.slice(0, 30)
+              : listSearch
+          }
+          renderItem={searchLoading ? () => <SkeletonLoading /> : renderItem}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            padding: 9,
+            width,
+          }}
+          ListHeaderComponent={() =>
+            listSearch === null ? null : JSON.stringify(listSearch) === '[]' ? (
+              <View
                 style={{
-                  color: lightTheme ? 'black' : 'white',
-                  textAlign: 'center',
-                  fontWeight: 'bold',
+                  width: '100%',
+                  padding: 5,
                 }}>
-                {enLang ? EN.resAfterA : RO.resAfterA}
-                {searchText}"
-              </Text>
-              <Text
+                <Text
+                  style={{
+                    color: lightTheme ? 'black' : 'white',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                  }}>
+                  {enLang ? EN.resAfterA : RO.resAfterA}
+                  {searchText}"
+                </Text>
+                <Text
+                  style={{
+                    color: lightTheme ? 'black' : 'white',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                  }}>
+                  {enLang ? EN.resNo : RO.resNo}
+                </Text>
+                <Text
+                  style={{
+                    color: lightTheme ? 'black' : 'white',
+                    textAlign: 'center',
+                  }}>
+                  {enLang ? EN.resTry : RO.resTry}
+                </Text>
+              </View>
+            ) : listSearch.length > 1 ? (
+              <View
                 style={{
-                  color: lightTheme ? 'black' : 'white',
-                  textAlign: 'center',
-                  fontWeight: 'bold',
+                  width: '100%',
+                  padding: 5,
                 }}>
-                {enLang ? EN.resNo : RO.resNo}
-              </Text>
-              <Text
-                style={{
-                  color: lightTheme ? 'black' : 'white',
-                  textAlign: 'center',
-                }}>
-                {enLang ? EN.resTry : RO.resTry}
-              </Text>
-            </View>
-          ) : listSearch.length > 1 ? (
-            <View
-              style={{
-                width: '100%',
-                padding: 5,
-              }}>
-              <Text
-                style={{
-                  color: lightTheme ? 'black' : 'white',
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                }}>
-                {enLang ? EN.resAfterB : RO.resAfterB}{' '}
-                {searchText === ''
-                  ? enLang
-                    ? EN.resAfterFilters
-                    : RO.resAfterFilters
-                  : '"' + searchText + '"'}
-              </Text>
-            </View>
-          ) : null
-        }
-        keyExtractor={(item) => item.id.toString()}
-      />
+                <Text
+                  style={{
+                    color: lightTheme ? 'black' : 'white',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                  }}>
+                  {enLang ? EN.resAfterB : RO.resAfterB}{' '}
+                  {searchText === ''
+                    ? enLang
+                      ? EN.resAfterFilters
+                      : RO.resAfterFilters
+                    : '"' + searchText + '"'}
+                </Text>
+              </View>
+            ) : null
+          }
+          keyExtractor={(item) => item.id.toString()}
+        />
+      )}
       {isNetReachable ? (
         <Animated.View
           style={[
@@ -3215,7 +3220,7 @@ const SearchPage = EStyleSheet.create({
     backgroundColor: 'transparent',
   },
   itemHistoryNav: {
-    paddingHorizontal: '1.2rem',
+    paddingHorizontal: '0.8rem',
   },
   historyText: {
     paddingLeft: '1.2rem',
@@ -3285,7 +3290,7 @@ const SearchPage = EStyleSheet.create({
     alignItems: 'center',
   },
   catCheckOverlay: {
-    width: width,
+    width,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 0,
@@ -3346,10 +3351,11 @@ const SearchPage = EStyleSheet.create({
   inputStyle: {
     paddingLeft: '2.5rem',
     paddingRight: '5rem',
+    borderBottomColor: 'transparent',
   },
   mainHeader: {
     height: statusHeight * 3.5,
-    width: width,
+    width,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',

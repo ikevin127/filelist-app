@@ -139,8 +139,8 @@ android {
         applicationId "com.baderproductions.fl"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 15
-        versionName "2021.1.0"
+        versionCode 16
+        versionName "2021.2.0"
         multiDexEnabled true
     }
     splits {
@@ -212,7 +212,7 @@ dependencies {
 
     implementation "androidx.multidex:multidex:2.0.1"
 
-    compile project(':react-native-fs')
+    implementation project(':rn-fetch-blob')
 
     implementation platform('com.google.firebase:firebase-bom:25.12.0')
     
@@ -220,7 +220,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}") {
-      exclude group:'com.facebook.fbjni'
+        exclude group:'com.facebook.fbjni'
     }
 
     debugImplementation("com.facebook.flipper:flipper-network-plugin:${FLIPPER_VERSION}") {

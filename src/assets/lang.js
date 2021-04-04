@@ -25,11 +25,14 @@ export const RO = {
   infoT6: 'Dacă mărimea textului este prea mică / mare',
   infoC6:
     'Se poate schimba din meniu pe mărimile mic, mediu ori mare în funcţie de preferinţă',
+  infoT7: 'Descărcarea fişierelor .torrent',
+  infoC7:
+    'De îndată ce fişierul va fi descărcat, se va încerca deschiderea automată în caz ca există o aplicaţie corespunzătoare deja instalată.\n\nÎn caz contrar se va recomanda descărcarea unui client funcţional din Magazinul Google Play.\n\nÎn urma unor teste cu aplicaţiile uTorrent şi BitTorrent s-a constatat că descărcarea se blochează la 1%, drept urmare se va recomanda aplicaţia TorrDroid care este testată şi funcţionează conform aşteptărilor.',
   filelistWeb: 'Doreşti să navighezi spre Filelist.io ?',
   filelistWebErr: 'Navigarea spre Filelist.io nu funcţionează pe telefonul tău',
   yes: 'DA',
   no: 'NU',
-  howToUse: 'Informaţii folosire',
+  howToUse: 'Informaţii',
   textSize: 'Dimensiune text',
   s: 'Mic',
   m: 'Mediu',
@@ -38,10 +41,13 @@ export const RO = {
   lang: 'Limba',
   autoplay: 'Autoplay trailer',
   settings: 'Setări',
+  menu: 'Meniu',
   logoutPrompt: 'Ai ales să te deloghezi. Doreşti să continui ?',
   // Home screen
   refreshComplete: 'Actualizare completă',
   download: 'Fişierul torrent a fost descărcat în directorul Download',
+  downloadClient:
+    'Fişierul a fost descărcat însă nu s-a găsit nici o aplicaţie care să deschdă fişierul. Aplicaţie recomandată:',
   downloadSuccess: 'Torrentul a fost descărcat',
   permissionDenied: 'Permisiuni descărcare neacceptate',
   downloadErr:
@@ -53,6 +59,8 @@ export const RO = {
   torrLeech: 'Numărul persoanelor care descarcă torrentul în acest moment',
   imdbNav: 'Doreşti să vizitezi pagina oficială IMDb ?',
   imdbNoPlot: 'Acest material nu are plot.',
+  imdbNoTrailer:
+    'Acest titlu IMDb nu are un trailer oficial. Pentru mai multe detalii vizitează pagina oficială IMDb prin intermediul posterului',
   imdbETA: 'Durată:',
   imdbNetErrH: 'Eroare conexiune',
   imdbNetErrP:
@@ -131,10 +139,14 @@ export const EN = {
   infoT6: 'Text size is too small / large',
   infoC6:
     'You can change it from the menu, having 3 sizes at your disposal: small, medium and large as per your preference',
+  infoT7: 'Downloading .torrent files',
+  infoC7:
+    "Once a file was downloaded the app will try to automatically open it in case there's any default .torrent client already installed.\n\nOtherwise you will be recommended a tested and functional .torrent client from the Google Play Store.\n\nAs a result of testing, following user's feedback we found that downloading with either uTorrent or BitTorrent stops at 1% hence you will be recommended the TorrDroid app which is tested and works as expected.",
   filelistWeb: 'Do you want to navigate to Filelist.io ?',
   filelistWebErr: "Navigation to Filelist.io doesn't work on your phone",
   yes: 'YES',
   no: 'NO',
+  ok: 'OK',
   howToUse: 'How to use',
   textSize: 'Text size',
   s: 'Small',
@@ -144,10 +156,13 @@ export const EN = {
   lang: 'Language',
   autoplay: 'Trailer autoplay',
   settings: 'Settings',
+  menu: 'Menu',
   logoutPrompt: 'You are about to logout. Do you want to proceed ?',
   // Home screen
   refreshComplete: 'Actualization complete',
   download: 'The torrent file was downloaded in the Download directory',
+  downloadClient:
+    'The file was downloaded but there was no default application that could open this kind of file. Recommended application:',
   downloadSuccess: 'Torrent file downloaded',
   permissionDenied: 'Download permissions denied',
   downloadErr: "This torrent can't be downloaded on your device.",
@@ -158,6 +173,8 @@ export const EN = {
   torrLeech: 'The number of Leechers this torrent has right now',
   imdbNav: 'Do you want to visit the official IMDb page ?',
   imdbNoPlot: "This IMDb title doesn't have a plot",
+  imdbNoTrailer:
+    'This IMDb title does not have an official trailer. For more details please visit the official IMDb page by touching the poster',
   imdbETA: 'Length:',
   imdbNetErrH: 'Network error',
   imdbNetErrP:

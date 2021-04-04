@@ -14,8 +14,11 @@ import {
   Keyboard,
   PermissionsAndroid,
   ToastAndroid,
+  TouchableOpacity,
+  BackHandler,
+  Linking,
 } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNFetchBlob from 'rn-fetch-blob';
 import Collapsible from 'react-native-collapsible';
 import FastImage from 'react-native-fast-image';
 import NetInfo from '@react-native-community/netinfo';
@@ -39,6 +42,8 @@ import {
   faFileDownload,
   faBars,
   faCheck,
+  faTimes,
+  faExclamationCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import {faImdb} from '@fortawesome/free-brands-svg-icons';
 // Variables & assets
@@ -81,9 +86,8 @@ export default function Home({navigation}) {
   const [refreshing] = useState(false);
   const [listEndMsg, setListEndMsg] = useState(false);
   const [isNetReachable, setIsNetReachable] = useState(true);
-  const [downloadNotice, setDownloadNotice] = useState(false);
+  const [downloadClient, setDownloadClient] = useState(false);
   // Animations
-  const [downloadAnimation] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
   const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
@@ -120,11 +124,26 @@ export default function Home({navigation}) {
       // Dismiss keyboard everytime screen is focused
       Keyboard.dismiss();
     });
+
     return () => {
       screenFocusListener();
     };
     // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, [latestError]);
+
+  useEffect(() => {
+    BackHandler.addEventListener('hardwareBackPress', () => {
+      if (downloadClient) {
+        setDownloadClient(!downloadClient);
+      }
+      return true;
+    });
+
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress');
+    };
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Connection listener
@@ -148,29 +167,111 @@ export default function Home({navigation}) {
   }, [isNetReachable]);
 
   // FUNCTIONS
-  const goSearch = () => {
-    navigation.navigate('Search');
+  const goMenu = () => navigation.navigate('Menu');
+  const goSearch = () => navigation.navigate('Search');
+  const closeDownloadClient = () => setDownloadClient(!downloadClient);
+  const openGooglePlay = () => {
+    Linking.openURL('market://details?id=intelligems.torrdroid');
+    closeDownloadClient();
   };
 
-  function downAnimation() {
-    return Animated.loop(
-      Animated.sequence([
-        Animated.timing(downloadAnimation, {
-          toValue: 0.5,
-          duration: 350,
-          useNativeDriver: true,
-        }),
-        Animated.timing(downloadAnimation, {
-          toValue: 1,
-          duration: 350,
-          useNativeDriver: true,
-        }),
-      ]),
-      {
-        iterations: 4,
-      },
-    ).start();
-  }
+  const goIMDb = (id) => async () => {
+    navigation.navigate('IMDb', {
+      id,
+    });
+  };
+
+  const setLimitReached = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.alert150R : RO.alert150R,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const setAPIDown = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.alertAPI : RO.alertAPI,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const sizeInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrSize : RO.torrSize,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const seedersInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrSeeds : RO.torrSeeds,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const downloadInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrDown : RO.torrDown,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
+
+  const filesInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrFiles : RO.torrFiles,
+      [
+        {
+          text: 'OK',
+        },
+      ],
+      {onDismiss: () => {}, cancelable: true},
+    );
+
+  const leechersInfo = () =>
+    Alert.alert(
+      'Info',
+      enLang ? EN.torrLeech : RO.torrLeech,
+      [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ],
+      {cancelable: true},
+    );
 
   const onRefresh = useCallback(async () => {
     dispatch(AppConfigActions.setCollItems([]));
@@ -198,7 +299,7 @@ export default function Home({navigation}) {
     }
   };
 
-  const setCollapsible = (id) => {
+  const setCollapsible = (id) => () => {
     const newIds = [...collItems];
     const index = newIds.indexOf(id);
     if (index > -1) {
@@ -223,37 +324,19 @@ export default function Home({navigation}) {
     );
   };
 
-  const setLimitReached = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.alert150R : RO.alert150R,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-          style: 'cancel',
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const setAPIDown = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.alertAPI : RO.alertAPI,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-          style: 'cancel',
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const downloadTorrent = async (name, link) => {
+  const downloadTorrent = (name, link) => async () => {
+    const {android, config, fs} = RNFetchBlob;
+    const downloadDir = fs.dirs.DownloadDir;
+    const options = {
+      fileCache: true,
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        mime: 'application/x-bittorrent',
+        path: `${downloadDir}/${name}.torrent`,
+        mediaScannable: true,
+      },
+    };
     const request = await PermissionsAndroid.requestMultiple([
       PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
       PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
@@ -263,16 +346,16 @@ export default function Home({navigation}) {
       request['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
     ) {
       if (isNetReachable) {
-        RNFS.downloadFile({
-          fromUrl: link,
-          toFile: `${RNFS.DownloadDirectoryPath}/${name}.torrent`,
-        }).promise.then(() => {
-          setDownloadNotice(true);
-          downAnimation();
-          setTimeout(() => {
-            setDownloadNotice(false);
-          }, 4000);
-        });
+        config(options)
+          .fetch('GET', link)
+          .then((res) => {
+            android
+              .actionViewIntent(res.path(), 'application/x-bittorrent')
+              .then(
+                (response) =>
+                  response === null && setDownloadClient(!downloadClient),
+              );
+          });
       } else {
         netOff();
       }
@@ -337,79 +420,6 @@ export default function Home({navigation}) {
         useNativeDriver: true,
       }).start();
     }, 4000);
-  };
-
-  const sizeInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.torrSize : RO.torrSize,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const seedersInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.torrSeeds : RO.torrSeeds,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const downloadInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.torrDown : RO.torrDown,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const filesInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.torrFiles : RO.torrFiles,
-      [
-        {
-          text: 'OK',
-        },
-      ],
-      {onDismiss: () => {}, cancelable: true},
-    );
-  };
-
-  const leechersInfo = () => {
-    Alert.alert(
-      'Info',
-      enLang ? EN.torrLeech : RO.torrLeech,
-      [
-        {
-          text: 'OK',
-          onPress: () => {},
-        },
-      ],
-      {cancelable: true},
-    );
-  };
-
-  const openDrawer = () => {
-    navigation.openDrawer();
   };
 
   // Skeleton loading component
@@ -493,7 +503,7 @@ export default function Home({navigation}) {
   // Pressable component
   const Item = ({item, onPress, style}) => (
     <Pressable
-      onPress={() => setCollapsible(item.id)}
+      onPress={setCollapsible(item.id)}
       android_ripple={{
         color: 'grey',
         borderless: false,
@@ -745,9 +755,7 @@ export default function Home({navigation}) {
                       borderless: false,
                       radius: width / 10,
                     }}
-                    onPress={() =>
-                      downloadTorrent(item.name, item.download_link)
-                    }>
+                    onPress={downloadTorrent(item.name, item.download_link)}>
                     <FontAwesomeIcon
                       size={14}
                       icon={faFileDownload}
@@ -991,13 +999,9 @@ export default function Home({navigation}) {
                       android_ripple={{
                         color: 'grey',
                       }}
-                      onPress={() => {
-                        navigation.navigate('IMDb', {
-                          id: item.imdb,
-                        });
-                      }}>
+                      onPress={goIMDb(item.imdb)}>
                       <FontAwesomeIcon
-                        size={Adjust(35)}
+                        size={Adjust(32)}
                         icon={faImdb}
                         color={'black'}
                       />
@@ -1035,9 +1039,9 @@ export default function Home({navigation}) {
                 android_ripple={{
                   color: 'white',
                   borderless: true,
-                  radius: width / 18,
+                  radius: statusHeight / 1.3,
                 }}
-                onPress={openDrawer}>
+                onPress={goMenu}>
                 <FontAwesomeIcon
                   size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
                   color={'white'}
@@ -1051,7 +1055,7 @@ export default function Home({navigation}) {
                 android_ripple={{
                   color: 'white',
                   borderless: true,
-                  radius: width / 18,
+                  radius: statusHeight / 1.3,
                 }}
                 onPress={goSearch}>
                 <FontAwesomeIcon
@@ -1070,7 +1074,7 @@ export default function Home({navigation}) {
             </Text>
           </View>
         </View>
-        {downloadNotice ? (
+        {downloadClient ? (
           <View
             style={{
               zIndex: 999,
@@ -1082,32 +1086,63 @@ export default function Home({navigation}) {
               left: 0,
               justifyContent: 'center',
               alignItems: 'center',
-              backgroundColor: 'rgba(0,0,0,0.8)',
+              backgroundColor: 'rgba(0,0,0,0.9)',
             }}>
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    scale: downloadAnimation,
-                  },
-                ],
-              }}>
+            <View style={{}}>
               <FontAwesomeIcon
                 size={Adjust(80)}
                 color={ACCENT_COLOR}
-                icon={faFileDownload}
+                icon={faExclamationCircle}
               />
-            </Animated.View>
+            </View>
             <Text
               style={{
-                fontSize: Adjust(16),
+                fontSize: Adjust(14),
                 textAlign: 'center',
                 color: 'white',
                 marginTop: statusHeight,
                 paddingHorizontal: statusHeight,
               }}>
-              {enLang ? EN.download : RO.download}
+              {enLang ? EN.downloadClient : RO.downloadClient}
             </Text>
+            <View style={{width, height: 50, marginTop: statusHeight}}>
+              <FastImage
+                style={HomePage.itemPresssableFastImage}
+                resizeMode={FastImage.resizeMode.contain}
+                source={require('../assets/td.png')}
+              />
+              <Text
+                style={{
+                  fontSize: Adjust(12),
+                  textAlign: 'center',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  marginTop: statusHeight / 3,
+                  paddingHorizontal: statusHeight,
+                }}>
+                TorrDroid - Torrent Downloader
+              </Text>
+              <View style={{width, height: 40, marginTop: statusHeight}}>
+                <TouchableOpacity activeOpacity={0.8} onPress={openGooglePlay}>
+                  <FastImage
+                    style={HomePage.itemPresssableFastImage}
+                    resizeMode={FastImage.resizeMode.contain}
+                    source={require('../assets/gp.png')}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={{height: 100, marginTop: statusHeight * 8}}>
+              <TouchableOpacity
+                activeOpacity={0.6}
+                onPress={closeDownloadClient}>
+                <FontAwesomeIcon
+                  size={Adjust(40)}
+                  color={'red'}
+                  icon={faTimes}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         ) : null}
         <FlatList
@@ -1146,7 +1181,7 @@ export default function Home({navigation}) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             padding: 9,
-            width: width,
+            width,
           }}
           onEndReachedThreshold={0.02}
           onEndReached={latestError !== null ? null : getMore}
@@ -1311,7 +1346,7 @@ const HomePage = EStyleSheet.create({
   },
   mainHeader: {
     height: statusHeight * 3.5,
-    width: width,
+    width,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
@@ -1333,7 +1368,7 @@ const HomePage = EStyleSheet.create({
   mainHeaderSearchContainer: {
     position: 'absolute',
     right: statusHeight / 2.5,
-    bottom: '1rem',
+    bottom: '1.2rem',
     width: '3rem',
     height: '2.5rem',
     justifyContent: 'center',
@@ -1342,7 +1377,7 @@ const HomePage = EStyleSheet.create({
   mainHeaderCogContainer: {
     position: 'absolute',
     left: statusHeight / 2.5,
-    bottom: '1rem',
+    bottom: '1.2rem',
     width: '3rem',
     height: '2.5rem',
     justifyContent: 'center',

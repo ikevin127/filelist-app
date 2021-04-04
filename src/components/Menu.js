@@ -1,8 +1,18 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {useEffect} from 'react';
-import {Text, View, Switch, Pressable, ScrollView} from 'react-native';
-import FastImage from 'react-native-fast-image';
+import React, {useState, useEffect} from 'react';
+import {
+  Alert,
+  Text,
+  View,
+  Pressable,
+  Platform,
+  Linking,
+  ScrollView,
+  Switch,
+  BackHandler,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import FastImage from 'react-native-fast-image';
 import Divider from 'react-native-paper/lib/commonjs/components/Divider';
 import RadioButton from 'react-native-paper/lib/commonjs/components/RadioButton/RadioButton';
 // Redux
@@ -10,30 +20,127 @@ import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
 // Responsiveness
 import Adjust from './AdjustText';
+import EStyleSheet from 'react-native-extended-stylesheet';
 // Icons
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faArrowLeft} from '@fortawesome/free-solid-svg-icons';
-// Variables & assets
-import {statusHeight, MAIN_LIGHT, ACCENT_COLOR} from '../assets/variables';
-import ro from '../assets/ro.png';
-import en from '../assets/en.png';
+import {
+  faSignOutAlt,
+  faInfoCircle,
+  faDirections,
+  faArrowLeft,
+} from '@fortawesome/free-solid-svg-icons';
+// Variables
+import {
+  width,
+  height,
+  statusHeight,
+  MAIN_LIGHT,
+  ACCENT_COLOR,
+} from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
-export default function Settings({navigation}) {
+// Variables & assets
+import ro from '../assets/ro.png';
+import en from '../assets/en.png';
+
+export default function LeftDrawer({navigation}) {
   // State
+  const [user, setUser] = useState('');
   const [checked, setChecked] = React.useState('first');
   // Redux
   const dispatch = useDispatch();
-  const {autoplay, lightTheme, fontSizes, enLang} = useSelector(
+  const {lightTheme, fontSizes, enLang, autoplay} = useSelector(
     (state) => state.appConfig,
   );
   // Component mount
   useEffect(() => {
+    BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
     fontSizes[0] === 4 && setChecked('first');
     fontSizes[0] === 6 && setChecked('second');
     fontSizes[0] === 8 && setChecked('third');
-  }, [fontSizes]);
+    // Get Username for display
+    getCurrentUser();
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress');
+    };
+  }, [fontSizes, navigation]);
+
   // Functions
+  const goHowTo = () => navigation.navigate('HowTo');
+  const toggleFontS = () => toggleFontSize('S');
+  const toggleFontM = () => toggleFontSize('M');
+  const toggleFontL = () => toggleFontSize('L');
+  const goBack = () => navigation.goBack();
+
+  const getCurrentUser = async () => {
+    const currentUser = await AsyncStorage.getItem('username');
+    if (currentUser !== null) {
+      setUser(currentUser);
+    }
+  };
+
+  const handleLogout = () => {
+    const keys = ['username', 'passkey', 'latest'];
+    Alert.alert(
+      'Logout',
+      enLang ? EN.logoutPrompt : RO.logoutPrompt,
+      [
+        {
+          text: enLang ? EN.yes : RO.yes,
+          onPress: async () => {
+            await AsyncStorage.multiRemove(keys);
+            dispatch(AppConfigActions.latestError());
+            dispatch(AppConfigActions.retrieveLatest());
+          },
+        },
+        {
+          text: enLang ? EN.no : RO.no,
+          onPress: () => {},
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const openFilelist = async () => {
+    const supported = await Linking.canOpenURL('https://filelist.io');
+    if (supported) {
+      Alert.alert(
+        'Info',
+        enLang ? EN.filelistWeb : RO.filelistWeb,
+        [
+          {
+            text: enLang ? EN.yes : RO.yes,
+            onPress: () => Linking.openURL('https://filelist.io'),
+          },
+          {
+            text: enLang ? EN.no : RO.no,
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+        {cancelable: true},
+      );
+    } else {
+      Alert.alert(
+        'Info',
+        enLang ? EN.filelistWebErr : RO.filelistWebErr,
+        [
+          {
+            text: 'OK',
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+        {cancelable: true},
+      );
+    }
+  };
+
   const toggleFontSize = async (size) => {
     dispatch(AppConfigActions.setCollItems([]));
     switch (size) {
@@ -51,15 +158,7 @@ export default function Settings({navigation}) {
     }
     dispatch(AppConfigActions.setFonts());
   };
-  const toggleFontS = () => {
-    toggleFontSize('S');
-  };
-  const toggleFontM = () => {
-    toggleFontSize('M');
-  };
-  const toggleFontL = () => {
-    toggleFontSize('L');
-  };
+
   const switchTheme = async () => {
     dispatch(AppConfigActions.setCollItems([]));
     const currentTheme = await AsyncStorage.getItem('theme');
@@ -103,9 +202,7 @@ export default function Settings({navigation}) {
     }
     dispatch(AppConfigActions.toggleAutoplay());
   };
-  const goBack = () => {
-    navigation.navigate('Home');
-  };
+
   // Component render
   return (
     <>
@@ -122,7 +219,7 @@ export default function Settings({navigation}) {
         <Pressable
           style={{
             position: 'absolute',
-            top: statusHeight * 1.3,
+            top: statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -140,23 +237,62 @@ export default function Settings({navigation}) {
         <Text
           style={{
             fontSize: Adjust(16),
-            marginTop: statusHeight / 1.3,
+            marginTop: statusHeight * 1.1,
             marginBottom: statusHeight / 2,
             fontWeight: 'bold',
             color: 'white',
           }}>
-          {enLang ? EN.settings : RO.settings}
+          {enLang ? EN.menu : RO.menu}
         </Text>
       </View>
       <ScrollView
         style={{flex: 1, backgroundColor: lightTheme ? MAIN_LIGHT : 'black'}}
         showsVerticalScrollIndicator={false}>
+        <View
+          style={[
+            RightDrawerStyle.profileContainer,
+            {backgroundColor: lightTheme ? '#D5D5D5' : '#151515'},
+          ]}>
+          <View style={RightDrawerStyle.profilePicContainer}>
+            <View
+              style={[
+                RightDrawerStyle.profilePicView,
+                {borderColor: lightTheme ? 'black' : 'silver'},
+              ]}>
+              <Text
+                style={{
+                  fontSize: Adjust(40),
+                  textTransform: 'uppercase',
+                  marginBottom: 4,
+                  fontWeight: 'bold',
+                  color: lightTheme ? 'black' : 'white',
+                }}>
+                {user !== '' ? user.charAt(0) : null}
+              </Text>
+            </View>
+          </View>
+          <View style={RightDrawerStyle.usernameView}>
+            <Text
+              style={{
+                fontSize: Adjust(16),
+                fontWeight: 'bold',
+                color: lightTheme ? 'black' : 'white',
+              }}>
+              {user !== '' ? user : null}
+            </Text>
+          </View>
+        </View>
+        <Divider
+          style={{
+            backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
+          }}
+        />
         <Text
           style={{
             fontSize: Adjust(12),
             fontWeight: 'bold',
             marginBottom: 2,
-            marginTop: statusHeight,
+            marginTop: statusHeight / 2,
             marginLeft: statusHeight / 2,
             color: lightTheme ? 'black' : 'white',
           }}>
@@ -210,7 +346,11 @@ export default function Settings({navigation}) {
             Dark
           </Text>
         </View>
-        <Divider style={{backgroundColor: lightTheme ? 'black' : 'silver'}} />
+        <Divider
+          style={{
+            backgroundColor: 'grey',
+          }}
+        />
         <Text
           style={{
             fontSize: Adjust(12),
@@ -267,7 +407,11 @@ export default function Settings({navigation}) {
             source={en}
           />
         </View>
-        <Divider style={{backgroundColor: lightTheme ? 'black' : 'silver'}} />
+        <Divider
+          style={{
+            backgroundColor: 'grey',
+          }}
+        />
         <Text
           style={{
             fontSize: Adjust(12),
@@ -357,7 +501,11 @@ export default function Settings({navigation}) {
             />
           </View>
         </View>
-        <Divider style={{backgroundColor: lightTheme ? 'black' : 'silver'}} />
+        <Divider
+          style={{
+            backgroundColor: 'grey',
+          }}
+        />
         <Text
           style={{
             fontSize: Adjust(12),
@@ -420,8 +568,229 @@ export default function Settings({navigation}) {
             ON
           </Text>
         </View>
-        <Divider style={{backgroundColor: lightTheme ? 'black' : 'silver'}} />
+        <Divider
+          style={{
+            backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
+          }}
+        />
+        <View
+          style={{
+            height: statusHeight * 3.5,
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: lightTheme ? '#D5D5D5' : '#151515',
+          }}>
+          <Pressable
+            style={{
+              width: width / 3,
+              height: '100%',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingHorizontal: statusHeight / 1.5,
+            }}
+            android_ripple={{
+              color: 'grey',
+              borderless: false,
+            }}
+            onPress={goHowTo}>
+            <FontAwesomeIcon
+              color={lightTheme ? 'black' : MAIN_LIGHT}
+              size={Adjust(22)}
+              icon={faInfoCircle}
+            />
+            <Text
+              style={[
+                RightDrawerStyle.settingsOverlayText,
+                {
+                  fontSize: Adjust(14),
+                  color: lightTheme ? 'black' : 'white',
+                },
+              ]}>
+              Info
+            </Text>
+          </Pressable>
+          <Pressable
+            style={{
+              width: width / 3,
+              height: '100%',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingHorizontal: statusHeight / 1.5,
+            }}
+            android_ripple={{
+              color: 'grey',
+              borderless: false,
+            }}
+            onPress={openFilelist}>
+            <FontAwesomeIcon
+              color={lightTheme ? 'black' : MAIN_LIGHT}
+              size={Adjust(22)}
+              icon={faDirections}
+            />
+            <Text
+              style={[
+                RightDrawerStyle.settingsOverlayText,
+                {
+                  fontSize: Adjust(14),
+                  color: lightTheme ? 'black' : 'white',
+                },
+              ]}>
+              Filelist.io
+            </Text>
+          </Pressable>
+          <Pressable
+            style={{
+              width: width / 3,
+              height: '100%',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingHorizontal: statusHeight / 1.5,
+            }}
+            android_ripple={{
+              color: 'grey',
+              borderless: false,
+            }}
+            onPress={handleLogout}>
+            <FontAwesomeIcon
+              color={'crimson'}
+              size={Adjust(22)}
+              icon={faSignOutAlt}
+            />
+            <Text
+              style={[
+                RightDrawerStyle.settingsOverlayText,
+                {
+                  fontSize: Adjust(14),
+                  color: lightTheme ? 'black' : 'white',
+                },
+              ]}>
+              Logout
+            </Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </>
   );
 }
+
+const RightDrawerStyle = EStyleSheet.create({
+  profileContainer: {
+    width,
+    paddingVertical: statusHeight,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profilePicContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: statusHeight / 1.5,
+  },
+  profilePicView: {
+    width: width / 5,
+    height: width / 5,
+    backgroundColor: 'transparent',
+    borderRadius: 100,
+    borderWidth: 0.5,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: '0.3rem',
+  },
+  usernameView: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
+  settingsOverlayMainContainer: {
+    width: '100%',
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: Platform.OS === 'ios' ? statusHeight / 3 : 0,
+  },
+  settingsOverlayContainer: {
+    width: '100%',
+    height: width / 7,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: '0.5rem',
+  },
+  settingsOverlayPressable: {
+    width,
+    height: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: statusHeight / 1.5,
+  },
+  settingsOverlayText: {
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  infoOverlay: {
+    height: height + statusHeight / 2,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 0,
+  },
+  infoOverlayCloseContainer: {
+    width,
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  infoOverlayScrollView: {
+    width,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  infoTitleContainer: {
+    width: '100%',
+    padding: '1rem',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  accordionContainer: {
+    width: '100%',
+    paddingHorizontal: '1rem',
+    paddingVertical: '0.8rem',
+  },
+  renderContent: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  btnMainContainer: {
+    width,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnContainer: {
+    elevation: 2,
+    zIndex: 2,
+    width: width / 8,
+    height: width / 8,
+    borderRadius: width / 8 / 2,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: '2rem',
+  },
+  btn: {
+    width: width / 8,
+    height: width / 8,
+    backgroundColor: ACCENT_COLOR,
+    borderRadius: width / 8 / 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

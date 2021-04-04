@@ -1,6 +1,16 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useState, useRef, useEffect} from 'react';
-import {Animated, View, Text, Pressable, ScrollView} from 'react-native';
+import {
+  Alert,
+  Animated,
+  View,
+  Text,
+  Linking,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  BackHandler,
+} from 'react-native';
 import Adjust from './AdjustText';
 import FastImage from 'react-native-fast-image';
 import NetInfo from '@react-native-community/netinfo';
@@ -45,7 +55,7 @@ export default function IMDb({route, navigation}) {
     };
   }, [isNetReachable]);
 
-  // IMDb axios effect
+  // IMDb axios
   useEffect(() => {
     const source = Axios.CancelToken.source();
     fetchIMDbInfo(route.params.id, source);
@@ -89,10 +99,42 @@ export default function IMDb({route, navigation}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // BackHandler effect
+  useEffect(() => {
+    BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.goBack();
+      return true;
+    });
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress');
+    };
+  }, [navigation]);
+
   // Functions
-  const handleBack = () => {
-    navigation.goBack();
+  const handleBack = () => navigation.goBack();
+  // eslint-disable-next-line no-shadow
+  const goTrailer = (trailerLink, autoplay) => () => {
+    if (trailerLink !== '') {
+      navigation.navigate('Trailer', {
+        trailerLink,
+        autoplay,
+      });
+    } else {
+      Alert.alert(
+        'Info',
+        enLang ? EN.imdbNoTrailer : RO.imdbNoTrailer,
+        [
+          {
+            text: EN.ok,
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+        {cancelable: true},
+      );
+    }
   };
+
   const checkYearExists = (title) => {
     let regex = new RegExp(/((\d\d\d\d))/);
     return regex.test(title);
@@ -103,14 +145,36 @@ export default function IMDb({route, navigation}) {
         cancelToken: cancel.token,
       })
         .then((res) => {
-          setIMDbData(Array(res.data));
+          if (res.status === 200) {
+            setIMDbData(Array(res.data));
+          }
           setLoading(false);
         })
-        .catch(() => {
-          setLoading(false);
-        });
+        .catch(() => setLoading(false));
     } else {
       setLoading(false);
+    }
+  };
+
+  const openIMDbBrowser = (link) => async () => {
+    const supported = await Linking.canOpenURL(link);
+    if (supported) {
+      Alert.alert(
+        'Info',
+        enLang ? EN.imdbNav : RO.imdbNav,
+        [
+          {
+            text: enLang ? EN.yes : RO.yes,
+            onPress: () => Linking.openURL(link),
+          },
+          {
+            text: enLang ? EN.no : RO.no,
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+        {cancelable: true},
+      );
     }
   };
 
@@ -129,7 +193,7 @@ export default function IMDb({route, navigation}) {
         <Pressable
           style={{
             position: 'absolute',
-            top: statusHeight * 1.3,
+            top: statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -147,7 +211,7 @@ export default function IMDb({route, navigation}) {
         <Text
           style={{
             fontSize: Adjust(16),
-            marginTop: statusHeight / 1.3,
+            marginTop: statusHeight * 1.1,
             marginBottom: statusHeight / 2,
             fontWeight: 'bold',
             color: 'white',
@@ -196,16 +260,20 @@ export default function IMDb({route, navigation}) {
                 style={{
                   width: 350,
                   height: 450,
-                  marginTop: statusHeight * 1.5,
+                  marginTop: statusHeight,
                   backgroundColor: 'transparent',
                 }}>
-                <FastImage
-                  style={{width: '100%', height: '100%'}}
-                  resizeMode={FastImage.resizeMode.contain}
-                  source={{
-                    uri: item.posterhq,
-                  }}
-                />
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={openIMDbBrowser(item.link)}>
+                  <FastImage
+                    style={{width: '100%', height: '100%'}}
+                    resizeMode={FastImage.resizeMode.contain}
+                    source={{
+                      uri: item.posterhq,
+                    }}
+                  />
+                </TouchableOpacity>
               </View>
               <Text
                 style={{
@@ -214,12 +282,13 @@ export default function IMDb({route, navigation}) {
                   fontWeight: 'bold',
                   color: lightTheme ? 'black' : 'white',
                   marginTop: statusHeight,
-                  marginBottom: statusHeight / 3,
+                  marginBottom: statusHeight / 4,
                   paddingHorizontal: statusHeight,
                 }}>
                 {`${item.title} ${
                   checkYearExists(item.title) ? '' : `(${item.year})`
-                }`}{' '}
+                }`}
+                {'\n'}
                 <Text
                   style={[
                     {
@@ -245,7 +314,9 @@ export default function IMDb({route, navigation}) {
                   textAlign: 'center',
                   color: lightTheme ? 'black' : 'white',
                 }}>
-                {`${item.duration} | ${item.genre}`}
+                {`${item.duration !== '' ? item.duration + ' | ' : ''} ${
+                  item.genre
+                }`}
               </Text>
               <Text
                 style={{
@@ -268,6 +339,7 @@ export default function IMDb({route, navigation}) {
                   borderRadius: 34,
                   overflow: 'hidden',
                   marginVertical: statusHeight / 2,
+                  marginBottom: statusHeight,
                   backgroundColor: ACCENT_COLOR,
                 }}>
                 <Pressable
@@ -283,12 +355,7 @@ export default function IMDb({route, navigation}) {
                     color: 'black',
                     borderless: false,
                   }}
-                  onPress={() =>
-                    navigation.navigate('Trailer', {
-                      trailerLink: item.trailer,
-                      autoplay,
-                    })
-                  }>
+                  onPress={goTrailer(item.trailer, autoplay)}>
                   <FontAwesomeIcon
                     size={Adjust(fontSizes !== null ? fontSizes[6] : 14)}
                     style={{marginRight: 10}}

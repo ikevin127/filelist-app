@@ -97,7 +97,7 @@ export default function TrailerView({route, navigation}) {
               <Pressable
                 style={{
                   position: 'absolute',
-                  top: statusHeight * 1.3,
+                  top: statusHeight * 1.6,
                   left: statusHeight / 1.5,
                 }}
                 android_ripple={{
@@ -115,7 +115,7 @@ export default function TrailerView({route, navigation}) {
               <Text
                 style={{
                   fontSize: Adjust(16),
-                  marginTop: statusHeight / 1.3,
+                  marginTop: statusHeight * 1.1,
                   marginBottom: statusHeight / 2,
                   fontWeight: 'bold',
                   color: 'white',

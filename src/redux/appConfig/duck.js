@@ -9,7 +9,6 @@ import Axios from 'axios';
 const initState = {
   lightTheme: false,
   autoplay: true,
-  autofocusScreen: true,
   enLang: false,
   appInfo: false,
   fontSizes: null,
@@ -36,9 +35,6 @@ export const actions = {
   }),
   toggleAutoplay: () => ({
     type: types.APP_CONFIG.AUTOPLAY,
-  }),
-  toggleAutofocusScreen: () => ({
-    type: types.APP_CONFIG.AUTOFOCUS_SCREEN,
   }),
   setFonts: () => async (dispatch) => {
     const size = await AsyncStorage.getItem('fontSizes');
@@ -254,8 +250,6 @@ export function reducer(state = initState, action) {
       return {...state, lightTheme: !state.lightTheme};
     case types.APP_CONFIG.AUTOPLAY:
       return {...state, autoplay: !state.autoplay};
-    case types.APP_CONFIG.AUTOFOCUS_SCREEN:
-      return {...state, autofocusScreen: !state.autofocusScreen};
     case types.APP_CONFIG.EN_LANG:
       return {...state, enLang: !state.enLang};
     case types.APP_CONFIG.APP_INFO:

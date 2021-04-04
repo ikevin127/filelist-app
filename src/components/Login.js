@@ -298,7 +298,9 @@ export default function Login() {
                 <FastImage
                   style={LoginPage.picture}
                   resizeMode={FastImage.resizeMode.contain}
-                  source={require('../assets/logo.png')}
+                  source={{
+                    uri: 'http://dlc4jqsejiyjs.cloudfront.net/filelist.png',
+                  }}
                 />
               </View>
               <View style={LoginPage.form}>
@@ -344,6 +346,7 @@ export default function Login() {
                               : MAIN_LIGHT,
                           },
                         ]}
+                        underlineColorAndroid="transparent"
                         onSubmitEditing={handleSubmit}
                         returnKeyType={'go'}
                         selectionColor="grey"
@@ -384,6 +387,7 @@ export default function Login() {
                               : MAIN_LIGHT,
                           },
                         ]}
+                        underlineColorAndroid="transparent"
                         onSubmitEditing={handleSubmit}
                         returnKeyType={'go'}
                         selectionColor="grey"
@@ -536,7 +540,7 @@ export default function Login() {
 
 const LoginPage = EStyleSheet.create({
   container: {
-    width: width,
+    width,
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
@@ -570,7 +574,8 @@ const LoginPage = EStyleSheet.create({
     paddingLeft: '0.5rem',
   },
   inputStyle: {
-    paddingLeft: '1rem',
+    paddingLeft: '0.6rem',
+    borderBottomColor: 'transparent',
   },
   btnContainer: {
     width: width / 6,
