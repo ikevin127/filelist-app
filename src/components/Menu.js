@@ -679,7 +679,6 @@ export default function LeftDrawer({navigation}) {
 
 const RightDrawerStyle = EStyleSheet.create({
   profileContainer: {
-    width,
     paddingVertical: statusHeight,
     flexDirection: 'row',
     justifyContent: 'center',

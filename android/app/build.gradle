@@ -139,7 +139,7 @@ android {
         applicationId "com.baderproductions.fl"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 16
+        versionCode 17
         versionName "2021.2.0"
         multiDexEnabled true
     }

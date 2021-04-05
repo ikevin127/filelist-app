@@ -299,7 +299,7 @@ export default function Login() {
                   style={LoginPage.picture}
                   resizeMode={FastImage.resizeMode.contain}
                   source={{
-                    uri: 'http://dlc4jqsejiyjs.cloudfront.net/filelist.png',
+                    uri: 'https://dlc4jqsejiyjs.cloudfront.net/filelist.png',
                   }}
                 />
               </View>
