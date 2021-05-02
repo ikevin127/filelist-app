@@ -119,38 +119,6 @@ export const actions = {
       crashlytics().recordError(e);
     }
   },
-  getPlusLatest: (user, pass, length) => async (dispatch) => {
-    try {
-      dispatch({
-        type: types.APP_CONFIG.END_LIST_LOADING,
-      });
-      await Axios.get(
-        `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=latest-torrents&limit=${length}`,
-      )
-        .then(async (res) => {
-          let {data} = res;
-          dispatch({
-            type: types.APP_CONFIG.GET_LATEST,
-            payload: data,
-          });
-          dispatch({
-            type: types.APP_CONFIG.END_LIST_LOADING,
-          });
-        })
-        .catch((err) => {
-          dispatch({
-            type: types.APP_CONFIG.LATEST_ERROR,
-            payload: err,
-          });
-          dispatch({
-            type: types.APP_CONFIG.END_LIST_LOADING,
-          });
-        });
-    } catch (e) {
-      crashlytics().log('ducks -> getPlusLatest()');
-      crashlytics().recordError(e);
-    }
-  },
   getLatestLogin: (user, pass) => async (dispatch) => {
     try {
       await Axios.get(

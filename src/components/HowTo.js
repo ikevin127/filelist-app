@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import {
   Text,
   View,
@@ -8,7 +8,6 @@ import {
   Platform,
   BackHandler,
 } from 'react-native';
-import Accordion from 'react-native-collapsible/Accordion';
 // Redux
 import {useSelector} from 'react-redux';
 // Responsiveness
@@ -28,28 +27,20 @@ import {
 import {RO, EN} from '../assets/lang';
 
 export default function HowTo({navigation}) {
-  // State
-  const [activeSections, setActiveSections] = useState([]);
-  const {lightTheme, fontSizes, enLang} = useSelector(
-    (state) => state.appConfig,
-  );
-  // Accordion info
+  const {lightTheme, enLang} = useSelector((state) => state.appConfig);
+  // List data
   const INFO = [
     {
       title: enLang ? EN.infoT1 : RO.infoT1,
-      content: enLang ? EN.infoC1 : RO.infoC1,
+      text: enLang ? EN.infoC1 : RO.infoC1,
     },
     {
       title: enLang ? EN.infoT2 : RO.infoT2,
-      content: enLang ? EN.infoC2 : RO.infoC2,
-    },
-    {
-      title: enLang ? EN.infoT6 : RO.infoT6,
-      content: enLang ? EN.infoC6 : RO.infoC6,
+      text: enLang ? EN.infoC2 : RO.infoC2,
     },
     {
       title: enLang ? EN.infoT7 : RO.infoT7,
-      content: enLang ? EN.infoC7 : RO.infoC7,
+      text: enLang ? EN.infoC7 : RO.infoC7,
     },
   ];
 
@@ -65,40 +56,6 @@ export default function HowTo({navigation}) {
 
   // Functions
   const goBack = () => navigation.goBack();
-
-  // eslint-disable-next-line no-shadow
-  const _updateSections = (activeSections) => {
-    setActiveSections(activeSections);
-  };
-
-  const _renderHeader = (section) => {
-    return (
-      <View>
-        <Text
-          style={{
-            fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
-            color: ACCENT_COLOR,
-            fontWeight: 'bold',
-          }}>
-          {section.title}
-        </Text>
-      </View>
-    );
-  };
-
-  const _renderContent = (section) => {
-    return (
-      <View style={HowToStyle.renderContent}>
-        <Text
-          style={{
-            color: lightTheme ? 'black' : 'white',
-            fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
-          }}>
-          {section.content}
-        </Text>
-      </View>
-    );
-  };
 
   return (
     <>
@@ -154,16 +111,30 @@ export default function HowTo({navigation}) {
               Platform.OS === 'android' ? statusHeight : statusHeight * 1.5,
           },
         ]}>
-        <Accordion
-          sections={INFO}
-          containerStyle={HowToStyle.accordionContainer}
-          expandMultiple
-          underlayColor={lightTheme ? MAIN_LIGHT : '#303030'}
-          activeSections={activeSections}
-          renderHeader={_renderHeader}
-          renderContent={_renderContent}
-          onChange={_updateSections}
-        />
+        <View style={HowToStyle.infoViewContainer}>
+          {INFO.map(({title, text}, index) => {
+            return (
+              <React.Fragment key={index}>
+                <Text
+                  style={{
+                    color: lightTheme ? 'black' : MAIN_LIGHT,
+                    fontSize: Adjust(16),
+                    fontWeight: 'bold',
+                    marginBottom: 6,
+                  }}>
+                  {title}
+                </Text>
+                <Text
+                  style={{
+                    color: lightTheme ? 'black' : MAIN_LIGHT,
+                    marginBottom: 6,
+                  }}>
+                  {text}
+                </Text>
+              </React.Fragment>
+            );
+          })}
+        </View>
       </ScrollView>
     </>
   );
@@ -254,7 +225,7 @@ const HowToStyle = EStyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
   },
-  accordionContainer: {
+  infoViewContainer: {
     width: '100%',
     paddingHorizontal: '1rem',
     paddingVertical: '0.8rem',

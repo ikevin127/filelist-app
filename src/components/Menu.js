@@ -10,6 +10,7 @@ import {
   ScrollView,
   Switch,
   BackHandler,
+  TouchableOpacity,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FastImage from 'react-native-fast-image';
@@ -26,7 +27,7 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
   faSignOutAlt,
   faInfoCircle,
-  faDirections,
+  faGlobe,
   faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
 // Variables
@@ -38,7 +39,6 @@ import {
   ACCENT_COLOR,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
-
 // Variables & assets
 import ro from '../assets/ro.png';
 import en from '../assets/en.png';
@@ -70,9 +70,12 @@ export default function LeftDrawer({navigation}) {
 
   // Functions
   const goHowTo = () => navigation.navigate('HowTo');
+  const goFilelist = () => navigation.navigate('Filelist');
   const toggleFontS = () => toggleFontSize('S');
   const toggleFontM = () => toggleFontSize('M');
   const toggleFontL = () => toggleFontSize('L');
+  const openGooglePlay = () =>
+    Linking.openURL('market://details?id=intelligems.torrdroid');
   const goBack = () => navigation.goBack();
 
   const getCurrentUser = async () => {
@@ -104,41 +107,6 @@ export default function LeftDrawer({navigation}) {
       ],
       {cancelable: true},
     );
-  };
-
-  const openFilelist = async () => {
-    const supported = await Linking.canOpenURL('https://filelist.io');
-    if (supported) {
-      Alert.alert(
-        'Info',
-        enLang ? EN.filelistWeb : RO.filelistWeb,
-        [
-          {
-            text: enLang ? EN.yes : RO.yes,
-            onPress: () => Linking.openURL('https://filelist.io'),
-          },
-          {
-            text: enLang ? EN.no : RO.no,
-            onPress: () => {},
-            style: 'cancel',
-          },
-        ],
-        {cancelable: true},
-      );
-    } else {
-      Alert.alert(
-        'Info',
-        enLang ? EN.filelistWebErr : RO.filelistWebErr,
-        [
-          {
-            text: 'OK',
-            onPress: () => {},
-            style: 'cancel',
-          },
-        ],
-        {cancelable: true},
-      );
-    }
   };
 
   const toggleFontSize = async (size) => {
@@ -245,48 +213,48 @@ export default function LeftDrawer({navigation}) {
           {enLang ? EN.menu : RO.menu}
         </Text>
       </View>
-      <ScrollView
-        style={{flex: 1, backgroundColor: lightTheme ? MAIN_LIGHT : 'black'}}
-        showsVerticalScrollIndicator={false}>
-        <View
-          style={[
-            RightDrawerStyle.profileContainer,
-            {backgroundColor: lightTheme ? '#D5D5D5' : '#151515'},
-          ]}>
-          <View style={RightDrawerStyle.profilePicContainer}>
-            <View
-              style={[
-                RightDrawerStyle.profilePicView,
-                {borderColor: lightTheme ? 'black' : 'silver'},
-              ]}>
-              <Text
-                style={{
-                  fontSize: Adjust(40),
-                  textTransform: 'uppercase',
-                  marginBottom: 4,
-                  fontWeight: 'bold',
-                  color: lightTheme ? 'black' : 'white',
-                }}>
-                {user !== '' ? user.charAt(0) : null}
-              </Text>
-            </View>
-          </View>
-          <View style={RightDrawerStyle.usernameView}>
+      <View
+        style={[
+          RightDrawerStyle.profileContainer,
+          {backgroundColor: lightTheme ? '#D5D5D5' : '#151515'},
+        ]}>
+        <View style={RightDrawerStyle.profilePicContainer}>
+          <View
+            style={[
+              RightDrawerStyle.profilePicView,
+              {borderColor: lightTheme ? 'black' : 'silver'},
+            ]}>
             <Text
               style={{
-                fontSize: Adjust(16),
+                fontSize: Adjust(40),
+                textTransform: 'uppercase',
+                marginBottom: 4,
                 fontWeight: 'bold',
                 color: lightTheme ? 'black' : 'white',
               }}>
-              {user !== '' ? user : null}
+              {user !== '' ? user.charAt(0) : null}
             </Text>
           </View>
         </View>
-        <Divider
-          style={{
-            backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
-          }}
-        />
+        <View style={RightDrawerStyle.usernameView}>
+          <Text
+            style={{
+              fontSize: Adjust(16),
+              fontWeight: 'bold',
+              color: lightTheme ? 'black' : 'white',
+            }}>
+            {user !== '' ? user : null}
+          </Text>
+        </View>
+      </View>
+      <Divider
+        style={{
+          backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
+        }}
+      />
+      <ScrollView
+        style={{flex: 1, backgroundColor: lightTheme ? MAIN_LIGHT : 'black'}}
+        showsVerticalScrollIndicator={false}>
         <Text
           style={{
             fontSize: Adjust(12),
@@ -348,7 +316,7 @@ export default function LeftDrawer({navigation}) {
         </View>
         <Divider
           style={{
-            backgroundColor: 'grey',
+            backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
           }}
         />
         <Text
@@ -409,7 +377,7 @@ export default function LeftDrawer({navigation}) {
         </View>
         <Divider
           style={{
-            backgroundColor: 'grey',
+            backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
           }}
         />
         <Text
@@ -503,7 +471,7 @@ export default function LeftDrawer({navigation}) {
         </View>
         <Divider
           style={{
-            backgroundColor: 'grey',
+            backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
           }}
         />
         <Text
@@ -575,13 +543,55 @@ export default function LeftDrawer({navigation}) {
         />
         <View
           style={{
-            height: statusHeight * 3.5,
+            height: statusHeight * 3,
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: lightTheme ? '#D5D5D5' : '#151515',
           }}>
-          <Pressable
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={{
+              width: width,
+              height: '100%',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingHorizontal: statusHeight / 1.5,
+            }}
+            onPress={openGooglePlay}>
+            <View style={{width: 50, height: 50}}>
+              <FastImage
+                style={{height: '100%', width: '100%'}}
+                resizeMode={FastImage.resizeMode.contain}
+                source={require('../assets/td.png')}
+              />
+            </View>
+            <Text
+              style={[
+                RightDrawerStyle.settingsOverlayText,
+                {
+                  fontSize: Adjust(12),
+                  marginLeft: statusHeight / 2,
+                  color: lightTheme ? 'black' : 'white',
+                },
+              ]}>
+              TorrDroid - Torrent Downloader
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <Divider
+          style={{
+            backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
+          }}
+        />
+        <View
+          style={{
+            height: statusHeight * 3,
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <TouchableOpacity
             style={{
               width: width / 3,
               height: '100%',
@@ -589,10 +599,6 @@ export default function LeftDrawer({navigation}) {
               justifyContent: 'center',
               alignItems: 'center',
               paddingHorizontal: statusHeight / 1.5,
-            }}
-            android_ripple={{
-              color: 'grey',
-              borderless: false,
             }}
             onPress={goHowTo}>
             <FontAwesomeIcon
@@ -610,8 +616,8 @@ export default function LeftDrawer({navigation}) {
               ]}>
               Info
             </Text>
-          </Pressable>
-          <Pressable
+          </TouchableOpacity>
+          <TouchableOpacity
             style={{
               width: width / 3,
               height: '100%',
@@ -620,15 +626,11 @@ export default function LeftDrawer({navigation}) {
               alignItems: 'center',
               paddingHorizontal: statusHeight / 1.5,
             }}
-            android_ripple={{
-              color: 'grey',
-              borderless: false,
-            }}
-            onPress={openFilelist}>
+            onPress={goFilelist}>
             <FontAwesomeIcon
               color={lightTheme ? 'black' : MAIN_LIGHT}
               size={Adjust(22)}
-              icon={faDirections}
+              icon={faGlobe}
             />
             <Text
               style={[
@@ -638,10 +640,10 @@ export default function LeftDrawer({navigation}) {
                   color: lightTheme ? 'black' : 'white',
                 },
               ]}>
-              Filelist.io
+              Filelist Web
             </Text>
-          </Pressable>
-          <Pressable
+          </TouchableOpacity>
+          <TouchableOpacity
             style={{
               width: width / 3,
               height: '100%',
@@ -649,10 +651,6 @@ export default function LeftDrawer({navigation}) {
               justifyContent: 'center',
               alignItems: 'center',
               paddingHorizontal: statusHeight / 1.5,
-            }}
-            android_ripple={{
-              color: 'grey',
-              borderless: false,
             }}
             onPress={handleLogout}>
             <FontAwesomeIcon
@@ -670,16 +668,34 @@ export default function LeftDrawer({navigation}) {
               ]}>
               Logout
             </Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+      <Divider
+        style={{
+          backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
+        }}
+      />
+      <View style={{backgroundColor: lightTheme ? '#D5D5D5' : '#151515'}}>
+        <Text
+          style={{
+            fontSize: Adjust(8),
+            fontWeight: 'bold',
+            marginTop: 6,
+            marginBottom: 6,
+            color: 'grey',
+            textAlign: 'center',
+          }}>
+          Filelist App v2021.2.0
+        </Text>
+      </View>
     </>
   );
 }
 
 const RightDrawerStyle = EStyleSheet.create({
   profileContainer: {
-    paddingVertical: statusHeight,
+    paddingVertical: statusHeight / 2,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',

@@ -16,18 +16,15 @@ export const RO = {
   passREQ: 'Codul passkey lipseşte',
   user: 'Utilizator',
   // Drawer
-  infoT1: 'Funcţia de căutare ',
+  infoT1: 'Funcţia de căutare',
   infoC1:
     'Pentru cele mai recente torrente dintr-o anumită categorie selectează cel puţin o categorie din lista de filtre\n\nPentru căutarea după cod IMDb asigură-te că selectezi Căutare după: Cod IMDb din lista de Filtre, pentru exemple legat de diferenţele dintre cele două ţine apăsat 2 secunde (long press) pe oricare dintre cele 2 opţiuni de Căutare după\n\nOpţiunile de Torrente din lista cu Filtre NU au nici un efect atunci când nu se foloseşte un Cuvânt cheie ori Cod IMDb\n\nOpţiunile Torrente: Freeleech, Internal şi 2x Upload pot fi folosite în combinaţie cu oricare dintre Categorii şi Cuvânt cheie ori Cod IMDb',
-  infoT2: 'Semnificaţie Freeleech, Internal şi 2x Upload',
+  infoT2: 'Freeleech, Internal şi 2x Upload',
   infoC2:
     'Freeleech: descărcarea torrentelor din această categorie îţi va creşte Upload-ul fără să adăuge Download astfel nu-ţi va afecta negativ Raţia\n\nInternal: torrente care fac parte din grupuri interne ale trackerului printre care Play(HD|BD|SD|XD)\n\n2x Upload: acest tip de torrente odată descărcate şi ţinute la Seed îţi oferă de 2 ori mai mult upload',
-  infoT6: 'Dacă mărimea textului este prea mică / mare',
-  infoC6:
-    'Se poate schimba din meniu pe mărimile mic, mediu ori mare în funcţie de preferinţă',
-  infoT7: 'Descărcarea fişierelor .torrent',
+  infoT7: 'Descărcarea torrentelor',
   infoC7:
-    'De îndată ce fişierul va fi descărcat, se va încerca deschiderea automată în caz ca există o aplicaţie corespunzătoare deja instalată.\n\nÎn caz contrar se va recomanda descărcarea unui client funcţional din Magazinul Google Play.\n\nÎn urma unor teste cu aplicaţiile uTorrent şi BitTorrent s-a constatat că descărcarea se blochează la 1%, drept urmare se va recomanda aplicaţia TorrDroid care este testată şi funcţionează conform aşteptărilor.',
+    'De îndată ce fişierul va fi descărcat, se va încerca deschiderea automată în caz ca există o aplicaţie corespunzătoare deja instalată.\n\nDacă nu există nici un client instalat se va recomanda descărcarea unui client din Magazinul Google Play.\n\nÎn urma unor teste cu aplicaţiile uTorrent şi BitTorrent s-a constatat că descărcarea se blochează la 1%, drept urmare se va recomanda aplicaţia TorrDroid care este testată, funcţionează şi se poate descărca din Meniu.',
   filelistWeb: 'Doreşti să navighezi spre Filelist.io ?',
   filelistWebErr: 'Navigarea spre Filelist.io nu funcţionează pe telefonul tău',
   yes: 'DA',
@@ -42,7 +39,7 @@ export const RO = {
   autoplay: 'Autoplay trailer',
   settings: 'Setări',
   menu: 'Meniu',
-  logoutPrompt: 'Ai ales să te deloghezi. Doreşti să continui ?',
+  logoutPrompt: 'Eşti pe cale să te deloghezi. Doreşti să continui ?',
   // Home screen
   refreshComplete: 'Actualizare completă',
   download: 'Fişierul torrent a fost descărcat în directorul Download',
@@ -133,15 +130,12 @@ export const EN = {
   infoT1: 'Search function',
   infoC1:
     "In order to search torrents you need to choose at least one Category from Filters\n\nIf you want to search for movies using their IMDb Code make sure to select Search with: IMDb Code from Filters, for more information on the Search with options (long press) on any of the two options\n\nThe Torrent options from Filters DOESN'T have any effect when searching without any Keyword or IMDb Code\n\nThe Torrent options: Freeleech, Internal and 2x Upload have effect ONLY when they're being used in combination with a Keyword or IMDb Code",
-  infoT2: 'About Freeleech, Internal and 2x Upload',
+  infoT2: 'Freeleech, Internal and 2x Upload',
   infoC2:
     "Freeleech: when downloading these type torrents, you will get Upload only without adding to your Download quota therefore your Ratio WON'T be negatively affected\n\nInternal: these type of torrents are part of Filelist internal groups like Play(HD|BD|SD|XD)\n\n2x Upload: these type of torrents once downloaded and held on Seed in your torrent client will get you 2x more Upload which will grow your Ratio 2 times faster then Seeding regular torrents",
-  infoT6: 'Text size is too small / large',
-  infoC6:
-    'You can change it from the menu, having 3 sizes at your disposal: small, medium and large as per your preference',
-  infoT7: 'Downloading .torrent files',
+  infoT7: 'Downloading torrents',
   infoC7:
-    "Once a file was downloaded the app will try to automatically open it in case there's any default .torrent client already installed.\n\nOtherwise you will be recommended a tested and functional .torrent client from the Google Play Store.\n\nAs a result of testing, following user's feedback we found that downloading with either uTorrent or BitTorrent stops at 1% hence you will be recommended the TorrDroid app which is tested and works as expected.",
+    "Once a file was downloaded the app will try to automatically open it in case there's any torrent client already installed.\n\nIn case there's no torrent client available you will be recommended a tested and functional torrent client from the Google Play Store.\n\nAs a result of testing, following user's feedback we found that downloading with either uTorrent or BitTorrent stops at 1% hence you will be recommended the TorrDroid app which is tested, works and can be downloaded from the Menu.",
   filelistWeb: 'Do you want to navigate to Filelist.io ?',
   filelistWebErr: "Navigation to Filelist.io doesn't work on your phone",
   yes: 'YES',

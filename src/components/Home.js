@@ -8,15 +8,11 @@ import {
   FlatList,
   RefreshControl,
   StatusBar,
-  ActivityIndicator,
   Pressable,
   Platform,
   Keyboard,
   PermissionsAndroid,
   ToastAndroid,
-  TouchableOpacity,
-  BackHandler,
-  Linking,
 } from 'react-native';
 import RNFetchBlob from 'rn-fetch-blob';
 import Collapsible from 'react-native-collapsible';
@@ -41,9 +37,6 @@ import {
   faSearch,
   faFileDownload,
   faBars,
-  faCheck,
-  faTimes,
-  faExclamationCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import {faImdb} from '@fortawesome/free-brands-svg-icons';
 // Variables & assets
@@ -84,9 +77,7 @@ import xxx from '../assets/cat/xxx.png';
 export default function Home({navigation}) {
   const netRef = useRef(false);
   const [refreshing] = useState(false);
-  const [listEndMsg, setListEndMsg] = useState(false);
   const [isNetReachable, setIsNetReachable] = useState(true);
-  const [downloadClient, setDownloadClient] = useState(false);
   // Animations
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
@@ -100,7 +91,6 @@ export default function Home({navigation}) {
     collItems,
     listLatest,
     latestLoading,
-    endListLoading,
     latestError,
     enLang,
   } = useSelector((state) => state.appConfig);
@@ -132,20 +122,6 @@ export default function Home({navigation}) {
   }, [latestError]);
 
   useEffect(() => {
-    BackHandler.addEventListener('hardwareBackPress', () => {
-      if (downloadClient) {
-        setDownloadClient(!downloadClient);
-      }
-      return true;
-    });
-
-    return () => {
-      BackHandler.removeEventListener('hardwareBackPress');
-    };
-    // eslint-disable-next-line  react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     // Connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isInternetReachable) {
@@ -169,17 +145,11 @@ export default function Home({navigation}) {
   // FUNCTIONS
   const goMenu = () => navigation.navigate('Menu');
   const goSearch = () => navigation.navigate('Search');
-  const closeDownloadClient = () => setDownloadClient(!downloadClient);
-  const openGooglePlay = () => {
-    Linking.openURL('market://details?id=intelligems.torrdroid');
-    closeDownloadClient();
-  };
 
-  const goIMDb = (id) => async () => {
+  const goIMDb = (id) => () =>
     navigation.navigate('IMDb', {
       id,
     });
-  };
 
   const setLimitReached = () =>
     Alert.alert(
@@ -282,23 +252,6 @@ export default function Home({navigation}) {
     }
   }, [dispatch]);
 
-  const getMore = async () => {
-    if (!isNetReachable) {
-      netOff();
-    } else {
-      if (listLatest && listLatest.length > 35) {
-        setListEndMsg(true);
-      } else {
-        setListEndMsg(false);
-        const value0 = await AsyncStorage.getItem('username');
-        const value1 = await AsyncStorage.getItem('passkey');
-        if (value0 !== null && value1 !== null) {
-          dispatch(AppConfigActions.getPlusLatest(value0, value1, 50));
-        }
-      }
-    }
-  };
-
   const setCollapsible = (id) => () => {
     const newIds = [...collItems];
     const index = newIds.indexOf(id);
@@ -349,12 +302,7 @@ export default function Home({navigation}) {
         config(options)
           .fetch('GET', link)
           .then((res) => {
-            android
-              .actionViewIntent(res.path(), 'application/x-bittorrent')
-              .then(
-                (response) =>
-                  response === null && setDownloadClient(!downloadClient),
-              );
+            android.actionViewIntent(res.path(), 'application/x-bittorrent');
           });
       } else {
         netOff();
@@ -1074,77 +1022,6 @@ export default function Home({navigation}) {
             </Text>
           </View>
         </View>
-        {downloadClient ? (
-          <View
-            style={{
-              zIndex: 999,
-              elevation: 999,
-              width: '100%',
-              height: '100%',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: 'rgba(0,0,0,0.9)',
-            }}>
-            <View style={{}}>
-              <FontAwesomeIcon
-                size={Adjust(80)}
-                color={ACCENT_COLOR}
-                icon={faExclamationCircle}
-              />
-            </View>
-            <Text
-              style={{
-                fontSize: Adjust(14),
-                textAlign: 'center',
-                color: 'white',
-                marginTop: statusHeight,
-                paddingHorizontal: statusHeight,
-              }}>
-              {enLang ? EN.downloadClient : RO.downloadClient}
-            </Text>
-            <View style={{width, height: 50, marginTop: statusHeight}}>
-              <FastImage
-                style={HomePage.itemPresssableFastImage}
-                resizeMode={FastImage.resizeMode.contain}
-                source={require('../assets/td.png')}
-              />
-              <Text
-                style={{
-                  fontSize: Adjust(12),
-                  textAlign: 'center',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  marginTop: statusHeight / 3,
-                  paddingHorizontal: statusHeight,
-                }}>
-                TorrDroid - Torrent Downloader
-              </Text>
-              <View style={{width, height: 40, marginTop: statusHeight}}>
-                <TouchableOpacity activeOpacity={0.8} onPress={openGooglePlay}>
-                  <FastImage
-                    style={HomePage.itemPresssableFastImage}
-                    resizeMode={FastImage.resizeMode.contain}
-                    source={require('../assets/gp.png')}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={{height: 100, marginTop: statusHeight * 8}}>
-              <TouchableOpacity
-                activeOpacity={0.6}
-                onPress={closeDownloadClient}>
-                <FontAwesomeIcon
-                  size={Adjust(40)}
-                  color={'red'}
-                  icon={faTimes}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : null}
         <FlatList
           refreshControl={
             latestLoading ? null : (
@@ -1156,35 +1033,11 @@ export default function Home({navigation}) {
               />
             )
           }
-          ListFooterComponent={() =>
-            endListLoading ? (
-              <ActivityIndicator
-                style={{marginVertical: statusHeight / 1.5}}
-                size="large"
-                color={ACCENT_COLOR}
-              />
-            ) : listEndMsg ? (
-              <View
-                style={{
-                  marginVertical: statusHeight / 1.5,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <FontAwesomeIcon
-                  size={14}
-                  icon={faCheck}
-                  color={ACCENT_COLOR}
-                />
-              </View>
-            ) : null
-          }
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             padding: 9,
             width,
           }}
-          onEndReachedThreshold={0.02}
-          onEndReached={latestError !== null ? null : getMore}
           data={
             latestLoading
               ? [

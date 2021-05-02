@@ -14,7 +14,6 @@ import {
   PermissionsAndroid,
   ToastAndroid,
   BackHandler,
-  Linking,
 } from 'react-native';
 import RNFetchBlob from 'rn-fetch-blob';
 import Collapsible from 'react-native-collapsible';
@@ -45,13 +44,11 @@ import {
   faAngleDoubleUp,
   faFileDownload,
   faCheckSquare,
-  faCheck,
   faEraser,
   faFilter,
   faArrowLeft,
   faTimes,
   faArrowUp,
-  faExclamationCircle,
   faSync,
 } from '@fortawesome/free-solid-svg-icons';
 import {faImdb} from '@fortawesome/free-brands-svg-icons';
@@ -86,7 +83,6 @@ import {catValues} from '../assets/catData';
 // Variables
 import {
   width,
-  height,
   MAIN_LIGHT,
   ACCENT_COLOR,
   statusHeight,
@@ -103,7 +99,6 @@ export default function Search({navigation}) {
   const [keySearch, setKeySearch] = useState(true);
   const [isNetReachable, setIsNetReachable] = useState(true);
   const [historyHidden, setHistoryHidden] = useState(false);
-  const [downloadClient, setDownloadClient] = useState(false);
   // Categories
   const [animes, setAnimes] = useState(false);
   const [audio, setAudio] = useState(false);
@@ -214,21 +209,21 @@ export default function Search({navigation}) {
 
   useEffect(() => {
     BackHandler.addEventListener('hardwareBackPress', () => {
-      if (downloadClient) {
-        setDownloadClient(!downloadClient);
-      }
+      goBack();
       return true;
     });
 
     return () => {
-      BackHandler.removeEventListener('hardwareBackPress');
+      BackHandler.removeEventListener('hardwareBackPress', () => {
+        goBack();
+        return true;
+      });
     };
-    // eslint-disable-next-line  react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // FUNCTIONS
   const closeSuggestions = () => setHistoryHidden(false);
-  const closeDownloadClient = () => setDownloadClient(!downloadClient);
   const animesSetCat = () => setAnimes(!animes);
   const audioSetCat = () => setAudio(!audio);
   const deseneSetCat = () => setDesene(!desene);
@@ -261,10 +256,6 @@ export default function Search({navigation}) {
   const displayCatList = () => setCatListLatest(!catListLatest);
   const setSearchValue = (query) => () =>
     formikRef.current.setFieldValue('search', query);
-  const openGooglePlay = () => {
-    Linking.openURL('market://details?id=intelligems.torrdroid');
-    closeDownloadClient();
-  };
 
   const setLimitReached = () =>
     Alert.alert(
@@ -560,12 +551,7 @@ export default function Search({navigation}) {
         config(options)
           .fetch('GET', link)
           .then((res) => {
-            android
-              .actionViewIntent(res.path(), 'application/x-bittorrent')
-              .then(
-                (response) =>
-                  response === null && setDownloadClient(!downloadClient),
-              );
+            android.actionViewIntent(res.path(), 'application/x-bittorrent');
           });
       } else {
         netOff();
@@ -1354,10 +1340,9 @@ export default function Search({navigation}) {
         overlayStyle={[
           SearchPage.catCheckOverlay,
           {
-            height: Platform.Version < 23 ? height - statusHeight : height,
-            paddingTop:
-              Platform.OS === 'android' ? statusHeight / 1.5 : statusHeight * 2,
-            paddingBottom: statusHeight / 2,
+            flex: 1,
+            padding: 0,
+            margin: 0,
             backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
           },
         ]}
@@ -1367,39 +1352,60 @@ export default function Search({navigation}) {
           <View style={SearchPage.catCheckContainer}>
             <View
               style={{
-                width,
-                height: width / 8,
+                height: statusHeight * 3.5,
+                width: '100%',
+                display: 'flex',
                 flexDirection: 'row',
-                left: 10,
-                paddingRight: 25,
-                paddingBottom: 10,
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: ACCENT_COLOR,
               }}>
+              <Pressable
+                style={{
+                  position: 'absolute',
+                  top: statusHeight * 1.6,
+                  left: statusHeight / 1.5,
+                }}
+                android_ripple={{
+                  color: 'white',
+                  borderless: true,
+                  radius: statusHeight / 1.3,
+                }}
+                onPress={getIndexes}>
+                <FontAwesomeIcon
+                  color={'white'}
+                  size={Adjust(22)}
+                  icon={faArrowLeft}
+                />
+              </Pressable>
               <Text
                 style={{
-                  color: lightTheme ? 'black' : 'white',
+                  fontSize: Adjust(16),
+                  marginTop: statusHeight * 1.1,
+                  marginBottom: statusHeight / 2,
                   fontWeight: 'bold',
-                  fontSize: Adjust(fontSizes !== null ? fontSizes[8] : 22),
-                  paddingLeft: 5,
+                  color: 'white',
                 }}>
                 {enLang ? EN.filters : RO.filters}
               </Text>
-              <View
-                style={[
-                  SearchPage.catCheckOverlayErase,
-                  {bottom: Platform.OS === 'android' ? 0 : 10},
-                ]}>
-                <Pressable
-                  style={SearchPage.catCheckOverlayPressableErase}
-                  android_ripple={{
-                    color: 'white',
-                    borderless: false,
-                  }}
-                  onPress={resetFilters}>
-                  <FontAwesomeIcon color={'white'} size={20} icon={faEraser} />
-                </Pressable>
-              </View>
+              <Pressable
+                style={{
+                  position: 'absolute',
+                  top: statusHeight * 1.6,
+                  right: statusHeight / 1.5,
+                }}
+                android_ripple={{
+                  color: 'white',
+                  borderless: true,
+                  radius: statusHeight / 1.3,
+                }}
+                onPress={resetFilters}>
+                <FontAwesomeIcon
+                  color={'white'}
+                  size={Adjust(22)}
+                  icon={faEraser}
+                />
+              </Pressable>
             </View>
             <ScrollView
               showsVerticalScrollIndicator={true}
@@ -2726,17 +2732,6 @@ export default function Search({navigation}) {
                 </Chip>
               </View>
             </ScrollView>
-            <View style={SearchPage.catCheckOverlayFooter}>
-              <Pressable
-                style={SearchPage.catCheckOverlayPressable}
-                android_ripple={{
-                  color: 'white',
-                  borderless: false,
-                }}
-                onPress={getIndexes}>
-                <FontAwesomeIcon color={'white'} size={20} icon={faCheck} />
-              </Pressable>
-            </View>
           </View>
         </>
       </Overlay>
@@ -2800,11 +2795,11 @@ export default function Search({navigation}) {
                       borderless: true,
                       radius: statusHeight / 1.3,
                     }}
-                    onPress={resetForm}>
+                    onPress={handleSubmit}>
                     <FontAwesomeIcon
                       size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
                       color={'white'}
-                      icon={faTimes}
+                      icon={faSearch}
                     />
                   </Pressable>
                 ) : (
@@ -2825,31 +2820,38 @@ export default function Search({navigation}) {
                 )}
               </View>
               <View style={SearchPage.mainHeaderSearch2Container}>
-                <Pressable
-                  style={SearchPage.mainHeaderCogPressable}
-                  android_ripple={{
-                    color: 'white',
-                    borderless: true,
-                    radius: statusHeight / 1.3,
-                  }}
-                  onPress={handleSubmit}>
-                  <FontAwesomeIcon
-                    size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
-                    color={'white'}
-                    icon={faSearch}
-                  />
-                </Pressable>
+                {values.search.length > 0 && (
+                  <Pressable
+                    style={SearchPage.mainHeaderCogPressable}
+                    android_ripple={{
+                      color: 'white',
+                      borderless: true,
+                      radius: statusHeight / 1.3,
+                    }}
+                    onPress={resetForm}>
+                    <FontAwesomeIcon
+                      size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+                      color={'white'}
+                      icon={faTimes}
+                    />
+                  </Pressable>
+                )}
               </View>
               <View style={SearchPage.mainHeaderSearch3Container}>
                 <Badge
-                  containerStyle={SearchPage.mainHeaderSearch3Badge}
+                  containerStyle={[
+                    SearchPage.mainHeaderSearch3Badge,
+                    {
+                      right:
+                        +selectedFilters > 0 && +selectedFilters <= 9 ? 9 : 4,
+                    },
+                  ]}
                   badgeStyle={{
                     borderWidth: 0,
-                    backgroundColor:
-                      selectedFilters === '0' ? 'transparent' : 'black',
+                    backgroundColor: 'transparent',
                   }}
                   textStyle={{
-                    color: selectedFilters === '0' ? 'transparent' : 'white',
+                    color: +selectedFilters === 0 ? 'transparent' : 'black',
                     fontWeight: 'bold',
                   }}
                   value={selectedFilters}
@@ -2863,7 +2865,7 @@ export default function Search({navigation}) {
                   }}
                   onPress={displayCatList}>
                   <FontAwesomeIcon
-                    size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+                    size={Adjust(fontSizes !== null ? fontSizes[7] : 20)}
                     color={'white'}
                     icon={faFilter}
                   />
@@ -2987,71 +2989,6 @@ export default function Search({navigation}) {
           keyExtractor={(item) => item.id.toString()}
         />
       )}
-      {downloadClient ? (
-        <View
-          style={{
-            zIndex: 999,
-            elevation: 999,
-            width: '100%',
-            height: '100%',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0,0,0,0.9)',
-          }}>
-          <View style={{}}>
-            <FontAwesomeIcon
-              size={Adjust(80)}
-              color={ACCENT_COLOR}
-              icon={faExclamationCircle}
-            />
-          </View>
-          <Text
-            style={{
-              fontSize: Adjust(14),
-              textAlign: 'center',
-              color: 'white',
-              marginTop: statusHeight,
-              paddingHorizontal: statusHeight,
-            }}>
-            {enLang ? EN.downloadClient : RO.downloadClient}
-          </Text>
-          <View style={{width, height: 50, marginTop: statusHeight}}>
-            <FastImage
-              style={SearchPage.itemPresssableFastImage}
-              resizeMode={FastImage.resizeMode.contain}
-              source={require('../assets/td.png')}
-            />
-            <Text
-              style={{
-                fontSize: Adjust(12),
-                textAlign: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                marginTop: statusHeight / 3,
-                paddingHorizontal: statusHeight,
-              }}>
-              TorrDroid - Torrent Downloader
-            </Text>
-            <View style={{width, height: 40, marginTop: statusHeight}}>
-              <TouchableOpacity activeOpacity={0.8} onPress={openGooglePlay}>
-                <FastImage
-                  style={SearchPage.itemPresssableFastImage}
-                  resizeMode={FastImage.resizeMode.contain}
-                  source={require('../assets/gp.png')}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={{height: 100, marginTop: statusHeight * 8}}>
-            <TouchableOpacity activeOpacity={0.6} onPress={closeDownloadClient}>
-              <FontAwesomeIcon size={Adjust(40)} color={'red'} icon={faTimes} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : null}
       {!historyHidden && (
         <FlatList
           data={
@@ -3305,6 +3242,7 @@ const SearchPage = EStyleSheet.create({
     width: '100%',
     height: '100%',
     marginBottom: statusHeight / 2,
+    paddingHorizontal: 10,
   },
   catCheckScrollContainer: {
     flex: 1,
@@ -3390,11 +3328,8 @@ const SearchPage = EStyleSheet.create({
     alignItems: 'center',
   },
   mainHeaderSearch3Badge: {
-    zIndex: 5,
-    elevation: 5,
     position: 'absolute',
-    top: 0,
-    right: 0,
+    bottom: 10,
   },
   mainHeaderCogPressable: {
     width: '100%',

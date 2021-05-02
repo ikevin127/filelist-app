@@ -339,7 +339,7 @@ export default function IMDb({route, navigation}) {
                   borderRadius: 34,
                   overflow: 'hidden',
                   marginVertical: statusHeight / 2,
-                  marginBottom: statusHeight,
+                  marginBottom: statusHeight * 2,
                   backgroundColor: ACCENT_COLOR,
                 }}>
                 <Pressable

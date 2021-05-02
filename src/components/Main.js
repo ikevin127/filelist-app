@@ -7,6 +7,7 @@ import {AppConfigActions} from '../redux/actions';
 // Screens
 import Menu from './Menu';
 import TrailerView from './TrailerView';
+import FilelistView from './FilelistView';
 import Loading from './Loading';
 import Search from './Search';
 import Login from './Login';
@@ -91,6 +92,7 @@ function Auth() {
           <Stack.Screen name="HowTo" component={HowTo} />
           <Stack.Screen name="IMDb" component={IMDb} />
           <Stack.Screen name="Trailer" component={TrailerView} />
+          <Stack.Screen name="Filelist" component={FilelistView} />
         </>
       ) : loading ? (
         <Stack.Screen name="Loading" component={Loading} />
