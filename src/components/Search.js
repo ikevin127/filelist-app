@@ -3332,8 +3332,6 @@ const SearchPage = EStyleSheet.create({
     bottom: 10,
   },
   mainHeaderCogPressable: {
-    width: '100%',
-    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },

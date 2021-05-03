@@ -139,8 +139,8 @@ android {
         applicationId "com.baderproductions.fl"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 17
-        versionName "2021.2.0"
+        versionCode 19
+        versionName "2021.3.0"
         multiDexEnabled true
     }
     splits {

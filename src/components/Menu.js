@@ -686,7 +686,7 @@ export default function LeftDrawer({navigation}) {
             color: 'grey',
             textAlign: 'center',
           }}>
-          Filelist App v2021.2.0
+          Filelist App v2021.3.0
         </Text>
       </View>
     </>

@@ -1220,7 +1220,7 @@ const HomePage = EStyleSheet.create({
   },
   mainHeaderSearchContainer: {
     position: 'absolute',
-    right: statusHeight / 2.5,
+    right: statusHeight / 3.5,
     bottom: '1.2rem',
     width: '3rem',
     height: '2.5rem',
@@ -1229,7 +1229,7 @@ const HomePage = EStyleSheet.create({
   },
   mainHeaderCogContainer: {
     position: 'absolute',
-    left: statusHeight / 2.5,
+    left: statusHeight / 3.5,
     bottom: '1.2rem',
     width: '3rem',
     height: '2.5rem',
@@ -1237,8 +1237,6 @@ const HomePage = EStyleSheet.create({
     alignItems: 'center',
   },
   mainHeaderCogPressable: {
-    width: '100%',
-    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
