@@ -60,4 +60,10 @@ buck-out/
 
 # CocoaPods & iOS
 /ios/Pods/
+/ios/Podfile.lock
 /ios/GoogleService-Info.plist
+/ios/filelist.xcodeproj/xcshareddata/xcschemes/filelist.xcscheme
+/ios/filelist.xcodeproj/xcshareddata/xcschemes/filelist-tvOS.xcscheme
+/ios/filelist.xcodeproj/project.pbxproj
+/ios/Podfile
+/ios/filelist/filelist.entitlements
