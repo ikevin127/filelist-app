@@ -83,7 +83,7 @@
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"
-      customArchiveName = "Filelist Aoo"
+      customArchiveName = "Filelist App"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>

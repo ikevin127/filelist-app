@@ -81,8 +81,16 @@ export default function Home({navigation}) {
   // Animations
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
-  const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
-  const [showNetworkAlertOff] = useState(new Animated.Value(statusHeight * 3));
+  const [showNetworkAlertOn] = useState(
+    new Animated.Value(
+      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
+    ),
+  );
+  const [showNetworkAlertOff] = useState(
+    new Animated.Value(
+      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
+    ),
+  );
   // Redux
   const dispatch = useDispatch();
   const {
@@ -124,16 +132,46 @@ export default function Home({navigation}) {
   useEffect(() => {
     // Connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
-      if (state.isInternetReachable) {
-        if (netRef.current) {
-          setIsNetReachable(true);
-          netOn();
+      if (Platform.OS === 'ios') {
+        if (state.isInternetReachable === null) {
+          setTimeout(() => {
+            if (state.isInternetReachable) {
+              if (netRef.current) {
+                setIsNetReachable(true);
+                netOn();
+              } else {
+                netRef.current = true;
+              }
+            } else {
+              setIsNetReachable(false);
+              netOff();
+            }
+          }, 1500);
         } else {
-          netRef.current = true;
+          if (state.isInternetReachable) {
+            if (netRef.current) {
+              setIsNetReachable(true);
+              netOn();
+            } else {
+              netRef.current = true;
+            }
+          } else {
+            setIsNetReachable(false);
+            netOff();
+          }
         }
       } else {
-        setIsNetReachable(false);
-        netOff();
+        if (state.isInternetReachable) {
+          if (netRef.current) {
+            setIsNetReachable(true);
+            netOn();
+          } else {
+            netRef.current = true;
+          }
+        } else {
+          setIsNetReachable(false);
+          netOff();
+        }
       }
     });
     return () => {
@@ -344,7 +382,7 @@ export default function Home({navigation}) {
   const netOn = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: 0,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -356,7 +394,7 @@ export default function Home({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -371,7 +409,7 @@ export default function Home({navigation}) {
   const netOff = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: 0,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -383,7 +421,7 @@ export default function Home({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -476,7 +514,7 @@ export default function Home({navigation}) {
   // Pressable component
   const Item = ({item, onPress, style}) => (
     <PressableOpacity
-          activeOpacity={0.5}
+      activeOpacity={0.5}
       onPress={setCollapsible(item.id)}
       android_ripple={{
         color: 'grey',
@@ -723,7 +761,7 @@ export default function Home({navigation}) {
                     alignItems: 'center',
                   }}>
                   <PressableOpacity
-          activeOpacity={0.5}
+                    activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -758,7 +796,7 @@ export default function Home({navigation}) {
                     alignItems: 'center',
                   }}>
                   <PressableOpacity
-          activeOpacity={0.5}
+                    activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -793,7 +831,7 @@ export default function Home({navigation}) {
                     alignItems: 'center',
                   }}>
                   <PressableOpacity
-          activeOpacity={0.5}
+                    activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -843,7 +881,7 @@ export default function Home({navigation}) {
                     alignItems: 'center',
                   }}>
                   <PressableOpacity
-          activeOpacity={0.5}
+                    activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -878,7 +916,7 @@ export default function Home({navigation}) {
                     alignItems: 'center',
                   }}>
                   <PressableOpacity
-          activeOpacity={0.5}
+                    activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -913,7 +951,7 @@ export default function Home({navigation}) {
                     alignItems: 'center',
                   }}>
                   <PressableOpacity
-          activeOpacity={0.5}
+                    activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -968,7 +1006,7 @@ export default function Home({navigation}) {
                       backgroundColor: lightTheme ? 'goldenrod' : 'gold',
                     }}>
                     <PressableOpacity
-          activeOpacity={0.5}
+                      activeOpacity={0.5}
                       style={{
                         width: width / 6.5,
                         height: width / 6.5,
@@ -1016,7 +1054,7 @@ export default function Home({navigation}) {
           <View style={HomePage.mainHeaderContainer}>
             <View style={HomePage.mainHeaderCogContainer}>
               <PressableOpacity
-          activeOpacity={0.5}
+                activeOpacity={0.5}
                 style={HomePage.mainHeaderCogPressable}
                 android_ripple={{
                   color: 'white',
@@ -1033,7 +1071,7 @@ export default function Home({navigation}) {
             </View>
             <View style={HomePage.mainHeaderSearchContainer}>
               <PressableOpacity
-          activeOpacity={0.5}
+                activeOpacity={0.5}
                 style={HomePage.mainHeaderCogPressable}
                 android_ripple={{
                   color: 'white',
@@ -1106,6 +1144,7 @@ export default function Home({navigation}) {
                 height:
                   Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'limegreen',
+                bottom: Platform.OS === 'ios' ? height : 0,
                 transform: [
                   {
                     translateY: showNetworkAlertOn,
@@ -1131,6 +1170,7 @@ export default function Home({navigation}) {
                 height:
                   Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
                 backgroundColor: 'crimson',
+                bottom: Platform.OS === 'ios' ? height : 0,
                 transform: [
                   {
                     translateY: showNetworkAlertOff,
@@ -1334,9 +1374,9 @@ const HomePage = EStyleSheet.create({
     elevation: 10,
     zIndex: 10,
     position: 'absolute',
-    bottom: 0,
     width: '100%',
-    justifyContent: 'center',
+    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'center',
     alignItems: 'center',
+    paddingBottom: Platform.OS === 'ios' ? 10 : 0,
   },
 });

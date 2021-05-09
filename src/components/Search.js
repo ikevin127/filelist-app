@@ -132,8 +132,16 @@ export default function Search({navigation}) {
   // Animations
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
-  const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
-  const [showNetworkAlertOff] = useState(new Animated.Value(statusHeight * 3));
+  const [showNetworkAlertOn] = useState(
+    new Animated.Value(
+      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
+    ),
+  );
+  const [showNetworkAlertOff] = useState(
+    new Animated.Value(
+      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
+    ),
+  );
   // Redux
   const dispatch = useDispatch();
   const {
@@ -163,16 +171,46 @@ export default function Search({navigation}) {
   useEffect(() => {
     // Connection listener
     const netListener = NetInfo.addEventListener((state) => {
-      if (state.isInternetReachable) {
-        if (netRef.current) {
-          setIsNetReachable(true);
-          netOn();
+      if (Platform.OS === 'ios') {
+        if (state.isInternetReachable === null) {
+          setTimeout(() => {
+            if (state.isInternetReachable) {
+              if (netRef.current) {
+                setIsNetReachable(true);
+                netOn();
+              } else {
+                netRef.current = true;
+              }
+            } else {
+              setIsNetReachable(false);
+              netOff();
+            }
+          }, 1500);
         } else {
-          netRef.current = true;
+          if (state.isInternetReachable) {
+            if (netRef.current) {
+              setIsNetReachable(true);
+              netOn();
+            } else {
+              netRef.current = true;
+            }
+          } else {
+            setIsNetReachable(false);
+            netOff();
+          }
         }
       } else {
-        setIsNetReachable(false);
-        netOff();
+        if (state.isInternetReachable) {
+          if (netRef.current) {
+            setIsNetReachable(true);
+            netOn();
+          } else {
+            netRef.current = true;
+          }
+        } else {
+          setIsNetReachable(false);
+          netOff();
+        }
       }
     });
 
@@ -697,7 +735,7 @@ export default function Search({navigation}) {
   const netOn = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: 0,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -709,7 +747,7 @@ export default function Search({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -724,7 +762,7 @@ export default function Search({navigation}) {
   const netOff = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: 0,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -736,7 +774,7 @@ export default function Search({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -1154,7 +1192,7 @@ export default function Search({navigation}) {
                     alignItems: 'center',
                   }}>
                   <PressableOpacity
-          activeOpacity={0.5}
+                    activeOpacity={0.5}
                     style={SearchPage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -1274,7 +1312,7 @@ export default function Search({navigation}) {
                     alignItems: 'center',
                   }}>
                   <PressableOpacity
-          activeOpacity={0.5}
+                    activeOpacity={0.5}
                     style={SearchPage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -2804,7 +2842,7 @@ export default function Search({navigation}) {
                 style={[
                   SearchPage.inputStyle,
                   {
-                    fontSize: Platform.OS === 'ios' ? Adjust(16) : Adjust(12),
+                    fontSize: Platform.OS === 'ios' ? Adjust(14) : Adjust(12),
                     color: 'white',
                   },
                 ]}
@@ -2861,7 +2899,11 @@ export default function Search({navigation}) {
                     }}
                     onPress={goBack}>
                     <FontAwesomeIcon
-                      size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+                      size={
+                        Platform.OS === 'ios'
+                          ? Adjust(28)
+                          : Adjust(fontSizes !== null ? fontSizes[8] : 22)
+                      }
                       color={'white'}
                       icon={faArrowLeft}
                     />
@@ -2991,14 +3033,15 @@ export default function Search({navigation}) {
           )}
           renderItem={({item}) => (
             <PressableOpacity
-          activeOpacity={0.5}
+              activeOpacity={0.5}
               style={{
                 display: 'flex',
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 width,
-                height: statusHeight * 1.6,
+                height:
+                  Platform.OS === 'ios' ? statusHeight : statusHeight * 1.6,
                 paddingLeft: statusHeight / 2,
               }}
               android_ripple={{
@@ -3456,9 +3499,9 @@ const SearchPage = EStyleSheet.create({
     elevation: 10,
     zIndex: 10,
     position: 'absolute',
-    bottom: 0,
     width: '100%',
-    justifyContent: 'center',
+    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'center',
     alignItems: 'center',
+    paddingBottom: Platform.OS === 'ios' ? 10 : 0,
   },
 });

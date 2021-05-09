@@ -54,8 +54,16 @@ export default function Login() {
   const [isNetReachable, setIsNetReachable] = useState(true);
   const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
-  const [showNetworkAlertOn] = useState(new Animated.Value(statusHeight * 3));
-  const [showNetworkAlertOff] = useState(new Animated.Value(statusHeight * 3));
+  const [showNetworkAlertOn] = useState(
+    new Animated.Value(
+      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
+    ),
+  );
+  const [showNetworkAlertOff] = useState(
+    new Animated.Value(
+      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
+    ),
+  );
   // Redux
   const dispatch = useDispatch();
   const {lightTheme, listLatest, latestError, fontSizes, enLang} = useSelector(
@@ -115,20 +123,46 @@ export default function Login() {
   useEffect(() => {
     // Network connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
-      console.log(state.isInternetReachable);
-      if (isNetReachable && state.isInternetReachable === null) {
-        return;
-      }
-      if (state.isInternetReachable !== null) {
-        if (netRef.current) {
-          setIsNetReachable(true);
-          netOn();
+      if (Platform.OS === 'ios') {
+        if (state.isInternetReachable === null) {
+          setTimeout(() => {
+            if (state.isInternetReachable) {
+              if (netRef.current) {
+                setIsNetReachable(true);
+                netOn();
+              } else {
+                netRef.current = true;
+              }
+            } else {
+              setIsNetReachable(false);
+              netOff();
+            }
+          }, 1500);
         } else {
-          netRef.current = true;
+          if (state.isInternetReachable) {
+            if (netRef.current) {
+              setIsNetReachable(true);
+              netOn();
+            } else {
+              netRef.current = true;
+            }
+          } else {
+            setIsNetReachable(false);
+            netOff();
+          }
         }
       } else {
-        setIsNetReachable(false);
-        netOff();
+        if (state.isInternetReachable) {
+          if (netRef.current) {
+            setIsNetReachable(true);
+            netOn();
+          } else {
+            netRef.current = true;
+          }
+        } else {
+          setIsNetReachable(false);
+          netOff();
+        }
       }
     });
 
@@ -206,7 +240,7 @@ export default function Login() {
   const netOn = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: 0,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -218,7 +252,7 @@ export default function Login() {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -233,7 +267,7 @@ export default function Login() {
   const netOff = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: 0,
+        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -245,7 +279,7 @@ export default function Login() {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -495,6 +529,7 @@ export default function Login() {
             {
               height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
               backgroundColor: 'limegreen',
+              bottom: Platform.OS === 'ios' ? height : 0,
               transform: [
                 {
                   translateY: showNetworkAlertOn,
@@ -519,6 +554,7 @@ export default function Login() {
             {
               height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
               backgroundColor: 'crimson',
+              bottom: Platform.OS === 'ios' ? height : 0,
               transform: [
                 {
                   translateY: showNetworkAlertOff,
@@ -600,7 +636,7 @@ const LoginPage = EStyleSheet.create({
   langView: {
     position: 'absolute',
     height: statusHeight * 2,
-    bottom: statusHeight,
+    bottom: Platform.OS === 'ios' ? statusHeight / 3 : statusHeight,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -612,9 +648,9 @@ const LoginPage = EStyleSheet.create({
     elevation: 10,
     zIndex: 10,
     position: 'absolute',
-    bottom: 0,
     width: '100%',
-    justifyContent: 'center',
+    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'center',
     alignItems: 'center',
+    paddingBottom: Platform.OS === 'ios' ? 10 : 0,
   },
 });

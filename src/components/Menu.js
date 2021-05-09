@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import FastImage from 'react-native-fast-image';
 import Divider from 'react-native-paper/lib/commonjs/components/Divider';
 import {CheckBox} from 'react-native-elements';
+import RadioButton from 'react-native-paper/lib/commonjs/components/RadioButton/RadioButton';
 // Redux
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
@@ -169,6 +170,77 @@ export default function LeftDrawer({navigation}) {
       await AsyncStorage.setItem('autoplay', 'false');
     }
     dispatch(AppConfigActions.toggleAutoplay());
+  };
+
+  // Platform specific RadioButton / CheckBox
+  const RadioCheckBox = (
+    type,
+    checkedColor,
+    uncheckedColor,
+    checkedInput,
+    onPress,
+  ) => {
+    if (type === 'S') {
+      if (Platform.OS === 'ios') {
+        return <CheckBox
+          uncheckedColor={uncheckedColor}
+          checkedColor={checkedColor}
+          checked={checkedInput === 'first' ? true : false}
+          onPress={onPress}
+        />
+      } else {
+        return <RadioButton
+          uncheckedColor={uncheckedColor}
+          color={checkedColor}
+          value="first"
+          status={checkedInput === 'first' ? 'checked' : 'unchecked'}
+          onPress={onPress}
+        />
+      }
+    }
+
+    if (type === 'M') {
+      if (Platform.OS === 'ios') {
+        return (
+          <CheckBox
+            uncheckedColor={uncheckedColor}
+            checkedColor={checkedColor}
+            checked={checkedInput === 'second' ? true : false}
+            onPress={onPress}
+          />
+        );
+      } else {
+        return <RadioButton
+          uncheckedColor={uncheckedColor}
+          color={checkedColor}
+          value="second"
+          status={checkedInput === 'second' ? 'checked' : 'unchecked'}
+          onPress={onPress}
+        />
+      }
+    }
+
+    if (type === 'L') {
+      if (Platform.OS === 'ios') {
+        return <CheckBox
+          uncheckedColor={uncheckedColor}
+          checkedColor={checkedColor}
+          checked={checkedInput === 'third' ? true : false}
+          onPress={onPress}
+        />
+      } else {
+        return (
+          <RadioButton
+            uncheckedColor={uncheckedColor}
+            color={checkedColor}
+            value="third"
+            status={checkedInput === 'third' ? 'checked' : 'unchecked'}
+            onPress={onPress}
+          />
+        );
+      }
+    }
+
   };
 
   // Component render
@@ -416,16 +488,17 @@ export default function LeftDrawer({navigation}) {
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: Platform.OS === 'ios' ? -8 : 2,
+                marginRight: -8,
               }}>
               S
             </Text>
-            <CheckBox
-              uncheckedColor={lightTheme ? 'grey' : 'silver'}
-              checkedColor={ACCENT_COLOR}
-              checked={checked === 'first' ? true : false}
-              onPress={toggleFontS}
-            />
+            {RadioCheckBox(
+              'S',
+              ACCENT_COLOR,
+              lightTheme ? 'grey' : 'silver',
+              checked,
+              toggleFontS,
+            )}
           </View>
           <View
             style={{
@@ -438,16 +511,17 @@ export default function LeftDrawer({navigation}) {
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: Platform.OS === 'ios' ? -8 : 2,
+                marginRight: -8,
               }}>
               M
             </Text>
-            <CheckBox
-              uncheckedColor={lightTheme ? 'grey' : 'silver'}
-              checkedColor={ACCENT_COLOR}
-              checked={checked === 'second' ? true : false}
-              onPress={toggleFontM}
-            />
+            {RadioCheckBox(
+              'M',
+              ACCENT_COLOR,
+              lightTheme ? 'grey' : 'silver',
+              checked,
+              toggleFontM,
+            )}
           </View>
           <View
             style={{
@@ -460,16 +534,17 @@ export default function LeftDrawer({navigation}) {
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: Platform.OS === 'ios' ? -8 : 2,
+                marginRight: -8,
               }}>
               L
             </Text>
-            <CheckBox
-              uncheckedColor={lightTheme ? 'grey' : 'silver'}
-              checkedColor={ACCENT_COLOR}
-              checked={checked === 'third' ? true : false}
-              onPress={toggleFontL}
-            />
+            {RadioCheckBox(
+              'L',
+              ACCENT_COLOR,
+              lightTheme ? 'grey' : 'silver',
+              checked,
+              toggleFontL,
+            )}
           </View>
         </View>
         <Divider
