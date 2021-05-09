@@ -137,17 +137,11 @@ export default function Home({navigation}) {
         if (state.isInternetReachable === null) {
           setTimeout(() => {
             if (state.isInternetReachable) {
-              if (netRef.current) {
-                setIsNetReachable(true);
-                netOn();
-              } else {
-                netRef.current = true;
-              }
+              setIsNetReachable(true);
             } else {
               setIsNetReachable(false);
-              netOff();
             }
-          }, 1500);
+          }, 1000);
         } else {
           if (state.isInternetReachable) {
             if (netRef.current) {
@@ -1378,6 +1372,6 @@ const HomePage = EStyleSheet.create({
     width: '100%',
     justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'center',
     alignItems: 'center',
-    paddingBottom: Platform.OS === 'ios' ? 10 : 0,
+    paddingBottom: Platform.OS === 'ios' ? 6 : 0,
   },
 });
