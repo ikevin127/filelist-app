@@ -82,6 +82,7 @@ import {catValues} from '../assets/catData';
 // Variables
 import {
   width,
+  height,
   MAIN_LIGHT,
   ACCENT_COLOR,
   statusHeight,
@@ -3189,6 +3190,7 @@ export default function Search({navigation}) {
             {
               height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
               backgroundColor: 'limegreen',
+              bottom: Platform.OS === 'ios' ? height : 0,
               transform: [
                 {
                   translateY: showNetworkAlertOn,
@@ -3213,6 +3215,7 @@ export default function Search({navigation}) {
             {
               height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
               backgroundColor: 'crimson',
+              bottom: Platform.OS === 'ios' ? height : 0,
               transform: [
                 {
                   translateY: showNetworkAlertOff,

@@ -79,7 +79,7 @@ export default function Login() {
     // Set font size
     dispatch(AppConfigActions.setFonts());
     // API Error handling
-    if (latestError !== null) {
+    if (latestError !== null && latestError !== undefined) {
       if (latestError.response.status === 403) {
         if (latestError.response.data.error.includes('Invalid')) {
           setUserPass();

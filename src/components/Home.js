@@ -41,6 +41,7 @@ import {faImdb} from '@fortawesome/free-brands-svg-icons';
 // Variables & assets
 import {
   width,
+  height,
   MAIN_LIGHT,
   ACCENT_COLOR,
   statusHeight,
@@ -109,7 +110,7 @@ export default function Home({navigation}) {
     dispatch(AppConfigActions.setFonts());
     dispatch(AppConfigActions.latestError());
     // API error handling
-    if (latestError !== null) {
+    if (latestError !== null && latestError !== undefined) {
       if (latestError.response.status === 429) {
         setLimitReached();
       }

@@ -182,20 +182,24 @@ export default function LeftDrawer({navigation}) {
   ) => {
     if (type === 'S') {
       if (Platform.OS === 'ios') {
-        return <CheckBox
-          uncheckedColor={uncheckedColor}
-          checkedColor={checkedColor}
-          checked={checkedInput === 'first' ? true : false}
-          onPress={onPress}
-        />
+        return (
+          <CheckBox
+            uncheckedColor={uncheckedColor}
+            checkedColor={checkedColor}
+            checked={checkedInput === 'first' ? true : false}
+            onPress={onPress}
+          />
+        );
       } else {
-        return <RadioButton
-          uncheckedColor={uncheckedColor}
-          color={checkedColor}
-          value="first"
-          status={checkedInput === 'first' ? 'checked' : 'unchecked'}
-          onPress={onPress}
-        />
+        return (
+          <RadioButton
+            uncheckedColor={uncheckedColor}
+            color={checkedColor}
+            value="first"
+            status={checkedInput === 'first' ? 'checked' : 'unchecked'}
+            onPress={onPress}
+          />
+        );
       }
     }
 
@@ -210,24 +214,28 @@ export default function LeftDrawer({navigation}) {
           />
         );
       } else {
-        return <RadioButton
-          uncheckedColor={uncheckedColor}
-          color={checkedColor}
-          value="second"
-          status={checkedInput === 'second' ? 'checked' : 'unchecked'}
-          onPress={onPress}
-        />
+        return (
+          <RadioButton
+            uncheckedColor={uncheckedColor}
+            color={checkedColor}
+            value="second"
+            status={checkedInput === 'second' ? 'checked' : 'unchecked'}
+            onPress={onPress}
+          />
+        );
       }
     }
 
     if (type === 'L') {
       if (Platform.OS === 'ios') {
-        return <CheckBox
-          uncheckedColor={uncheckedColor}
-          checkedColor={checkedColor}
-          checked={checkedInput === 'third' ? true : false}
-          onPress={onPress}
-        />
+        return (
+          <CheckBox
+            uncheckedColor={uncheckedColor}
+            checkedColor={checkedColor}
+            checked={checkedInput === 'third' ? true : false}
+            onPress={onPress}
+          />
+        );
       } else {
         return (
           <RadioButton
@@ -240,7 +248,6 @@ export default function LeftDrawer({navigation}) {
         );
       }
     }
-
   };
 
   // Component render
@@ -488,7 +495,7 @@ export default function LeftDrawer({navigation}) {
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: -8,
+                marginRight: Platform.OS === 'ios' ? -8 : 2,
               }}>
               S
             </Text>
@@ -511,7 +518,7 @@ export default function LeftDrawer({navigation}) {
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: -8,
+                marginRight: Platform.OS === 'ios' ? -8 : 2,
               }}>
               M
             </Text>
@@ -534,7 +541,7 @@ export default function LeftDrawer({navigation}) {
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: -8,
+                marginRight: Platform.OS === 'ios' ? -8 : 2,
               }}>
               L
             </Text>
