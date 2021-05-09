@@ -1,5 +1,11 @@
 /* eslint-disable curly */
-import {Dimensions, PixelRatio} from 'react-native';
+import {
+  Dimensions,
+  PixelRatio,
+  Platform,
+  TouchableOpacity,
+  Pressable,
+} from 'react-native';
 import {getStatusBarHeight} from 'react-native-status-bar-height';
 
 // Colors
@@ -37,3 +43,9 @@ export const sortArrayHistory = (array, keyword) => {
     return a.query.localeCompare(b.query);
   });
 };
+
+// Platform specific Pressable / Touchable
+export const PressableOpacity = Platform.select({
+  ios: TouchableOpacity,
+  android: Pressable,
+});

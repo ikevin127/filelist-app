@@ -21,7 +21,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -33,6 +33,25 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Fonts/AntDesign.ttf</string>
+		<string>Fonts/Entypo.ttf</string>
+		<string>Fonts/EvilIcons.ttf</string>
+		<string>Fonts/Feather.ttf</string>
+		<string>Fonts/FontAwesome.ttf</string>
+		<string>Fonts/FontAwesome5_Brands.ttf</string>
+		<string>Fonts/FontAwesome5_Regular.ttf</string>
+		<string>Fonts/FontAwesome5_Solid.ttf</string>
+		<string>Fonts/Fontisto.ttf</string>
+		<string>Fonts/Foundation.ttf</string>
+		<string>Fonts/Ionicons.ttf</string>
+		<string>Fonts/MaterialCommunityIcons.ttf</string>
+		<string>Fonts/MaterialIcons.ttf</string>
+		<string>Fonts/Octicons.ttf</string>
+		<string>Fonts/SimpleLineIcons.ttf</string>
+		<string>Fonts/Zocial.ttf</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

@@ -8,7 +8,6 @@ import {
   FlatList,
   RefreshControl,
   StatusBar,
-  Pressable,
   Platform,
   Keyboard,
   PermissionsAndroid,
@@ -45,6 +44,7 @@ import {
   MAIN_LIGHT,
   ACCENT_COLOR,
   statusHeight,
+  PressableOpacity,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 import a3d from '../assets/cat/3d.png';
@@ -278,41 +278,66 @@ export default function Home({navigation}) {
   };
 
   const downloadTorrent = (name, link) => async () => {
-    const {android, config, fs} = RNFetchBlob;
-    const downloadDir = fs.dirs.DownloadDir;
-    const options = {
-      fileCache: true,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        mime: 'application/x-bittorrent',
+    const {android, ios, config, fs} = RNFetchBlob;
+    const downloadDir = Platform.select({
+      ios: fs.dirs.DocumentDir,
+      android: fs.dirs.DownloadDir,
+    });
+    const configOptions = Platform.select({
+      ios: {
+        fileCache: true,
+        title: `${name}.torrent`,
         path: `${downloadDir}/${name}.torrent`,
-        mediaScannable: true,
       },
-    };
-    const request = await PermissionsAndroid.requestMultiple([
-      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-    ]);
-    if (
-      request['android.permission.READ_EXTERNAL_STORAGE'] &&
-      request['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
-    ) {
+      android: {
+        fileCache: true,
+        addAndroidDownloads: {
+          useDownloadManager: true,
+          notification: true,
+          mime: 'application/x-bittorrent',
+          path: `${downloadDir}/${name}.torrent`,
+          mediaScannable: false,
+        },
+      },
+    });
+
+    if (Platform.OS === 'ios') {
       if (isNetReachable) {
-        config(options)
+        config(configOptions)
           .fetch('GET', link)
           .then((res) => {
-            android.actionViewIntent(res.path(), 'application/x-bittorrent');
+            fs.writeFile(`${downloadDir}/${name}.torrent`, res.data, 'base64');
+            ios.previewDocument(`${downloadDir}/${name}.torrent`);
           });
       } else {
         netOff();
       }
     } else {
-      ToastAndroid.showWithGravity(
-        enLang ? EN.permissionDenied : RO.permissionDenied,
-        ToastAndroid.SHORT,
-        ToastAndroid.CENTER,
-      );
+      const request = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      ]);
+
+      if (
+        request['android.permission.READ_EXTERNAL_STORAGE'] &&
+        request['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
+      ) {
+        if (isNetReachable) {
+          config(configOptions)
+            .fetch('GET', link)
+            .then((res) => {
+              android.actionViewIntent(res.path(), 'application/x-bittorrent');
+            });
+        } else {
+          netOff();
+        }
+      } else {
+        ToastAndroid.showWithGravity(
+          enLang ? EN.permissionDenied : RO.permissionDenied,
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
+      }
     }
   };
 
@@ -450,7 +475,8 @@ export default function Home({navigation}) {
 
   // Pressable component
   const Item = ({item, onPress, style}) => (
-    <Pressable
+    <PressableOpacity
+          activeOpacity={0.5}
       onPress={setCollapsible(item.id)}
       android_ripple={{
         color: 'grey',
@@ -570,7 +596,7 @@ export default function Home({navigation}) {
           </View>
         </View>
       </View>
-    </Pressable>
+    </PressableOpacity>
   );
 
   // Collapsible component
@@ -696,7 +722,8 @@ export default function Home({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+          activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -720,7 +747,7 @@ export default function Home({navigation}) {
                       ]}>
                       Download
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
                 <View
                   style={{
@@ -730,7 +757,8 @@ export default function Home({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+          activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -754,7 +782,7 @@ export default function Home({navigation}) {
                       ]}>
                       {formatBytes(item.size)}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
                 <View
                   style={{
@@ -764,7 +792,8 @@ export default function Home({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+          activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -788,7 +817,7 @@ export default function Home({navigation}) {
                       ]}>
                       {item.seeders}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
               </View>
             </View>
@@ -813,7 +842,8 @@ export default function Home({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+          activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -837,7 +867,7 @@ export default function Home({navigation}) {
                       ]}>
                       {item.times_completed}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
                 <View
                   style={{
@@ -847,7 +877,8 @@ export default function Home({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+          activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -871,7 +902,7 @@ export default function Home({navigation}) {
                       ]}>
                       {item.files}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
                 <View
                   style={{
@@ -881,7 +912,8 @@ export default function Home({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+          activeOpacity={0.5}
                     style={HomePage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -905,7 +937,7 @@ export default function Home({navigation}) {
                       ]}>
                       {item.leechers}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
               </View>
             </View>
@@ -935,7 +967,8 @@ export default function Home({navigation}) {
                       alignItems: 'center',
                       backgroundColor: lightTheme ? 'goldenrod' : 'gold',
                     }}>
-                    <Pressable
+                    <PressableOpacity
+          activeOpacity={0.5}
                       style={{
                         width: width / 6.5,
                         height: width / 6.5,
@@ -953,7 +986,7 @@ export default function Home({navigation}) {
                         icon={faImdb}
                         color={'black'}
                       />
-                    </Pressable>
+                    </PressableOpacity>
                   </View>
                 </View>
               </View>
@@ -982,7 +1015,8 @@ export default function Home({navigation}) {
         <View style={HomePage.mainHeader}>
           <View style={HomePage.mainHeaderContainer}>
             <View style={HomePage.mainHeaderCogContainer}>
-              <Pressable
+              <PressableOpacity
+          activeOpacity={0.5}
                 style={HomePage.mainHeaderCogPressable}
                 android_ripple={{
                   color: 'white',
@@ -995,10 +1029,11 @@ export default function Home({navigation}) {
                   color={'white'}
                   icon={faBars}
                 />
-              </Pressable>
+              </PressableOpacity>
             </View>
             <View style={HomePage.mainHeaderSearchContainer}>
-              <Pressable
+              <PressableOpacity
+          activeOpacity={0.5}
                 style={HomePage.mainHeaderCogPressable}
                 android_ripple={{
                   color: 'white',
@@ -1011,7 +1046,7 @@ export default function Home({navigation}) {
                   color={'white'}
                   icon={faSearch}
                 />
-              </Pressable>
+              </PressableOpacity>
             </View>
             <Text
               style={[

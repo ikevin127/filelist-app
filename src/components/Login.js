@@ -2,7 +2,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
-  Pressable,
   ScrollView,
   TouchableOpacity,
   Animated,
@@ -43,6 +42,7 @@ import {
   MAIN_LIGHT,
   ACCENT_COLOR,
   statusHeight,
+  PressableOpacity,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
@@ -87,9 +87,7 @@ export default function Login() {
       }
     }
 
-    if (Platform.OS === 'android') {
-      scrollRef.current.scrollTo({y: height, animated: true});
-    }
+    scrollRef.current.scrollTo({y: height, animated: true});
 
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
@@ -117,7 +115,11 @@ export default function Login() {
   useEffect(() => {
     // Network connection listener
     const unsubscribe = NetInfo.addEventListener((state) => {
-      if (state.isInternetReachable) {
+      console.log(state.isInternetReachable);
+      if (isNetReachable && state.isInternetReachable === null) {
+        return;
+      }
+      if (state.isInternetReachable !== null) {
         if (netRef.current) {
           setIsNetReachable(true);
           netOn();
@@ -289,8 +291,8 @@ export default function Login() {
                   paddingBottom:
                     Platform.OS === 'ios'
                       ? isKeyboard
-                        ? height / 5.5
-                        : 0
+                        ? height / 3
+                        : statusHeight
                       : statusHeight * 2,
                 },
               ]}>
@@ -425,7 +427,8 @@ export default function Login() {
                             color={ACCENT_COLOR}
                           />
                         ) : (
-                          <Pressable
+                          <PressableOpacity
+                            activeOpacity={0.5}
                             disabled={loginLoading}
                             onPress={handleSubmit}
                             android_ripple={{
@@ -438,7 +441,7 @@ export default function Login() {
                               color={'white'}
                               icon={faArrowRight}
                             />
-                          </Pressable>
+                          </PressableOpacity>
                         )}
                       </View>
                     </>
@@ -560,7 +563,7 @@ const LoginPage = EStyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: '1rem',
+    paddingTop: Platform.OS === 'ios' ? 0 : '1rem',
   },
   error: {
     width: '100%',
@@ -584,7 +587,7 @@ const LoginPage = EStyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: '3rem',
+    marginTop: Platform.OS === 'ios' ? '0.5rem' : '3rem',
   },
   btn: {
     width: width / 6,

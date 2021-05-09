@@ -8,7 +8,6 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
-  Pressable,
   Platform,
   Keyboard,
   PermissionsAndroid,
@@ -87,6 +86,7 @@ import {
   ACCENT_COLOR,
   statusHeight,
   sortArrayHistory,
+  PressableOpacity,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
@@ -527,41 +527,66 @@ export default function Search({navigation}) {
   };
 
   const downloadTorrent = (name, link) => async () => {
-    const {android, config, fs} = RNFetchBlob;
-    const downloadDir = fs.dirs.DownloadDir;
-    const options = {
-      fileCache: true,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        mime: 'application/x-bittorrent',
+    const {android, ios, config, fs} = RNFetchBlob;
+    const downloadDir = Platform.select({
+      ios: fs.dirs.DocumentDir,
+      android: fs.dirs.DownloadDir,
+    });
+    const configOptions = Platform.select({
+      ios: {
+        fileCache: true,
+        title: `${name}.torrent`,
         path: `${downloadDir}/${name}.torrent`,
-        mediaScannable: true,
       },
-    };
-    const request = await PermissionsAndroid.requestMultiple([
-      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-    ]);
-    if (
-      request['android.permission.READ_EXTERNAL_STORAGE'] &&
-      request['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
-    ) {
+      android: {
+        fileCache: true,
+        addAndroidDownloads: {
+          useDownloadManager: true,
+          notification: true,
+          mime: 'application/x-bittorrent',
+          path: `${downloadDir}/${name}.torrent`,
+          mediaScannable: false,
+        },
+      },
+    });
+
+    if (Platform.OS === 'ios') {
       if (isNetReachable) {
-        config(options)
+        config(configOptions)
           .fetch('GET', link)
           .then((res) => {
-            android.actionViewIntent(res.path(), 'application/x-bittorrent');
+            fs.writeFile(`${downloadDir}/${name}.torrent`, res.data, 'base64');
+            ios.previewDocument(`${downloadDir}/${name}.torrent`);
           });
       } else {
         netOff();
       }
     } else {
-      ToastAndroid.showWithGravity(
-        enLang ? EN.permissionDenied : RO.permissionDenied,
-        ToastAndroid.SHORT,
-        ToastAndroid.CENTER,
-      );
+      const request = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      ]);
+
+      if (
+        request['android.permission.READ_EXTERNAL_STORAGE'] &&
+        request['android.permission.WRITE_EXTERNAL_STORAGE'] === 'granted'
+      ) {
+        if (isNetReachable) {
+          config(configOptions)
+            .fetch('GET', link)
+            .then((res) => {
+              android.actionViewIntent(res.path(), 'application/x-bittorrent');
+            });
+        } else {
+          netOff();
+        }
+      } else {
+        ToastAndroid.showWithGravity(
+          enLang ? EN.permissionDenied : RO.permissionDenied,
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
+      }
     }
   };
 
@@ -724,12 +749,12 @@ export default function Search({navigation}) {
   };
 
   const setKeywordSearchType = () => {
-    setKeySearch(!keySearch);
+    setKeySearch(true);
     setImdbSearch(false);
   };
 
   const setIMDbSearchType = () => {
-    setImdbSearch(!imdbSearch);
+    setImdbSearch(true);
     setKeySearch(false);
   };
 
@@ -812,7 +837,8 @@ export default function Search({navigation}) {
 
   // Torrent pressable
   const Item = ({item, onPress, style}) => (
-    <Pressable
+    <PressableOpacity
+      activeOpacity={0.5}
       onPress={setCollapsible(item.id)}
       android_ripple={{
         color: 'grey',
@@ -932,7 +958,7 @@ export default function Search({navigation}) {
           </View>
         </View>
       </View>
-    </Pressable>
+    </PressableOpacity>
   );
 
   const renderItem = ({item}) => {
@@ -1057,7 +1083,8 @@ export default function Search({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+                    activeOpacity={0.5}
                     style={SearchPage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -1081,7 +1108,7 @@ export default function Search({navigation}) {
                       ]}>
                       Download
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
                 <View
                   style={{
@@ -1091,7 +1118,8 @@ export default function Search({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+                    activeOpacity={0.5}
                     style={SearchPage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -1115,7 +1143,7 @@ export default function Search({navigation}) {
                       ]}>
                       {formatBytes(item.size)}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
                 <View
                   style={{
@@ -1125,7 +1153,8 @@ export default function Search({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+          activeOpacity={0.5}
                     style={SearchPage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -1149,7 +1178,7 @@ export default function Search({navigation}) {
                       ]}>
                       {item.seeders}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
               </View>
             </View>
@@ -1174,7 +1203,8 @@ export default function Search({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+                    activeOpacity={0.5}
                     style={SearchPage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -1198,7 +1228,7 @@ export default function Search({navigation}) {
                       ]}>
                       {item.times_completed}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
                 <View
                   style={{
@@ -1208,7 +1238,8 @@ export default function Search({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+                    activeOpacity={0.5}
                     style={SearchPage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -1232,7 +1263,7 @@ export default function Search({navigation}) {
                       ]}>
                       {item.files}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
                 <View
                   style={{
@@ -1242,7 +1273,8 @@ export default function Search({navigation}) {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Pressable
+                  <PressableOpacity
+          activeOpacity={0.5}
                     style={SearchPage.imdbInfoMainFooter3rdPressable}
                     android_ripple={{
                       color: 'grey',
@@ -1266,7 +1298,7 @@ export default function Search({navigation}) {
                       ]}>
                       {item.leechers}
                     </Text>
-                  </Pressable>
+                  </PressableOpacity>
                 </View>
               </View>
             </View>
@@ -1296,7 +1328,8 @@ export default function Search({navigation}) {
                       alignItems: 'center',
                       backgroundColor: lightTheme ? 'goldenrod' : 'gold',
                     }}>
-                    <Pressable
+                    <PressableOpacity
+                      activeOpacity={0.5}
                       style={{
                         width: width / 6.5,
                         height: width / 6.5,
@@ -1314,7 +1347,7 @@ export default function Search({navigation}) {
                         icon={faImdb}
                         color={'black'}
                       />
-                    </Pressable>
+                    </PressableOpacity>
                   </View>
                 </View>
               </View>
@@ -1360,10 +1393,14 @@ export default function Search({navigation}) {
                 alignItems: 'center',
                 backgroundColor: ACCENT_COLOR,
               }}>
-              <Pressable
+              <PressableOpacity
+                activeOpacity={0.5}
                 style={{
                   position: 'absolute',
-                  top: statusHeight * 1.6,
+                  top:
+                    Platform.OS === 'ios'
+                      ? statusHeight * 2.2
+                      : statusHeight * 1.6,
                   left: statusHeight / 1.5,
                 }}
                 android_ripple={{
@@ -1377,21 +1414,28 @@ export default function Search({navigation}) {
                   size={Adjust(22)}
                   icon={faArrowLeft}
                 />
-              </Pressable>
+              </PressableOpacity>
               <Text
                 style={{
                   fontSize: Adjust(16),
-                  marginTop: statusHeight * 1.1,
+                  marginTop:
+                    Platform.OS === 'ios'
+                      ? statusHeight * 2
+                      : statusHeight * 1.1,
                   marginBottom: statusHeight / 2,
                   fontWeight: 'bold',
                   color: 'white',
                 }}>
                 {enLang ? EN.filters : RO.filters}
               </Text>
-              <Pressable
+              <PressableOpacity
+                activeOpacity={0.5}
                 style={{
                   position: 'absolute',
-                  top: statusHeight * 1.6,
+                  top:
+                    Platform.OS === 'ios'
+                      ? statusHeight * 2.2
+                      : statusHeight * 1.6,
                   right: statusHeight / 1.5,
                 }}
                 android_ripple={{
@@ -1405,7 +1449,7 @@ export default function Search({navigation}) {
                   size={Adjust(22)}
                   icon={faEraser}
                 />
-              </Pressable>
+              </PressableOpacity>
             </View>
             <ScrollView
               showsVerticalScrollIndicator={true}
@@ -2760,7 +2804,7 @@ export default function Search({navigation}) {
                 style={[
                   SearchPage.inputStyle,
                   {
-                    fontSize: Adjust(12),
+                    fontSize: Platform.OS === 'ios' ? Adjust(16) : Adjust(12),
                     color: 'white',
                   },
                 ]}
@@ -2788,7 +2832,8 @@ export default function Search({navigation}) {
               />
               <View style={SearchPage.mainHeaderSearch1Container}>
                 {values.search.length > 0 ? (
-                  <Pressable
+                  <PressableOpacity
+                    activeOpacity={0.5}
                     style={SearchPage.mainHeaderCogPressable}
                     android_ripple={{
                       color: 'white',
@@ -2801,10 +2846,14 @@ export default function Search({navigation}) {
                       color={'white'}
                       icon={faSearch}
                     />
-                  </Pressable>
+                  </PressableOpacity>
                 ) : (
-                  <Pressable
-                    style={SearchPage.mainHeaderCogPressable}
+                  <PressableOpacity
+                    activeOpacity={0.5}
+                    style={[
+                      SearchPage.mainHeaderCogPressable,
+                      {paddingTop: Platform.OS === 'ios' ? 6 : 0},
+                    ]}
                     android_ripple={{
                       color: 'white',
                       borderless: true,
@@ -2816,12 +2865,13 @@ export default function Search({navigation}) {
                       color={'white'}
                       icon={faArrowLeft}
                     />
-                  </Pressable>
+                  </PressableOpacity>
                 )}
               </View>
               <View style={SearchPage.mainHeaderSearch2Container}>
                 {values.search.length > 0 && (
-                  <Pressable
+                  <PressableOpacity
+                    activeOpacity={0.5}
                     style={SearchPage.mainHeaderCogPressable}
                     android_ripple={{
                       color: 'white',
@@ -2830,11 +2880,15 @@ export default function Search({navigation}) {
                     }}
                     onPress={resetForm}>
                     <FontAwesomeIcon
-                      size={Adjust(fontSizes !== null ? fontSizes[8] : 22)}
+                      size={
+                        Platform.OS === 'ios'
+                          ? Adjust(30)
+                          : Adjust(fontSizes !== null ? fontSizes[8] : 22)
+                      }
                       color={'white'}
                       icon={faTimes}
                     />
-                  </Pressable>
+                  </PressableOpacity>
                 )}
               </View>
               <View style={SearchPage.mainHeaderSearch3Container}>
@@ -2856,7 +2910,8 @@ export default function Search({navigation}) {
                   }}
                   value={selectedFilters}
                 />
-                <Pressable
+                <PressableOpacity
+                  activeOpacity={0.5}
                   style={SearchPage.mainHeaderCogPressable}
                   android_ripple={{
                     color: 'white',
@@ -2865,11 +2920,17 @@ export default function Search({navigation}) {
                   }}
                   onPress={displayCatList}>
                   <FontAwesomeIcon
-                    size={Adjust(fontSizes !== null ? fontSizes[7] : 20)}
+                    size={Adjust(
+                      fontSizes !== null
+                        ? fontSizes[Platform.OS === 'ios' ? 8 : 7]
+                        : Platform.OS === 'ios'
+                        ? 22
+                        : 20,
+                    )}
                     color={'white'}
                     icon={faFilter}
                   />
-                </Pressable>
+                </PressableOpacity>
               </View>
             </>
           )}
@@ -2929,7 +2990,8 @@ export default function Search({navigation}) {
             </View>
           )}
           renderItem={({item}) => (
-            <Pressable
+            <PressableOpacity
+          activeOpacity={0.5}
               style={{
                 display: 'flex',
                 flexDirection: 'row',
@@ -2984,7 +3046,7 @@ export default function Search({navigation}) {
                   icon={faArrowUp}
                 />
               </TouchableOpacity>
-            </Pressable>
+            </PressableOpacity>
           )}
           keyExtractor={(item) => item.id.toString()}
         />

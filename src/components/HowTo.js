@@ -1,13 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useEffect} from 'react';
-import {
-  Text,
-  View,
-  ScrollView,
-  Pressable,
-  Platform,
-  BackHandler,
-} from 'react-native';
+import {Text, View, ScrollView, Platform, BackHandler} from 'react-native';
 // Redux
 import {useSelector} from 'react-redux';
 // Responsiveness
@@ -23,6 +16,7 @@ import {
   statusHeight,
   MAIN_LIGHT,
   ACCENT_COLOR,
+  PressableOpacity,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
@@ -69,10 +63,12 @@ export default function HowTo({navigation}) {
           alignItems: 'center',
           backgroundColor: ACCENT_COLOR,
         }}>
-        <Pressable
+        <PressableOpacity
+          activeOpacity={0.5}
           style={{
             position: 'absolute',
-            top: statusHeight * 1.6,
+            top:
+              Platform.OS === 'ios' ? statusHeight * 2.2 : statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -86,11 +82,12 @@ export default function HowTo({navigation}) {
             size={Adjust(22)}
             icon={faArrowLeft}
           />
-        </Pressable>
+        </PressableOpacity>
         <Text
           style={{
             fontSize: Adjust(16),
-            marginTop: statusHeight * 1.1,
+            marginTop:
+              Platform.OS === 'ios' ? statusHeight * 2 : statusHeight * 1.1,
             marginBottom: statusHeight / 2,
             fontWeight: 'bold',
             color: 'white',

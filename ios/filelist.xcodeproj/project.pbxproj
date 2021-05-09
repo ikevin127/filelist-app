@@ -18,7 +18,7 @@
 		5A6B0FACEA912EA2C708CB7F /* libPods-filelist-tvOSTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A09ABB4FBB07CE95E9FA0AE5 /* libPods-filelist-tvOSTests.a */; };
 		6727069490B4393E877EA2BA /* libPods-filelist.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31B225D8FE14B1A7CAE5267D /* libPods-filelist.a */; };
 		6FB811EC4243CAF851102F53 /* libPods-filelist-tvOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 81ED62984A9620990043EC5D /* libPods-filelist-tvOS.a */; };
-		7B7F87DA264745BB00602AAC /* libRNFetchBlob.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B7F87D42647454C00602AAC /* libRNFetchBlob.a */; };
+		7BF204FA264761B000EE637E /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = 7BF204F9264761AF00EE637E /* Fonts */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		CEA92BF4533FEE1AB92D0BA7 /* libPods-filelist-filelistTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 82B148D216F554834F9B0702 /* libPods-filelist-filelistTests.a */; };
 		E013CF8C257D6D230052AD82 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E013CF8B257D6D1A0052AD82 /* GoogleService-Info.plist */; };
@@ -38,13 +38,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 2D02E47A1E0B4A5D006451C7;
 			remoteInfo = "filelist-tvOS";
-		};
-		7B7F87D32647454C00602AAC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 7B7F87CF2647454C00602AAC /* RNFetchBlob.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = A15C300E1CD25C330074CB35;
-			remoteInfo = RNFetchBlob;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -66,8 +59,8 @@
 		2D02E4901E0B4A5D006451C7 /* filelist-tvOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "filelist-tvOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		31B225D8FE14B1A7CAE5267D /* libPods-filelist.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-filelist.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4AEA8069767FFC625902AD7F /* Pods-filelist-filelistTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-filelist-filelistTests.debug.xcconfig"; path = "Target Support Files/Pods-filelist-filelistTests/Pods-filelist-filelistTests.debug.xcconfig"; sourceTree = "<group>"; };
-		7B7F87CF2647454C00602AAC /* RNFetchBlob.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RNFetchBlob.xcodeproj; path = "../node_modules/rn-fetch-blob/ios/RNFetchBlob.xcodeproj"; sourceTree = "<group>"; };
 		7BE50AEE2646175D00AEBB2E /* filelist.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = filelist.entitlements; path = filelist/filelist.entitlements; sourceTree = "<group>"; };
+		7BF204F9264761AF00EE637E /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Fonts; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = filelist/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		81ED62984A9620990043EC5D /* libPods-filelist-tvOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-filelist-tvOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		82B148D216F554834F9B0702 /* libPods-filelist-filelistTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-filelist-filelistTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -95,7 +88,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				6727069490B4393E877EA2BA /* libPods-filelist.a in Frameworks */,
-				7B7F87DA264745BB00602AAC /* libRNFetchBlob.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,18 +170,9 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
-		7B7F87D02647454C00602AAC /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				7B7F87D42647454C00602AAC /* libRNFetchBlob.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
-				7B7F87CF2647454C00602AAC /* RNFetchBlob.xcodeproj */,
 			);
 			name = Libraries;
 			sourceTree = "<group>";
@@ -197,6 +180,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				7BF204F9264761AF00EE637E /* Fonts */,
 				E013CF8B257D6D1A0052AD82 /* GoogleService-Info.plist */,
 				13B07FAE1A68108700A75B9A /* filelist */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
@@ -345,12 +329,6 @@
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 7B7F87D02647454C00602AAC /* Products */;
-					ProjectRef = 7B7F87CF2647454C00602AAC /* RNFetchBlob.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* filelist */,
@@ -360,16 +338,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		7B7F87D42647454C00602AAC /* libRNFetchBlob.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = libRNFetchBlob.a;
-			remoteRef = 7B7F87D32647454C00602AAC /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		00E356EC1AD99517003FC87E /* Resources */ = {
@@ -386,6 +354,7 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				E013CF8C257D6D230052AD82 /* GoogleService-Info.plist in Resources */,
+				7BF204FA264761B000EE637E /* Fonts in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -793,12 +762,12 @@
 				CODE_SIGN_ENTITLEMENTS = filelist/filelist.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = E4NE4X2V7C;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = filelist/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 2021.2.0;
+				MARKETING_VERSION = 2021.3.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -822,11 +791,11 @@
 				CODE_SIGN_ENTITLEMENTS = filelist/filelist.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = E4NE4X2V7C;
 				INFOPLIST_FILE = filelist/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 2021.2.0;
+				MARKETING_VERSION = 2021.3.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

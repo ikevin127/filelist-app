@@ -5,12 +5,17 @@ import {
   View,
   Keyboard,
   StatusBar,
-  Pressable,
   Dimensions,
+  Platform,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import {useIsFocused} from '@react-navigation/native';
-import {ACCENT_COLOR, MAIN_LIGHT, statusHeight} from '../assets/variables';
+import {
+  ACCENT_COLOR,
+  MAIN_LIGHT,
+  statusHeight,
+  PressableOpacity,
+} from '../assets/variables';
 import Orientation from 'react-native-orientation-locker';
 // Redux
 import {useSelector} from 'react-redux';
@@ -94,10 +99,14 @@ export default function TrailerView({route, navigation}) {
                 alignItems: 'center',
                 backgroundColor: ACCENT_COLOR,
               }}>
-              <Pressable
+              <PressableOpacity
+          activeOpacity={0.5}
                 style={{
                   position: 'absolute',
-                  top: statusHeight * 1.6,
+                  top:
+                    Platform.OS === 'ios'
+                      ? statusHeight * 2.2
+                      : statusHeight * 1.6,
                   left: statusHeight / 1.5,
                 }}
                 android_ripple={{
@@ -111,11 +120,14 @@ export default function TrailerView({route, navigation}) {
                   size={Adjust(22)}
                   icon={faArrowLeft}
                 />
-              </Pressable>
+              </PressableOpacity>
               <Text
                 style={{
                   fontSize: Adjust(16),
-                  marginTop: statusHeight * 1.1,
+                  marginTop:
+                    Platform.OS === 'ios'
+                      ? statusHeight * 2
+                      : statusHeight * 1.1,
                   marginBottom: statusHeight / 2,
                   fontWeight: 'bold',
                   color: 'white',

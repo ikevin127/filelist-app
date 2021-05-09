@@ -6,10 +6,10 @@ import {
   View,
   Text,
   Linking,
-  Pressable,
   ScrollView,
   TouchableOpacity,
   BackHandler,
+  Platform,
 } from 'react-native';
 import Adjust from './AdjustText';
 import FastImage from 'react-native-fast-image';
@@ -23,7 +23,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import {faImdb} from '@fortawesome/free-brands-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {ACCENT_COLOR, MAIN_LIGHT, statusHeight} from '../assets/variables';
+import {
+  ACCENT_COLOR,
+  MAIN_LIGHT,
+  statusHeight,
+  PressableOpacity,
+} from '../assets/variables';
 import {EN, RO} from '../assets/lang';
 // Redux
 import {useSelector} from 'react-redux';
@@ -190,10 +195,12 @@ export default function IMDb({route, navigation}) {
           alignItems: 'center',
           backgroundColor: ACCENT_COLOR,
         }}>
-        <Pressable
+        <PressableOpacity
+          activeOpacity={0.5}
           style={{
             position: 'absolute',
-            top: statusHeight * 1.6,
+            top:
+              Platform.OS === 'ios' ? statusHeight * 2.2 : statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -207,11 +214,12 @@ export default function IMDb({route, navigation}) {
             size={Adjust(22)}
             icon={faArrowLeft}
           />
-        </Pressable>
+        </PressableOpacity>
         <Text
           style={{
             fontSize: Adjust(16),
-            marginTop: statusHeight * 1.1,
+            marginTop:
+              Platform.OS === 'ios' ? statusHeight * 2 : statusHeight * 1.1,
             marginBottom: statusHeight / 2,
             fontWeight: 'bold',
             color: 'white',
@@ -299,7 +307,9 @@ export default function IMDb({route, navigation}) {
                   ]}>
                   {item.rating}
                 </Text>{' '}
-                {item.rating === '' ? null : (
+                {item.rating === '' ? null : Platform.OS === 'ios' ? (
+                  <Text style={{fontSize: Adjust(15)}}>⭐</Text>
+                ) : (
                   <FontAwesomeIcon
                     icon={faStar}
                     size={Adjust(15)}
@@ -332,7 +342,8 @@ export default function IMDb({route, navigation}) {
               <View
                 style={{
                   width: '60%',
-                  height: statusHeight * 1.5,
+                  height:
+                    Platform.OS === 'ios' ? statusHeight : statusHeight * 1.5,
                   flexDirection: 'row',
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -342,7 +353,8 @@ export default function IMDb({route, navigation}) {
                   marginBottom: statusHeight * 2,
                   backgroundColor: ACCENT_COLOR,
                 }}>
-                <Pressable
+                <PressableOpacity
+          activeOpacity={0.5}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -374,7 +386,7 @@ export default function IMDb({route, navigation}) {
                     ]}>
                     Watch trailer
                   </Text>
-                </Pressable>
+                </PressableOpacity>
               </View>
             </ScrollView>
           );

@@ -4,7 +4,6 @@ import {
   Alert,
   Text,
   View,
-  Pressable,
   Platform,
   Linking,
   ScrollView,
@@ -15,7 +14,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FastImage from 'react-native-fast-image';
 import Divider from 'react-native-paper/lib/commonjs/components/Divider';
-import RadioButton from 'react-native-paper/lib/commonjs/components/RadioButton/RadioButton';
+import {CheckBox} from 'react-native-elements';
 // Redux
 import {useDispatch, useSelector} from 'react-redux';
 import {AppConfigActions} from '../redux/actions';
@@ -37,6 +36,7 @@ import {
   statusHeight,
   MAIN_LIGHT,
   ACCENT_COLOR,
+  PressableOpacity,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 // Variables & assets
@@ -184,10 +184,12 @@ export default function LeftDrawer({navigation}) {
           alignItems: 'center',
           backgroundColor: ACCENT_COLOR,
         }}>
-        <Pressable
+        <PressableOpacity
+          activeOpacity={0.5}
           style={{
             position: 'absolute',
-            top: statusHeight * 1.6,
+            top:
+              Platform.OS === 'ios' ? statusHeight * 2.2 : statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -201,11 +203,12 @@ export default function LeftDrawer({navigation}) {
             size={Adjust(22)}
             icon={faArrowLeft}
           />
-        </Pressable>
+        </PressableOpacity>
         <Text
           style={{
             fontSize: Adjust(16),
-            marginTop: statusHeight * 1.1,
+            marginTop:
+              Platform.OS === 'ios' ? statusHeight * 2 : statusHeight * 1.1,
             marginBottom: statusHeight / 2,
             fontWeight: 'bold',
             color: 'white',
@@ -228,7 +231,7 @@ export default function LeftDrawer({navigation}) {
               style={{
                 fontSize: Adjust(40),
                 textTransform: 'uppercase',
-                marginBottom: 4,
+                marginBottom: Platform.OS === 'ios' ? -4 : 4,
                 fontWeight: 'bold',
                 color: lightTheme ? 'black' : 'white',
               }}>
@@ -283,7 +286,8 @@ export default function LeftDrawer({navigation}) {
             }}>
             Light
           </Text>
-          <Pressable
+          <PressableOpacity
+            activeOpacity={0.5}
             style={{
               display: 'flex',
               flexDirection: 'row',
@@ -304,7 +308,7 @@ export default function LeftDrawer({navigation}) {
                 value={!lightTheme}
               />
             </View>
-          </Pressable>
+          </PressableOpacity>
           <Text
             style={{
               color: lightTheme ? 'grey' : 'silver',
@@ -344,7 +348,8 @@ export default function LeftDrawer({navigation}) {
             resizeMode={FastImage.resizeMode.contain}
             source={ro}
           />
-          <Pressable
+          <PressableOpacity
+            activeOpacity={0.5}
             style={{
               display: 'flex',
               flexDirection: 'row',
@@ -368,7 +373,7 @@ export default function LeftDrawer({navigation}) {
                 value={enLang}
               />
             </View>
-          </Pressable>
+          </PressableOpacity>
           <FastImage
             style={{width: 25, height: 25}}
             resizeMode={FastImage.resizeMode.contain}
@@ -405,20 +410,20 @@ export default function LeftDrawer({navigation}) {
               justifyContent: 'center',
               alignItems: 'center',
               flexDirection: 'row',
+              marginLeft: Platform.OS === 'ios' ? statusHeight / 2.5 : 0,
             }}>
             <Text
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: 2,
+                marginRight: Platform.OS === 'ios' ? -8 : 2,
               }}>
               S
             </Text>
-            <RadioButton
+            <CheckBox
               uncheckedColor={lightTheme ? 'grey' : 'silver'}
-              color={ACCENT_COLOR}
-              value="first"
-              status={checked === 'first' ? 'checked' : 'unchecked'}
+              checkedColor={ACCENT_COLOR}
+              checked={checked === 'first' ? true : false}
               onPress={toggleFontS}
             />
           </View>
@@ -433,15 +438,14 @@ export default function LeftDrawer({navigation}) {
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: 2,
+                marginRight: Platform.OS === 'ios' ? -8 : 2,
               }}>
               M
             </Text>
-            <RadioButton
+            <CheckBox
               uncheckedColor={lightTheme ? 'grey' : 'silver'}
-              color={ACCENT_COLOR}
-              value="second"
-              status={checked === 'second' ? 'checked' : 'unchecked'}
+              checkedColor={ACCENT_COLOR}
+              checked={checked === 'second' ? true : false}
               onPress={toggleFontM}
             />
           </View>
@@ -456,15 +460,14 @@ export default function LeftDrawer({navigation}) {
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: 2,
+                marginRight: Platform.OS === 'ios' ? -8 : 2,
               }}>
               L
             </Text>
-            <RadioButton
+            <CheckBox
               uncheckedColor={lightTheme ? 'grey' : 'silver'}
-              color={ACCENT_COLOR}
-              value="third"
-              status={checked === 'third' ? 'checked' : 'unchecked'}
+              checkedColor={ACCENT_COLOR}
+              checked={checked === 'third' ? true : false}
               onPress={toggleFontL}
             />
           </View>
@@ -502,7 +505,8 @@ export default function LeftDrawer({navigation}) {
             }}>
             OFF
           </Text>
-          <Pressable
+          <PressableOpacity
+            activeOpacity={0.5}
             style={{
               display: 'flex',
               flexDirection: 'row',
@@ -526,7 +530,7 @@ export default function LeftDrawer({navigation}) {
                 value={autoplay}
               />
             </View>
-          </Pressable>
+          </PressableOpacity>
           <Text
             style={{
               color: lightTheme ? 'grey' : 'silver',
@@ -541,49 +545,53 @@ export default function LeftDrawer({navigation}) {
             backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
           }}
         />
-        <View
-          style={{
-            height: statusHeight * 3,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            style={{
-              width: width,
-              height: '100%',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-              paddingHorizontal: statusHeight / 1.5,
-            }}
-            onPress={openGooglePlay}>
-            <View style={{width: 50, height: 50}}>
-              <FastImage
-                style={{height: '100%', width: '100%'}}
-                resizeMode={FastImage.resizeMode.contain}
-                source={require('../assets/td.png')}
-              />
+        {Platform.OS === 'android' && (
+          <>
+            <View
+              style={{
+                height: statusHeight * 3,
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={{
+                  width: width,
+                  height: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingHorizontal: statusHeight / 1.5,
+                }}
+                onPress={openGooglePlay}>
+                <View style={{width: 50, height: 50}}>
+                  <FastImage
+                    style={{height: '100%', width: '100%'}}
+                    resizeMode={FastImage.resizeMode.contain}
+                    source={require('../assets/td.png')}
+                  />
+                </View>
+                <Text
+                  style={[
+                    RightDrawerStyle.settingsOverlayText,
+                    {
+                      fontSize: Adjust(12),
+                      marginLeft: statusHeight / 2,
+                      color: lightTheme ? 'black' : 'white',
+                    },
+                  ]}>
+                  TorrDroid - Torrent Downloader
+                </Text>
+              </TouchableOpacity>
             </View>
-            <Text
-              style={[
-                RightDrawerStyle.settingsOverlayText,
-                {
-                  fontSize: Adjust(12),
-                  marginLeft: statusHeight / 2,
-                  color: lightTheme ? 'black' : 'white',
-                },
-              ]}>
-              TorrDroid - Torrent Downloader
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <Divider
-          style={{
-            backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
-          }}
-        />
+            <Divider
+              style={{
+                backgroundColor: lightTheme ? '#B0B0B0' : '#303030',
+              }}
+            />
+          </>
+        )}
         <View
           style={{
             height: statusHeight * 3,
@@ -624,7 +632,7 @@ export default function LeftDrawer({navigation}) {
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              paddingHorizontal: statusHeight / 1.5,
+              paddingHorizontal: Platform.OS === 'ios' ? 0 : statusHeight / 1.5,
             }}
             onPress={goFilelist}>
             <FontAwesomeIcon
@@ -638,6 +646,7 @@ export default function LeftDrawer({navigation}) {
                 {
                   fontSize: Adjust(14),
                   color: lightTheme ? 'black' : 'white',
+                  textAlign: 'center',
                 },
               ]}>
               Filelist Web
@@ -689,6 +698,15 @@ export default function LeftDrawer({navigation}) {
           Filelist App v2021.3.0
         </Text>
       </View>
+      {Platform.OS === 'ios' && (
+        <View
+          style={{
+            height: statusHeight / 3.5,
+            width,
+            backgroundColor: lightTheme ? '#D5D5D5' : '#151515',
+          }}
+        />
+      )}
     </>
   );
 }

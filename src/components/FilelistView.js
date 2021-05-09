@@ -1,8 +1,12 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useEffect} from 'react';
-import {Text, View, Keyboard, Pressable} from 'react-native';
+import {Text, View, Keyboard, Platform} from 'react-native';
 import {WebView} from 'react-native-webview';
-import {ACCENT_COLOR, statusHeight} from '../assets/variables';
+import {
+  ACCENT_COLOR,
+  statusHeight,
+  PressableOpacity,
+} from '../assets/variables';
 import Orientation from 'react-native-orientation-locker';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import Adjust from './AdjustText';
@@ -41,10 +45,12 @@ export default function FilelistView({navigation}) {
           alignItems: 'center',
           backgroundColor: ACCENT_COLOR,
         }}>
-        <Pressable
+        <PressableOpacity
+          activeOpacity={0.5}
           style={{
             position: 'absolute',
-            top: statusHeight * 1.6,
+            top:
+              Platform.OS === 'ios' ? statusHeight * 2.2 : statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -58,11 +64,12 @@ export default function FilelistView({navigation}) {
             size={Adjust(22)}
             icon={faArrowLeft}
           />
-        </Pressable>
+        </PressableOpacity>
         <Text
           style={{
             fontSize: Adjust(16),
-            marginTop: statusHeight * 1.1,
+            marginTop:
+              Platform.OS === 'ios' ? statusHeight * 2 : statusHeight * 1.1,
             marginBottom: statusHeight / 2,
             fontWeight: 'bold',
             color: 'white',

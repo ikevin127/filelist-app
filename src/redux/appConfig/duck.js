@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {S, M, L, removeDublicate} from '../../assets/variables';
 import crashlytics from '@react-native-firebase/crashlytics';
-import {ToastAndroid} from 'react-native';
+import {Platform, ToastAndroid} from 'react-native';
 import {RO, EN} from '../../assets/lang';
 import {types} from '../types';
 import Axios from 'axios';
@@ -97,7 +97,7 @@ export const actions = {
           dispatch({
             type: types.APP_CONFIG.LATEST_LOADING,
           });
-          if (enLang !== null) {
+          if (enLang !== null && Platform.OS !== 'ios') {
             ToastAndroid.showWithGravity(
               enLang === 'true' ? EN.refreshComplete : RO.refreshComplete,
               ToastAndroid.SHORT,
