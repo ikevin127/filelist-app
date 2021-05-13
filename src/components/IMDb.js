@@ -38,7 +38,7 @@ export default function IMDb({route, navigation}) {
   const [IMDbData, setIMDbData] = useState(null);
   const [isNetReachable, setIsNetReachable] = useState(true);
   const [downloadAnimation] = useState(new Animated.Value(0));
-  const {autoplay, enLang, fontSizes, lightTheme} = useSelector(
+  const {autoplay, enLang, fontSizes, lightTheme, hasNotch} = useSelector(
     (state) => state.appConfig,
   );
   const netRef = useRef(false);
@@ -187,7 +187,10 @@ export default function IMDb({route, navigation}) {
     <>
       <View
         style={{
-          height: statusHeight * 3.5,
+          height:
+            Platform.OS === 'ios' && !hasNotch
+              ? statusHeight * 5
+              : statusHeight * 3.5,
           width: '100%',
           display: 'flex',
           flexDirection: 'row',
@@ -200,7 +203,11 @@ export default function IMDb({route, navigation}) {
           style={{
             position: 'absolute',
             top:
-              Platform.OS === 'ios' ? statusHeight * 2.2 : statusHeight * 1.6,
+              Platform.OS === 'ios' && !hasNotch
+                ? statusHeight * 2.2
+                : Platform.OS === 'ios' && hasNotch
+                ? statusHeight * 2.2
+                : statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -219,7 +226,9 @@ export default function IMDb({route, navigation}) {
           style={{
             fontSize: Adjust(16),
             marginTop:
-              Platform.OS === 'ios' ? statusHeight * 2 : statusHeight * 1.1,
+              Platform.OS === 'ios' && hasNotch
+                ? statusHeight * 2
+                : statusHeight * 1.1,
             marginBottom: statusHeight / 2,
             fontWeight: 'bold',
             color: 'white',
@@ -307,7 +316,10 @@ export default function IMDb({route, navigation}) {
                   ]}>
                   {item.rating}
                 </Text>{' '}
-                {item.rating === '' ? null : Platform.OS === 'ios' ? (
+                {item.rating === '' ? null : Platform.OS === 'ios' &&
+                  hasNotch ? (
+                  <Text style={{fontSize: Adjust(15)}}>⭐</Text>
+                ) : Platform.OS === 'ios' && !hasNotch ? (
                   <Text style={{fontSize: Adjust(15)}}>⭐</Text>
                 ) : (
                   <FontAwesomeIcon
@@ -343,7 +355,11 @@ export default function IMDb({route, navigation}) {
                 style={{
                   width: '60%',
                   height:
-                    Platform.OS === 'ios' ? statusHeight : statusHeight * 1.5,
+                    Platform.OS === 'ios' && !hasNotch
+                      ? statusHeight * 2
+                      : Platform.OS === 'ios' && hasNotch
+                      ? statusHeight
+                      : statusHeight * 1.5,
                   flexDirection: 'row',
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -354,7 +370,7 @@ export default function IMDb({route, navigation}) {
                   backgroundColor: ACCENT_COLOR,
                 }}>
                 <PressableOpacity
-          activeOpacity={0.5}
+                  activeOpacity={0.5}
                   style={{
                     width: '100%',
                     height: '100%',

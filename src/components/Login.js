@@ -47,6 +47,16 @@ import {
 import {RO, EN} from '../assets/lang';
 
 export default function Login() {
+  // Redux
+  const dispatch = useDispatch();
+  const {
+    lightTheme,
+    listLatest,
+    latestError,
+    fontSizes,
+    enLang,
+    hasNotch,
+  } = useSelector((state) => state.appConfig);
   // State
   const [errorMsg, setErrorMsg] = useState(null);
   const [isKeyboard, setIsKeyboard] = useState(false);
@@ -56,19 +66,15 @@ export default function Login() {
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
   const [showNetworkAlertOn] = useState(
     new Animated.Value(
-      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
+      Platform.OS === 'ios' && hasNotch ? -statusHeight * 3 : statusHeight * 3,
     ),
   );
   const [showNetworkAlertOff] = useState(
     new Animated.Value(
-      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
+      Platform.OS === 'ios' && hasNotch ? -statusHeight * 3 : statusHeight * 3,
     ),
   );
-  // Redux
-  const dispatch = useDispatch();
-  const {lightTheme, listLatest, latestError, fontSizes, enLang} = useSelector(
-    (state) => state.appConfig,
-  );
+
   // Refs
   const netRef = useRef(false);
   const scrollRef = useRef(null);
@@ -234,7 +240,7 @@ export default function Login() {
   const netOn = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
+        toValue: Platform.OS === 'ios' && hasNotch ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -246,7 +252,10 @@ export default function Login() {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
+        toValue:
+          Platform.OS === 'ios' && hasNotch
+            ? -statusHeight * 1.5
+            : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -261,7 +270,7 @@ export default function Login() {
   const netOff = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
+        toValue: Platform.OS === 'ios' && hasNotch ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -273,7 +282,10 @@ export default function Login() {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
+        toValue:
+          Platform.OS === 'ios' && hasNotch
+            ? -statusHeight * 1.5
+            : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -315,7 +327,9 @@ export default function Login() {
                 {
                   backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
                   height:
-                    Platform.OS === 'ios' ? height : height + statusHeight,
+                    Platform.OS === 'ios' && hasNotch
+                      ? height
+                      : height + statusHeight,
                   paddingBottom:
                     Platform.OS === 'ios'
                       ? isKeyboard
@@ -333,7 +347,11 @@ export default function Login() {
                   }}
                 />
               </View>
-              <View style={LoginPage.form}>
+              <View
+                style={[
+                  LoginPage.form,
+                  {paddingTop: Platform.OS === 'ios' && hasNotch ? 0 : 16},
+                ]}>
                 <Formik
                   initialValues={{user: '', pass: ''}}
                   onSubmit={(values) => handleLogin(values.user, values.pass)}
@@ -447,6 +465,11 @@ export default function Login() {
                           {
                             elevation: loginLoading ? 0 : 2,
                             zIndex: loginLoading ? 0 : 2,
+                            marginTop:
+                              (Platform.OS === 'ios' && hasNotch) ||
+                              (Platform.OS === 'ios' && !hasNotch)
+                                ? 8
+                                : 48,
                           },
                         ]}>
                         {loginLoading ? (
@@ -481,7 +504,16 @@ export default function Login() {
         </ScrollView>
       </TouchableWithoutFeedback>
       {isKeyboard ? null : (
-        <View style={LoginPage.langView}>
+        <View
+          style={[
+            LoginPage.langView,
+            {
+              bottom:
+                Platform.OS === 'ios' && hasNotch
+                  ? statusHeight / 3
+                  : statusHeight,
+            },
+          ]}>
           <TouchableOpacity
             onPress={switchLangRo}
             style={{
@@ -521,9 +553,15 @@ export default function Login() {
           style={[
             LoginPage.networkAlertContainer,
             {
-              height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+              height:
+                Platform.OS === 'ios' && hasNotch
+                  ? statusHeight * 1.5
+                  : statusHeight,
               backgroundColor: 'limegreen',
-              bottom: Platform.OS === 'ios' ? height : 0,
+              bottom: Platform.OS === 'ios' && hasNotch ? height : 0,
+              justifyContent:
+                Platform.OS === 'ios' && hasNotch ? 'flex-end' : 'center',
+              paddingBottom: Platform.OS === 'ios' && hasNotch ? 6 : 0,
               transform: [
                 {
                   translateY: showNetworkAlertOn,
@@ -546,9 +584,15 @@ export default function Login() {
           style={[
             LoginPage.networkAlertContainer,
             {
-              height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+              height:
+                Platform.OS === 'ios' && hasNotch
+                  ? statusHeight * 1.5
+                  : statusHeight,
               backgroundColor: 'crimson',
-              bottom: Platform.OS === 'ios' ? height : 0,
+              bottom: Platform.OS === 'ios' && hasNotch ? height : 0,
+              justifyContent:
+                Platform.OS === 'ios' && hasNotch ? 'flex-end' : 'center',
+              paddingBottom: Platform.OS === 'ios' && hasNotch ? 6 : 0,
               transform: [
                 {
                   translateY: showNetworkAlertOff,
@@ -593,7 +637,6 @@ const LoginPage = EStyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: Platform.OS === 'ios' ? 0 : '1rem',
   },
   error: {
     width: '100%',
@@ -617,7 +660,6 @@ const LoginPage = EStyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? '0.5rem' : '3rem',
   },
   btn: {
     width: width / 6,
@@ -630,7 +672,6 @@ const LoginPage = EStyleSheet.create({
   langView: {
     position: 'absolute',
     height: statusHeight * 2,
-    bottom: Platform.OS === 'ios' ? statusHeight / 3 : statusHeight,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -643,8 +684,6 @@ const LoginPage = EStyleSheet.create({
     zIndex: 10,
     position: 'absolute',
     width: '100%',
-    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'center',
     alignItems: 'center',
-    paddingBottom: Platform.OS === 'ios' ? 6 : 0,
   },
 });

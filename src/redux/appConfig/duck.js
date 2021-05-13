@@ -2,11 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {S, M, L, removeDublicate} from '../../assets/variables';
 import crashlytics from '@react-native-firebase/crashlytics';
 import {Platform, ToastAndroid} from 'react-native';
+import DeviceInfo from 'react-native-device-info';
 import {RO, EN} from '../../assets/lang';
 import {types} from '../types';
 import Axios from 'axios';
 
 const initState = {
+  hasNotch: DeviceInfo.hasNotch(),
   lightTheme: false,
   autoplay: true,
   enLang: false,

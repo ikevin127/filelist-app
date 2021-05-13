@@ -50,7 +50,7 @@ export default function LeftDrawer({navigation}) {
   const [checked, setChecked] = React.useState('first');
   // Redux
   const dispatch = useDispatch();
-  const {lightTheme, fontSizes, enLang, autoplay} = useSelector(
+  const {lightTheme, fontSizes, enLang, autoplay, hasNotch} = useSelector(
     (state) => state.appConfig,
   );
   // Component mount
@@ -255,7 +255,10 @@ export default function LeftDrawer({navigation}) {
     <>
       <View
         style={{
-          height: statusHeight * 3.5,
+          height:
+            Platform.OS === 'ios' && !hasNotch
+              ? statusHeight * 5
+              : statusHeight * 3.5,
           width: '100%',
           display: 'flex',
           flexDirection: 'row',
@@ -268,7 +271,11 @@ export default function LeftDrawer({navigation}) {
           style={{
             position: 'absolute',
             top:
-              Platform.OS === 'ios' ? statusHeight * 2.2 : statusHeight * 1.6,
+              Platform.OS === 'ios' && !hasNotch
+                ? statusHeight * 2.2
+                : Platform.OS === 'ios' && hasNotch
+                ? statusHeight * 2.2
+                : statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -287,7 +294,9 @@ export default function LeftDrawer({navigation}) {
           style={{
             fontSize: Adjust(16),
             marginTop:
-              Platform.OS === 'ios' ? statusHeight * 2 : statusHeight * 1.1,
+              Platform.OS === 'ios' && hasNotch
+                ? statusHeight * 2
+                : statusHeight * 1.1,
             marginBottom: statusHeight / 2,
             fontWeight: 'bold',
             color: 'white',
@@ -355,7 +364,10 @@ export default function LeftDrawer({navigation}) {
             flexDirection: 'row',
             justifyContent: 'space-evenly',
             alignItems: 'center',
-            marginVertical: statusHeight / 3,
+            marginVertical:
+              Platform.OS === 'ios' && !hasNotch
+                ? statusHeight / 1.5
+                : statusHeight / 3,
           }}>
           <Text
             style={{
@@ -383,7 +395,7 @@ export default function LeftDrawer({navigation}) {
               <Switch
                 trackColor={{false: 'black', true: '#505050'}}
                 thumbColor={lightTheme ? 'white' : MAIN_LIGHT}
-                ios_backgroundColor="#909090"
+                ios_backgroundColor={lightTheme ? '#909090' : 'black'}
                 value={!lightTheme}
               />
             </View>
@@ -420,7 +432,10 @@ export default function LeftDrawer({navigation}) {
             flexDirection: 'row',
             justifyContent: 'space-evenly',
             alignItems: 'center',
-            marginVertical: statusHeight / 3,
+            marginVertical:
+              Platform.OS === 'ios' && !hasNotch
+                ? statusHeight / 1.5
+                : statusHeight / 3,
           }}>
           <FastImage
             style={{width: 25, height: 25}}
@@ -489,13 +504,14 @@ export default function LeftDrawer({navigation}) {
               justifyContent: 'center',
               alignItems: 'center',
               flexDirection: 'row',
-              marginLeft: Platform.OS === 'ios' ? statusHeight / 2.5 : 0,
+              marginLeft:
+                Platform.OS === 'ios' && hasNotch ? statusHeight / 2.5 : 0,
             }}>
             <Text
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: Platform.OS === 'ios' ? -8 : 2,
+                marginRight: Platform.OS === 'ios' && hasNotch ? -8 : 2,
               }}>
               S
             </Text>
@@ -518,7 +534,7 @@ export default function LeftDrawer({navigation}) {
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: Platform.OS === 'ios' ? -8 : 2,
+                marginRight: Platform.OS === 'ios' && hasNotch ? -8 : 2,
               }}>
               M
             </Text>
@@ -541,7 +557,7 @@ export default function LeftDrawer({navigation}) {
               style={{
                 color: lightTheme ? 'grey' : 'silver',
                 fontWeight: 'bold',
-                marginRight: Platform.OS === 'ios' ? -8 : 2,
+                marginRight: Platform.OS === 'ios' && hasNotch ? -8 : 2,
               }}>
               L
             </Text>
@@ -577,7 +593,10 @@ export default function LeftDrawer({navigation}) {
             flexDirection: 'row',
             justifyContent: 'space-evenly',
             alignItems: 'center',
-            marginVertical: statusHeight / 3,
+            marginVertical:
+              Platform.OS === 'ios' && !hasNotch
+                ? statusHeight / 1.5
+                : statusHeight / 3,
           }}>
           <Text
             style={{
@@ -676,7 +695,10 @@ export default function LeftDrawer({navigation}) {
         )}
         <View
           style={{
-            height: statusHeight * 3,
+            height:
+              Platform.OS === 'ios' && !hasNotch
+                ? statusHeight * 4
+                : statusHeight * 3,
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
@@ -714,7 +736,8 @@ export default function LeftDrawer({navigation}) {
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              paddingHorizontal: Platform.OS === 'ios' ? 0 : statusHeight / 1.5,
+              paddingHorizontal:
+                Platform.OS === 'ios' && hasNotch ? 0 : statusHeight / 1.5,
             }}
             onPress={goFilelist}>
             <FontAwesomeIcon

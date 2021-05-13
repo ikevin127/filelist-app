@@ -26,7 +26,7 @@ import {faArrowLeft} from '@fortawesome/free-solid-svg-icons';
 export default function TrailerView({route, navigation}) {
   const isFocused = useIsFocused();
   const [orientation, setOrientation] = useState('');
-  const {lightTheme} = useSelector((state) => state.appConfig);
+  const {lightTheme, hasNotch} = useSelector((state) => state.appConfig);
   // Component mount
   useEffect(() => {
     // Orientation listener
@@ -91,7 +91,10 @@ export default function TrailerView({route, navigation}) {
           {orientation === 'LANDSCAPE' ? null : (
             <View
               style={{
-                height: statusHeight * 3.5,
+                height:
+                  Platform.OS === 'ios' && !hasNotch
+                    ? statusHeight * 5
+                    : statusHeight * 3.5,
                 width: '100%',
                 display: 'flex',
                 flexDirection: 'row',
@@ -100,11 +103,13 @@ export default function TrailerView({route, navigation}) {
                 backgroundColor: ACCENT_COLOR,
               }}>
               <PressableOpacity
-          activeOpacity={0.5}
+                activeOpacity={0.5}
                 style={{
                   position: 'absolute',
                   top:
-                    Platform.OS === 'ios'
+                    Platform.OS === 'ios' && !hasNotch
+                      ? statusHeight * 2.3
+                      : Platform.OS === 'ios' && hasNotch
                       ? statusHeight * 2.2
                       : statusHeight * 1.6,
                   left: statusHeight / 1.5,
@@ -125,8 +130,10 @@ export default function TrailerView({route, navigation}) {
                 style={{
                   fontSize: Adjust(16),
                   marginTop:
-                    Platform.OS === 'ios'
-                      ? statusHeight * 2
+                    Platform.OS === 'ios' && !hasNotch
+                      ? statusHeight * 1.1
+                      : Platform.OS === 'ios' && hasNotch
+                      ? statusHeight * 2.1
                       : statusHeight * 1.1,
                   marginBottom: statusHeight / 2,
                   fontWeight: 'bold',

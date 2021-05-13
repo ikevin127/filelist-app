@@ -11,8 +11,11 @@ import Orientation from 'react-native-orientation-locker';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import Adjust from './AdjustText';
 import {faArrowLeft} from '@fortawesome/free-solid-svg-icons';
+// Redux
+import {useSelector} from 'react-redux';
 
 export default function FilelistView({navigation}) {
+  const {hasNotch} = useSelector((state) => state.appConfig);
   // Component mount
   useEffect(() => {
     // Screen focus listener
@@ -37,7 +40,10 @@ export default function FilelistView({navigation}) {
     <>
       <View
         style={{
-          height: statusHeight * 3.5,
+          height:
+            Platform.OS === 'ios' && !hasNotch
+              ? statusHeight * 5
+              : statusHeight * 3.5,
           width: '100%',
           display: 'flex',
           flexDirection: 'row',
@@ -50,7 +56,11 @@ export default function FilelistView({navigation}) {
           style={{
             position: 'absolute',
             top:
-              Platform.OS === 'ios' ? statusHeight * 2.2 : statusHeight * 1.6,
+              Platform.OS === 'ios' && !hasNotch
+                ? statusHeight * 2.2
+                : Platform.OS === 'ios' && hasNotch
+                ? statusHeight * 2.2
+                : statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -69,7 +79,9 @@ export default function FilelistView({navigation}) {
           style={{
             fontSize: Adjust(16),
             marginTop:
-              Platform.OS === 'ios' ? statusHeight * 2 : statusHeight * 1.1,
+              Platform.OS === 'ios' && hasNotch
+                ? statusHeight * 2
+                : statusHeight * 1.1,
             marginBottom: statusHeight / 2,
             fontWeight: 'bold',
             color: 'white',

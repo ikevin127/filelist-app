@@ -92,6 +92,20 @@ import {
 import {RO, EN} from '../assets/lang';
 
 export default function Search({navigation}) {
+  // Redux
+  const dispatch = useDispatch();
+  const {
+    lightTheme,
+    fontSizes,
+    collItems,
+    historyList,
+    listSearch,
+    searchLoading,
+    searchError,
+    enLang,
+    hasNotch,
+  } = useSelector((state) => state.appConfig);
+  // State
   const [catIndex, setCatIndex] = useState('');
   const [searchText, setSearchText] = useState('');
   const [inputKeyword, setInputKeyword] = useState('');
@@ -135,26 +149,14 @@ export default function Search({navigation}) {
   const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
   const [showNetworkAlertOn] = useState(
     new Animated.Value(
-      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
+      Platform.OS === 'ios' && hasNotch ? -statusHeight * 3 : statusHeight * 3,
     ),
   );
   const [showNetworkAlertOff] = useState(
     new Animated.Value(
-      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
+      Platform.OS === 'ios' && hasNotch ? -statusHeight * 3 : statusHeight * 3,
     ),
   );
-  // Redux
-  const dispatch = useDispatch();
-  const {
-    lightTheme,
-    fontSizes,
-    collItems,
-    historyList,
-    listSearch,
-    searchLoading,
-    searchError,
-    enLang,
-  } = useSelector((state) => state.appConfig);
 
   // Refs
   const netRef = useRef(false);
@@ -730,7 +732,7 @@ export default function Search({navigation}) {
   const netOn = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
+        toValue: Platform.OS === 'ios' && hasNotch ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -742,7 +744,10 @@ export default function Search({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
+        toValue:
+          Platform.OS === 'ios' && hasNotch
+            ? -statusHeight * 1.5
+            : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -757,7 +762,7 @@ export default function Search({navigation}) {
   const netOff = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
+        toValue: Platform.OS === 'ios' && hasNotch ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -769,7 +774,10 @@ export default function Search({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
+        toValue:
+          Platform.OS === 'ios' && hasNotch
+            ? -statusHeight * 1.5
+            : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -1418,7 +1426,10 @@ export default function Search({navigation}) {
           <View style={SearchPage.catCheckContainer}>
             <View
               style={{
-                height: statusHeight * 3.5,
+                height:
+                  Platform.OS === 'ios' && !hasNotch
+                    ? statusHeight * 5
+                    : statusHeight * 3.5,
                 width: '100%',
                 display: 'flex',
                 flexDirection: 'row',
@@ -1431,10 +1442,15 @@ export default function Search({navigation}) {
                 style={{
                   position: 'absolute',
                   top:
-                    Platform.OS === 'ios'
+                    Platform.OS === 'ios' && !hasNotch
+                      ? statusHeight * 2.4
+                      : Platform.OS === 'ios' && hasNotch
                       ? statusHeight * 2.2
                       : statusHeight * 1.6,
-                  left: statusHeight / 1.5,
+                  left:
+                    Platform.OS === 'ios' && !hasNotch
+                      ? statusHeight
+                      : statusHeight / 1.5,
                 }}
                 android_ripple={{
                   color: 'white',
@@ -1466,10 +1482,15 @@ export default function Search({navigation}) {
                 style={{
                   position: 'absolute',
                   top:
-                    Platform.OS === 'ios'
+                    Platform.OS === 'ios' && !hasNotch
+                      ? statusHeight * 2.4
+                      : Platform.OS === 'ios' && hasNotch
                       ? statusHeight * 2.2
                       : statusHeight * 1.6,
-                  right: statusHeight / 1.5,
+                  right:
+                    Platform.OS === 'ios' && !hasNotch
+                      ? statusHeight
+                      : statusHeight / 1.5,
                 }}
                 android_ripple={{
                   color: 'white',
@@ -2812,7 +2833,16 @@ export default function Search({navigation}) {
           </View>
         </>
       </Overlay>
-      <View style={SearchPage.mainHeader}>
+      <View
+        style={[
+          SearchPage.mainHeader,
+          {
+            height:
+              Platform.OS === 'ios' && !hasNotch
+                ? statusHeight * 5
+                : statusHeight * 3.5,
+          },
+        ]}>
         <Formik
           innerRef={onRefChange}
           initialValues={{search: ''}}
@@ -2837,7 +2867,10 @@ export default function Search({navigation}) {
                 style={[
                   SearchPage.inputStyle,
                   {
-                    fontSize: Platform.OS === 'ios' ? Adjust(14) : Adjust(12),
+                    fontSize:
+                      Platform.OS === 'ios' && hasNotch
+                        ? Adjust(14)
+                        : Adjust(12),
                     color: 'white',
                   },
                 ]}
@@ -2885,7 +2918,7 @@ export default function Search({navigation}) {
                     activeOpacity={0.5}
                     style={[
                       SearchPage.mainHeaderCogPressable,
-                      {paddingTop: Platform.OS === 'ios' ? 6 : 0},
+                      {paddingTop: Platform.OS === 'ios' && hasNotch ? 6 : 0},
                     ]}
                     android_ripple={{
                       color: 'white',
@@ -2895,7 +2928,7 @@ export default function Search({navigation}) {
                     onPress={goBack}>
                     <FontAwesomeIcon
                       size={
-                        Platform.OS === 'ios'
+                        Platform.OS === 'ios' && hasNotch
                           ? Adjust(28)
                           : Adjust(fontSizes !== null ? fontSizes[8] : 22)
                       }
@@ -2918,7 +2951,9 @@ export default function Search({navigation}) {
                     onPress={resetForm}>
                     <FontAwesomeIcon
                       size={
-                        Platform.OS === 'ios'
+                        Platform.OS === 'ios' && !hasNotch
+                          ? Adjust(28)
+                          : Platform.OS === 'ios' && hasNotch
                           ? Adjust(30)
                           : Adjust(fontSizes !== null ? fontSizes[8] : 22)
                       }
@@ -2957,13 +2992,19 @@ export default function Search({navigation}) {
                   }}
                   onPress={displayCatList}>
                   <FontAwesomeIcon
-                    size={Adjust(
-                      fontSizes !== null
-                        ? fontSizes[Platform.OS === 'ios' ? 8 : 7]
-                        : Platform.OS === 'ios'
-                        ? 22
-                        : 20,
-                    )}
+                    size={
+                      Platform.OS === 'ios' && !hasNotch
+                        ? Adjust(22)
+                        : Adjust(
+                            fontSizes !== null
+                              ? fontSizes[
+                                  Platform.OS === 'ios' && hasNotch ? 8 : 7
+                                ]
+                              : Platform.OS === 'ios'
+                              ? 22
+                              : 20,
+                          )
+                    }
                     color={'white'}
                     icon={faFilter}
                   />
@@ -2994,7 +3035,10 @@ export default function Search({navigation}) {
               ]}>
               <TouchableOpacity
                 style={{
-                  height: statusHeight * 1.5,
+                  height:
+                    Platform.OS === 'ios' && !hasNotch
+                      ? statusHeight * 2
+                      : statusHeight * 1.5,
                   justifyContent: 'center',
                   alignItems: 'center',
                   backgroundColor: 'transparent',
@@ -3010,7 +3054,10 @@ export default function Search({navigation}) {
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
-                  height: statusHeight * 1.5,
+                  height:
+                    Platform.OS === 'ios' && !hasNotch
+                      ? statusHeight * 2
+                      : statusHeight * 1.5,
                   justifyContent: 'center',
                   alignItems: 'center',
                   backgroundColor: 'transparent',
@@ -3036,7 +3083,11 @@ export default function Search({navigation}) {
                 alignItems: 'center',
                 width,
                 height:
-                  Platform.OS === 'ios' ? statusHeight : statusHeight * 1.6,
+                  Platform.OS === 'ios' && !hasNotch
+                    ? statusHeight * 2.2
+                    : Platform.OS === 'ios' && hasNotch
+                    ? statusHeight
+                    : statusHeight * 1.6,
                 paddingLeft: statusHeight / 2,
               }}
               android_ripple={{
@@ -3182,9 +3233,15 @@ export default function Search({navigation}) {
           style={[
             SearchPage.networkAlertContainer,
             {
-              height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+              height:
+                Platform.OS === 'ios' && hasNotch
+                  ? statusHeight * 1.5
+                  : statusHeight,
               backgroundColor: 'limegreen',
-              bottom: Platform.OS === 'ios' ? height : 0,
+              bottom: Platform.OS === 'ios' && hasNotch ? height : 0,
+              justifyContent:
+                Platform.OS === 'ios' && hasNotch ? 'flex-end' : 'center',
+              paddingBottom: Platform.OS === 'ios' && hasNotch ? 6 : 0,
               transform: [
                 {
                   translateY: showNetworkAlertOn,
@@ -3207,9 +3264,15 @@ export default function Search({navigation}) {
           style={[
             SearchPage.networkAlertContainer,
             {
-              height: Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+              height:
+                Platform.OS === 'ios' && hasNotch
+                  ? statusHeight * 1.5
+                  : statusHeight,
               backgroundColor: 'crimson',
-              bottom: Platform.OS === 'ios' ? height : 0,
+              bottom: Platform.OS === 'ios' && hasNotch ? height : 0,
+              justifyContent:
+                Platform.OS === 'ios' && hasNotch ? 'flex-end' : 'center',
+              paddingBottom: Platform.OS === 'ios' && hasNotch ? 6 : 0,
               transform: [
                 {
                   translateY: showNetworkAlertOff,
@@ -3394,7 +3457,6 @@ const SearchPage = EStyleSheet.create({
     borderBottomColor: 'transparent',
   },
   mainHeader: {
-    height: statusHeight * 3.5,
     width,
     display: 'flex',
     flexDirection: 'row',
@@ -3497,8 +3559,6 @@ const SearchPage = EStyleSheet.create({
     zIndex: 10,
     position: 'absolute',
     width: '100%',
-    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'center',
     alignItems: 'center',
-    paddingBottom: Platform.OS === 'ios' ? 6 : 0,
   },
 });

@@ -76,22 +76,6 @@ import vids from '../assets/cat/vids.png';
 import xxx from '../assets/cat/xxx.png';
 
 export default function Home({navigation}) {
-  const netRef = useRef(false);
-  const [refreshing] = useState(false);
-  const [isNetReachable, setIsNetReachable] = useState(true);
-  // Animations
-  const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
-  const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
-  const [showNetworkAlertOn] = useState(
-    new Animated.Value(
-      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
-    ),
-  );
-  const [showNetworkAlertOff] = useState(
-    new Animated.Value(
-      Platform.OS === 'ios' ? -statusHeight * 3 : statusHeight * 3,
-    ),
-  );
   // Redux
   const dispatch = useDispatch();
   const {
@@ -102,7 +86,25 @@ export default function Home({navigation}) {
     latestLoading,
     latestError,
     enLang,
+    hasNotch,
   } = useSelector((state) => state.appConfig);
+  // State
+  const netRef = useRef(false);
+  const [refreshing] = useState(false);
+  const [isNetReachable, setIsNetReachable] = useState(true);
+  // Animations
+  const [showNetworkAlertTextOn] = useState(new Animated.Value(0));
+  const [showNetworkAlertTextOff] = useState(new Animated.Value(0));
+  const [showNetworkAlertOn] = useState(
+    new Animated.Value(
+      Platform.OS === 'ios' && hasNotch ? -statusHeight * 3 : statusHeight * 3,
+    ),
+  );
+  const [showNetworkAlertOff] = useState(
+    new Animated.Value(
+      Platform.OS === 'ios' && hasNotch ? -statusHeight * 3 : statusHeight * 3,
+    ),
+  );
 
   // Component mount
   useEffect(() => {
@@ -377,7 +379,7 @@ export default function Home({navigation}) {
   const netOn = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
+        toValue: Platform.OS === 'ios' && hasNotch ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -389,7 +391,10 @@ export default function Home({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOn, {
-        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
+        toValue:
+          Platform.OS === 'ios' && hasNotch
+            ? -statusHeight * 1.5
+            : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -404,7 +409,7 @@ export default function Home({navigation}) {
   const netOff = () => {
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS === 'ios' ? statusHeight * 1.5 : 0,
+        toValue: Platform.OS === 'ios' && hasNotch ? statusHeight * 1.5 : 0,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -416,7 +421,10 @@ export default function Home({navigation}) {
     }, 100);
     setTimeout(() => {
       Animated.timing(showNetworkAlertOff, {
-        toValue: Platform.OS === 'ios' ? -statusHeight * 1.5 : statusHeight,
+        toValue:
+          Platform.OS === 'ios' && hasNotch
+            ? -statusHeight * 1.5
+            : statusHeight,
         duration: 500,
         useNativeDriver: true,
       }).start();
@@ -1045,7 +1053,16 @@ export default function Home({navigation}) {
             backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
           },
         ]}>
-        <View style={HomePage.mainHeader}>
+        <View
+          style={[
+            HomePage.mainHeader,
+            {
+              height:
+                Platform.OS === 'ios' && !hasNotch
+                  ? statusHeight * 5
+                  : statusHeight * 3.5,
+            },
+          ]}>
           <View style={HomePage.mainHeaderContainer}>
             <View style={HomePage.mainHeaderCogContainer}>
               <PressableOpacity
@@ -1137,9 +1154,14 @@ export default function Home({navigation}) {
               HomePage.networkAlertContainer,
               {
                 height:
-                  Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+                  Platform.OS === 'ios' && hasNotch
+                    ? statusHeight * 1.5
+                    : statusHeight,
                 backgroundColor: 'limegreen',
-                bottom: Platform.OS === 'ios' ? height : 0,
+                bottom: Platform.OS === 'ios' && hasNotch ? height : 0,
+                justifyContent:
+                  Platform.OS === 'ios' && hasNotch ? 'flex-end' : 'center',
+                paddingBottom: Platform.OS === 'ios' && hasNotch ? 6 : 0,
                 transform: [
                   {
                     translateY: showNetworkAlertOn,
@@ -1163,9 +1185,14 @@ export default function Home({navigation}) {
               HomePage.networkAlertContainer,
               {
                 height:
-                  Platform.OS === 'ios' ? statusHeight * 1.5 : statusHeight,
+                  Platform.OS === 'ios' && hasNotch
+                    ? statusHeight * 1.5
+                    : statusHeight,
                 backgroundColor: 'crimson',
-                bottom: Platform.OS === 'ios' ? height : 0,
+                bottom: Platform.OS === 'ios' && hasNotch ? height : 0,
+                justifyContent:
+                  Platform.OS === 'ios' && hasNotch ? 'flex-end' : 'center',
+                paddingBottom: Platform.OS === 'ios' && hasNotch ? 6 : 0,
                 transform: [
                   {
                     translateY: showNetworkAlertOff,
@@ -1268,7 +1295,6 @@ const HomePage = EStyleSheet.create({
     alignItems: 'center',
   },
   mainHeader: {
-    height: statusHeight * 3.5,
     width,
     display: 'flex',
     flexDirection: 'row',
@@ -1370,8 +1396,6 @@ const HomePage = EStyleSheet.create({
     zIndex: 10,
     position: 'absolute',
     width: '100%',
-    justifyContent: Platform.OS === 'ios' ? 'flex-end' : 'center',
     alignItems: 'center',
-    paddingBottom: Platform.OS === 'ios' ? 6 : 0,
   },
 });

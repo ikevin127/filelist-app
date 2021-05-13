@@ -21,7 +21,9 @@ import {
 import {RO, EN} from '../assets/lang';
 
 export default function HowTo({navigation}) {
-  const {lightTheme, enLang} = useSelector((state) => state.appConfig);
+  const {lightTheme, enLang, hasNotch} = useSelector(
+    (state) => state.appConfig,
+  );
   // List data
   const INFO = [
     {
@@ -55,7 +57,10 @@ export default function HowTo({navigation}) {
     <>
       <View
         style={{
-          height: statusHeight * 3.5,
+          height:
+            Platform.OS === 'ios' && !hasNotch
+              ? statusHeight * 5
+              : statusHeight * 3.5,
           width: '100%',
           display: 'flex',
           flexDirection: 'row',
@@ -68,7 +73,11 @@ export default function HowTo({navigation}) {
           style={{
             position: 'absolute',
             top:
-              Platform.OS === 'ios' ? statusHeight * 2.2 : statusHeight * 1.6,
+              Platform.OS === 'ios' && !hasNotch
+                ? statusHeight * 2.2
+                : Platform.OS === 'ios' && hasNotch
+                ? statusHeight * 2.2
+                : statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -87,7 +96,9 @@ export default function HowTo({navigation}) {
           style={{
             fontSize: Adjust(16),
             marginTop:
-              Platform.OS === 'ios' ? statusHeight * 2 : statusHeight * 1.1,
+              Platform.OS === 'ios' && hasNotch
+                ? statusHeight * 2
+                : statusHeight * 1.1,
             marginBottom: statusHeight / 2,
             fontWeight: 'bold',
             color: 'white',
