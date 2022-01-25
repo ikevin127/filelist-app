@@ -6,6 +6,7 @@ import DeviceInfo from 'react-native-device-info';
 import {RO, EN} from '../../assets/lang';
 import {types} from '../types';
 import Axios from 'axios';
+import {VARIABLES_API} from '../../../env.js';
 
 const initState = {
   hasNotch: DeviceInfo.hasNotch(),
@@ -23,6 +24,7 @@ const initState = {
   searchError: null,
   collItems: [],
   historyList: {},
+  variables: null,
 };
 
 export const actions = {
@@ -162,46 +164,48 @@ export const actions = {
   latestError: () => async (dispatch) => {
     dispatch({type: types.APP_CONFIG.LATEST_ERROR, payload: null});
   },
-  getSearch: (
-    user,
-    pass,
-    action,
-    type,
-    query,
-    category,
-    internal,
-    freeleech,
-    doubleup,
-  ) => async (dispatch) => {
-    try {
-      dispatch({
-        type: types.APP_CONFIG.SEARCH_LOADING,
-      });
-      await Axios.get(
-        `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=${action}&type=${type}&query=${query}${category}${freeleech}${internal}${doubleup}`,
-      )
-        .then(async (res) => {
-          let {data} = res;
-          dispatch({
-            type: types.APP_CONFIG.GET_SEARCH,
-            payload: data,
-          });
-          await AsyncStorage.setItem('search', JSON.stringify(data));
-          dispatch({
-            type: types.APP_CONFIG.SEARCH_LOADING,
-          });
-        })
-        .catch((err) => {
-          dispatch({type: types.APP_CONFIG.SEARCH_ERROR, payload: err});
-          dispatch({
-            type: types.APP_CONFIG.SEARCH_LOADING,
-          });
+  getSearch:
+    (
+      user,
+      pass,
+      action,
+      type,
+      query,
+      category,
+      internal,
+      freeleech,
+      doubleup,
+    ) =>
+    async (dispatch) => {
+      try {
+        dispatch({
+          type: types.APP_CONFIG.SEARCH_LOADING,
         });
-    } catch (e) {
-      crashlytics().log('ducks -> getSearch()');
-      crashlytics().recordError(e);
-    }
-  },
+        await Axios.get(
+          `https://filelist.io/api.php?username=${user}&passkey=${pass}&action=${action}&type=${type}&query=${query}${category}${freeleech}${internal}${doubleup}`,
+        )
+          .then(async (res) => {
+            let {data} = res;
+            dispatch({
+              type: types.APP_CONFIG.GET_SEARCH,
+              payload: data,
+            });
+            await AsyncStorage.setItem('search', JSON.stringify(data));
+            dispatch({
+              type: types.APP_CONFIG.SEARCH_LOADING,
+            });
+          })
+          .catch((err) => {
+            dispatch({type: types.APP_CONFIG.SEARCH_ERROR, payload: err});
+            dispatch({
+              type: types.APP_CONFIG.SEARCH_LOADING,
+            });
+          });
+      } catch (e) {
+        crashlytics().log('ducks -> getSearch()');
+        crashlytics().recordError(e);
+      }
+    },
   clearSearchStorage: () => async (dispatch) => {
     await AsyncStorage.removeItem('search');
     dispatch({
@@ -211,6 +215,25 @@ export const actions = {
   },
   searchError: () => async (dispatch) => {
     dispatch({type: types.APP_CONFIG.SEARCH_ERROR, payload: null});
+  },
+  getVariables: () => async (dispatch) => {
+    try {
+      await Axios.get(VARIABLES_API)
+        .then(async (res) => {
+          let {data} = res;
+          dispatch({
+            type: types.APP_CONFIG.SET_VARIABLES,
+            payload: data?.Values,
+          });
+        })
+        .catch((err) => {
+          crashlytics().log('ducks -> getVariables() -> catch()');
+          crashlytics().recordError(err);
+        });
+    } catch (e) {
+      crashlytics().log('ducks -> getVariables()');
+      crashlytics().recordError(e);
+    }
   },
 };
 
@@ -244,6 +267,8 @@ export function reducer(state = initState, action) {
       return {...state, searchLoading: !state.searchLoading};
     case types.APP_CONFIG.SEARCH_ERROR:
       return {...state, searchError: action.payload};
+    case types.APP_CONFIG.SET_VARIABLES:
+      return {...state, variables: action.payload};
     default:
       return state;
   }

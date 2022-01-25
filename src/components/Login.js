@@ -56,6 +56,7 @@ export default function Login() {
     fontSizes,
     enLang,
     hasNotch,
+    variables,
   } = useSelector((state) => state.appConfig);
   // State
   const [errorMsg, setErrorMsg] = useState(null);
@@ -297,6 +298,8 @@ export default function Login() {
     }, 4000);
   };
 
+  const {CDN_URL, LOGIN_LOGO} = variables || {};
+
   return (
     <>
       <StatusBar
@@ -343,7 +346,9 @@ export default function Login() {
                   style={LoginPage.picture}
                   resizeMode={FastImage.resizeMode.contain}
                   source={{
-                    uri: 'https://dlc4jqsejiyjs.cloudfront.net/filelist.png',
+                    uri: CDN_URL
+                      ? `${CDN_URL}/${LOGIN_LOGO}`
+                      : 'https://dlc4jqsejiyjs.cloudfront.net/filelist.png',
                   }}
                 />
               </View>

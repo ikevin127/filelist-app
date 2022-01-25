@@ -20,6 +20,7 @@ import {
   createStackNavigator,
   CardStyleInterpolators,
 } from '@react-navigation/stack';
+
 const Stack = createStackNavigator();
 
 function Auth() {
@@ -29,6 +30,8 @@ function Auth() {
   const {listLatest} = useSelector((state) => state.appConfig);
   // Component mount
   useEffect(() => {
+    // Get app variables
+    dispatch(AppConfigActions.getVariables());
     // Set language, theme, autoplay & font sizes
     setLang();
     setTheme();

@@ -4,6 +4,7 @@
 android/*.properties
 android/app/google-services.json
 env.js
+.env
 
 # Xcode
 #

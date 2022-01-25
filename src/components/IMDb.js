@@ -38,9 +38,8 @@ export default function IMDb({route, navigation}) {
   const [IMDbData, setIMDbData] = useState(null);
   const [isNetReachable, setIsNetReachable] = useState(true);
   const [downloadAnimation] = useState(new Animated.Value(0));
-  const {autoplay, enLang, fontSizes, lightTheme, hasNotch} = useSelector(
-    (state) => state.appConfig,
-  );
+  const {autoplay, enLang, fontSizes, lightTheme, hasNotch, variables} =
+    useSelector((state) => state.appConfig);
   const netRef = useRef(false);
   // Connection listener effect
   useEffect(() => {
@@ -118,11 +117,11 @@ export default function IMDb({route, navigation}) {
   // Functions
   const handleBack = () => navigation.goBack();
   // eslint-disable-next-line no-shadow
-  const goTrailer = (trailerLink, autoplay) => () => {
+  const goTrailer = (trailerLink, autoPlay) => () => {
     if (trailerLink !== '') {
       navigation.navigate('Trailer', {
         trailerLink,
-        autoplay,
+        autoPlay,
       });
     } else {
       Alert.alert(
@@ -145,8 +144,9 @@ export default function IMDb({route, navigation}) {
     return regex.test(title);
   };
   const fetchIMDbInfo = async (id, cancel) => {
+    const {SCRAPER_URL} = variables || {};
     if (isNetReachable) {
-      await Axios.get(`https://inkthatquote.com/${id}`, {
+      await Axios.get(`${SCRAPER_URL}/${id}`, {
         cancelToken: cancel.token,
       })
         .then((res) => {
