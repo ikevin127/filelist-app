@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import org.devio.rn.splashscreen.SplashScreenReactPackage;
 import androidx.multidex.MultiDexApplication;
+import org.wonday.orientation.OrientationActivityLifecycle;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -47,6 +48,7 @@ public class MainApplication extends Application implements ReactApplication {
   @Override
   public void onCreate() {
     super.onCreate();
+    registerActivityLifecycleCallbacks(OrientationActivityLifecycle.getInstance());
     SoLoader.init(this, /* native exopackage */ false);
     initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
   }
@@ -63,8 +65,8 @@ public class MainApplication extends Application implements ReactApplication {
     if (BuildConfig.DEBUG) {
       try {
         /*
-         We use reflection here to pick up the class that initializes Flipper,
-        since Flipper library is not available in release mode
+        * We use reflection here to pick up the class that initializes Flipper,
+        * since Flipper library is not available in release mode
         */
         Class<?> aClass = Class.forName("com.baderproductions.fl.ReactNativeFlipper");
         aClass

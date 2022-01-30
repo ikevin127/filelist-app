@@ -1,9 +1,9 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import SplashScreen from 'react-native-splash-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Redux
-import {useDispatch, useSelector} from 'react-redux';
-import {AppConfigActions} from '../redux/actions';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppConfigActions } from '../redux/actions';
 // Screens
 import Menu from './Menu';
 import TrailerView from './TrailerView';
@@ -15,7 +15,7 @@ import IMDb from './IMDb';
 import HowTo from './HowTo';
 import Home from './Home';
 // Navigation
-import {NavigationContainer} from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import {
   createStackNavigator,
   CardStyleInterpolators,
@@ -27,7 +27,7 @@ function Auth() {
   const [loading, setLoading] = useState(true);
   // Redux
   const dispatch = useDispatch();
-  const {listLatest} = useSelector((state) => state.appConfig);
+  const { listLatest } = useSelector((state) => state.appConfig);
   // Component mount
   useEffect(() => {
     // Get app variables
@@ -84,7 +84,8 @@ function Auth() {
     <Stack.Navigator
       screenOptions={{
         cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-        cardStyle: {backgroundColor: 'black'},
+        cardStyle: { backgroundColor: 'black' },
+        presentation: 'modal'
       }}
       headerMode="none">
       {listLatest !== null ? (
@@ -111,7 +112,7 @@ export default () => {
     SplashScreen.hide();
   }, []);
   return (
-    <NavigationContainer theme={{colors: {background: '#000'}}}>
+    <NavigationContainer theme={{ colors: { background: '#000' } }}>
       <Auth />
     </NavigationContainer>
   );

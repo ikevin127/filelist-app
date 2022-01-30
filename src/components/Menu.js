@@ -38,11 +38,9 @@ import {
   MAIN_LIGHT,
   ACCENT_COLOR,
   PressableOpacity,
+  getColor,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
-// Variables & assets
-import ro from '../assets/ro.png';
-import en from '../assets/en.png';
 
 export default function LeftDrawer({navigation}) {
   // State
@@ -50,7 +48,7 @@ export default function LeftDrawer({navigation}) {
   const [checked, setChecked] = React.useState('first');
   // Redux
   const dispatch = useDispatch();
-  const {lightTheme, fontSizes, enLang, autoplay, hasNotch} = useSelector(
+  const {lightTheme, fontSizes, enLang, autoplay, hasNotch, variables} = useSelector(
     (state) => state.appConfig,
   );
   // Component mount
@@ -250,6 +248,9 @@ export default function LeftDrawer({navigation}) {
     }
   };
 
+  const {CDN_URL, ICONS} = variables || {};
+  const {roIcon, enIcon, torrentDownloader} = ICONS || {};
+
   // Component render
   return (
     <>
@@ -321,7 +322,7 @@ export default function LeftDrawer({navigation}) {
                 textTransform: 'uppercase',
                 marginBottom: Platform.OS === 'ios' ? -4 : 4,
                 fontWeight: 'bold',
-                color: lightTheme ? 'black' : 'white',
+                color: getColor(lightTheme),
               }}>
               {user !== '' ? user.charAt(0) : null}
             </Text>
@@ -332,7 +333,7 @@ export default function LeftDrawer({navigation}) {
             style={{
               fontSize: Adjust(16),
               fontWeight: 'bold',
-              color: lightTheme ? 'black' : 'white',
+              color: getColor(lightTheme),
             }}>
             {user !== '' ? user : null}
           </Text>
@@ -353,7 +354,7 @@ export default function LeftDrawer({navigation}) {
             marginBottom: 2,
             marginTop: statusHeight / 2,
             marginLeft: statusHeight / 2,
-            color: lightTheme ? 'black' : 'white',
+            color: getColor(lightTheme),
           }}>
           {enLang ? EN.theme : RO.theme}
         </Text>
@@ -421,7 +422,7 @@ export default function LeftDrawer({navigation}) {
             marginBottom: 2,
             marginTop: statusHeight / 2,
             marginLeft: statusHeight / 2,
-            color: lightTheme ? 'black' : 'white',
+            color: getColor(lightTheme),
           }}>
           {enLang ? EN.lang : RO.lang}
         </Text>
@@ -440,7 +441,7 @@ export default function LeftDrawer({navigation}) {
           <FastImage
             style={{width: 25, height: 25}}
             resizeMode={FastImage.resizeMode.contain}
-            source={ro}
+            source={{ uri: CDN_URL ? `${ CDN_URL }/${ roIcon }` : 'https://dlc4jqsejiyjs.cloudfront.net/ro_cf908c3a13.png' }}
           />
           <PressableOpacity
             activeOpacity={0.5}
@@ -471,7 +472,7 @@ export default function LeftDrawer({navigation}) {
           <FastImage
             style={{width: 25, height: 25}}
             resizeMode={FastImage.resizeMode.contain}
-            source={en}
+            source={{ uri: CDN_URL ? `${ CDN_URL }/${ enIcon }` : 'https://dlc4jqsejiyjs.cloudfront.net/en_eb0fd1fe87.png' }}
           />
         </View>
         <Divider
@@ -486,7 +487,7 @@ export default function LeftDrawer({navigation}) {
             marginBottom: 2,
             marginTop: statusHeight / 2,
             marginLeft: statusHeight / 2,
-            color: lightTheme ? 'black' : 'white',
+            color: getColor(lightTheme),
           }}>
           {enLang ? EN.textSize : RO.textSize}
         </Text>
@@ -582,7 +583,7 @@ export default function LeftDrawer({navigation}) {
             marginBottom: 2,
             marginTop: statusHeight / 2,
             marginLeft: statusHeight / 2,
-            color: lightTheme ? 'black' : 'white',
+            color: getColor(lightTheme),
           }}>
           {enLang ? EN.autoplay : RO.autoplay}
         </Text>
@@ -670,7 +671,7 @@ export default function LeftDrawer({navigation}) {
                   <FastImage
                     style={{height: '100%', width: '100%'}}
                     resizeMode={FastImage.resizeMode.contain}
-                    source={require('../assets/td.png')}
+                    source={{ uri: CDN_URL ? `${ CDN_URL }/${ torrentDownloader }` : 'https://dlc4jqsejiyjs.cloudfront.net/td_dde6adaa23.png' }}
                   />
                 </View>
                 <Text
@@ -679,7 +680,7 @@ export default function LeftDrawer({navigation}) {
                     {
                       fontSize: Adjust(12),
                       marginLeft: statusHeight / 2,
-                      color: lightTheme ? 'black' : 'white',
+                      color: getColor(lightTheme),
                     },
                   ]}>
                   TorrDroid - Torrent Downloader
@@ -723,7 +724,7 @@ export default function LeftDrawer({navigation}) {
                 RightDrawerStyle.settingsOverlayText,
                 {
                   fontSize: Adjust(14),
-                  color: lightTheme ? 'black' : 'white',
+                  color: getColor(lightTheme),
                 },
               ]}>
               Info
@@ -750,7 +751,7 @@ export default function LeftDrawer({navigation}) {
                 RightDrawerStyle.settingsOverlayText,
                 {
                   fontSize: Adjust(14),
-                  color: lightTheme ? 'black' : 'white',
+                  color: getColor(lightTheme),
                   textAlign: 'center',
                 },
               ]}>
@@ -777,7 +778,7 @@ export default function LeftDrawer({navigation}) {
                 RightDrawerStyle.settingsOverlayText,
                 {
                   fontSize: Adjust(14),
-                  color: lightTheme ? 'black' : 'white',
+                  color: getColor(lightTheme),
                 },
               ]}>
               Logout
@@ -800,7 +801,7 @@ export default function LeftDrawer({navigation}) {
             color: 'grey',
             textAlign: 'center',
           }}>
-          Filelist App v2022.0.0
+          Filelist App v2022.0.2
         </Text>
       </View>
       {Platform.OS === 'ios' && (

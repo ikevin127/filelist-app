@@ -1,8 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {useState, useRef, useEffect} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Alert,
-  Animated,
   View,
   Text,
   Linking,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   BackHandler,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import Adjust from './AdjustText';
 import FastImage from 'react-native-fast-image';
@@ -21,25 +21,30 @@ import {
   faStar,
   faExclamationTriangle,
 } from '@fortawesome/free-solid-svg-icons';
-import {faImdb} from '@fortawesome/free-brands-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   ACCENT_COLOR,
   MAIN_LIGHT,
   statusHeight,
   PressableOpacity,
+  getColor,
 } from '../assets/variables';
-import {EN, RO} from '../assets/lang';
+import { EN, RO } from '../assets/lang';
 // Redux
-import {useSelector} from 'react-redux';
+import { useSelector } from 'react-redux';
 
-export default function IMDb({route, navigation}) {
+export default function IMDb({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [IMDbData, setIMDbData] = useState(null);
   const [isNetReachable, setIsNetReachable] = useState(true);
-  const [downloadAnimation] = useState(new Animated.Value(0));
-  const {autoplay, enLang, fontSizes, lightTheme, hasNotch, variables} =
-    useSelector((state) => state.appConfig);
+  const {
+    autoplay,
+    enLang,
+    fontSizes,
+    lightTheme,
+    hasNotch,
+    variables,
+  } = useSelector((state) => state.appConfig);
   const netRef = useRef(false);
   // Connection listener effect
   useEffect(() => {
@@ -63,42 +68,8 @@ export default function IMDb({route, navigation}) {
   useEffect(() => {
     const source = Axios.CancelToken.source();
     fetchIMDbInfo(route.params.id, source);
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(downloadAnimation, {
-          toValue: 0.65,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-        Animated.timing(downloadAnimation, {
-          toValue: 1,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-      ]),
-      {
-        iterations: 20,
-      },
-    ).start();
     return () => {
       source.cancel();
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(downloadAnimation, {
-            toValue: 0.65,
-            duration: 700,
-            useNativeDriver: true,
-          }),
-          Animated.timing(downloadAnimation, {
-            toValue: 1,
-            duration: 700,
-            useNativeDriver: true,
-          }),
-        ]),
-        {
-          iterations: 20,
-        },
-      ).stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -117,11 +88,11 @@ export default function IMDb({route, navigation}) {
   // Functions
   const handleBack = () => navigation.goBack();
   // eslint-disable-next-line no-shadow
-  const goTrailer = (trailerLink, autoPlay) => () => {
-    if (trailerLink !== '') {
+  const goTrailer = (trailer, autoPlay) => () => {
+    if (trailer !== '') {
       navigation.navigate('Trailer', {
-        trailerLink,
-        autoPlay,
+        trailer,
+        autoplay: autoPlay,
       });
     } else {
       Alert.alert(
@@ -130,11 +101,11 @@ export default function IMDb({route, navigation}) {
         [
           {
             text: EN.ok,
-            onPress: () => {},
+            onPress: () => { },
             style: 'cancel',
           },
         ],
-        {cancelable: true},
+        { cancelable: true },
       );
     }
   };
@@ -144,7 +115,7 @@ export default function IMDb({route, navigation}) {
     return regex.test(title);
   };
   const fetchIMDbInfo = async (id, cancel) => {
-    const {SCRAPER_URL} = variables || {};
+    const { SCRAPER_URL } = variables || {};
     if (isNetReachable) {
       await Axios.get(`${SCRAPER_URL}/${id}`, {
         cancelToken: cancel.token,
@@ -174,11 +145,11 @@ export default function IMDb({route, navigation}) {
           },
           {
             text: enLang ? EN.no : RO.no,
-            onPress: () => {},
+            onPress: () => { },
             style: 'cancel',
           },
         ],
-        {cancelable: true},
+        { cancelable: true },
       );
     }
   };
@@ -206,8 +177,8 @@ export default function IMDb({route, navigation}) {
               Platform.OS === 'ios' && !hasNotch
                 ? statusHeight * 2.2
                 : Platform.OS === 'ios' && hasNotch
-                ? statusHeight * 2.2
-                : statusHeight * 1.6,
+                  ? statusHeight * 2.2
+                  : statusHeight * 1.6,
             left: statusHeight / 1.5,
           }}
           android_ripple={{
@@ -246,22 +217,10 @@ export default function IMDb({route, navigation}) {
             paddingBottom: statusHeight * 5,
             backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
           }}>
-          <Animated.View
-            style={{
-              backgroundColor: 'black',
-              borderRadius: 15,
-              transform: [
-                {
-                  scale: downloadAnimation,
-                },
-              ],
-            }}>
-            <FontAwesomeIcon
-              size={Adjust(100)}
-              color={'#deb522'}
-              icon={faImdb}
-            />
-          </Animated.View>
+          <ActivityIndicator
+            size={Platform.OS === 'ios' ? 'small' : 'large'}
+            color={lightTheme ? 'black' : '#deb522'}
+          />
         </View>
       ) : IMDbData ? (
         IMDbData.map((item, index) => {
@@ -271,7 +230,7 @@ export default function IMDb({route, navigation}) {
               style={{
                 backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
               }}
-              contentContainerStyle={{alignItems: 'center'}}
+              contentContainerStyle={{ alignItems: 'center' }}
               showsVerticalScrollIndicator={false}>
               <View
                 style={{
@@ -284,7 +243,7 @@ export default function IMDb({route, navigation}) {
                   activeOpacity={0.8}
                   onPress={openIMDbBrowser(item.link)}>
                   <FastImage
-                    style={{width: '100%', height: '100%'}}
+                    style={{ width: '100%', height: '100%' }}
                     resizeMode={FastImage.resizeMode.contain}
                     source={{
                       uri: item.posterhq,
@@ -297,14 +256,13 @@ export default function IMDb({route, navigation}) {
                   fontSize: Adjust(18),
                   textAlign: 'center',
                   fontWeight: 'bold',
-                  color: lightTheme ? 'black' : 'white',
+                  color: getColor(lightTheme),
                   marginTop: statusHeight,
                   marginBottom: statusHeight / 4,
                   paddingHorizontal: statusHeight,
                 }}>
-                {`${item.title} ${
-                  checkYearExists(item.title) ? '' : `(${item.year})`
-                }`}
+                {`${item.title} ${checkYearExists(item.title) ? '' : `(${item.year})`
+                  }`}
                 {'\n'}
                 <Text
                   style={[
@@ -318,9 +276,9 @@ export default function IMDb({route, navigation}) {
                 </Text>{' '}
                 {item.rating === '' ? null : Platform.OS === 'ios' &&
                   hasNotch ? (
-                  <Text style={{fontSize: Adjust(15)}}>⭐</Text>
+                  <Text style={{ fontSize: Adjust(15) }}>⭐</Text>
                 ) : Platform.OS === 'ios' && !hasNotch ? (
-                  <Text style={{fontSize: Adjust(15)}}>⭐</Text>
+                  <Text style={{ fontSize: Adjust(15) }}>⭐</Text>
                 ) : (
                   <FontAwesomeIcon
                     icon={faStar}
@@ -336,9 +294,8 @@ export default function IMDb({route, navigation}) {
                   textAlign: 'center',
                   color: lightTheme ? 'black' : 'white',
                 }}>
-                {`${item.duration !== '' ? item.duration + ' | ' : ''} ${
-                  item.genre
-                }`}
+                {`${item.duration !== '' ? item.duration + ' | ' : ''} ${item.genre
+                  }`}
               </Text>
               <Text
                 style={{
@@ -358,8 +315,8 @@ export default function IMDb({route, navigation}) {
                     Platform.OS === 'ios' && !hasNotch
                       ? statusHeight * 2
                       : Platform.OS === 'ios' && hasNotch
-                      ? statusHeight
-                      : statusHeight * 1.5,
+                        ? statusHeight
+                        : statusHeight * 1.5,
                   flexDirection: 'row',
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -386,7 +343,7 @@ export default function IMDb({route, navigation}) {
                   onPress={goTrailer(item.trailer, autoplay)}>
                   <FontAwesomeIcon
                     size={Adjust(fontSizes !== null ? fontSizes[6] : 14)}
-                    style={{marginRight: 10}}
+                    style={{ marginRight: 10 }}
                     color={'white'}
                     icon={faPlay}
                   />
@@ -418,7 +375,7 @@ export default function IMDb({route, navigation}) {
           }}>
           <FontAwesomeIcon
             size={Adjust(100)}
-            style={{marginBottom: statusHeight / 5}}
+            style={{ marginBottom: statusHeight / 5 }}
             color={lightTheme ? 'black' : 'white'}
             icon={faExclamationTriangle}
           />

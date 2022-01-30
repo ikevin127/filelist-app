@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import RNFetchBlob from 'rn-fetch-blob';
 import Collapsible from 'react-native-collapsible';
-import {Input, Overlay, Badge} from 'react-native-elements';
+import { Input, Overlay, Badge } from 'react-native-elements';
 import Chip from 'react-native-paper/lib/commonjs/components/Chip';
 import FastImage from 'react-native-fast-image';
 import NetInfo from '@react-native-community/netinfo';
@@ -24,15 +24,15 @@ import SkeletonContent from 'react-native-skeleton-content-nonexpo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Forms
 import * as yup from 'yup';
-import {Formik} from 'formik';
+import { Formik } from 'formik';
 // Redux
-import {useDispatch, useSelector} from 'react-redux';
-import {AppConfigActions} from '../redux/actions';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppConfigActions } from '../redux/actions';
 // Responsiveness
 import Adjust from './AdjustText';
 import EStyleSheet from 'react-native-extended-stylesheet';
 // Icons
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   faChevronCircleUp,
   faChevronCircleDown,
@@ -50,35 +50,10 @@ import {
   faArrowUp,
   faSync,
 } from '@fortawesome/free-solid-svg-icons';
-import {faImdb} from '@fortawesome/free-brands-svg-icons';
+import { faImdb } from '@fortawesome/free-brands-svg-icons';
 // Assets
-import a3d from '../assets/cat/3d.png';
-import a4k from '../assets/cat/4k.png';
-import a4kbd from '../assets/cat/4kBD.png';
-import a4ktv from '../assets/cat/4ks.png';
-import anime from '../assets/cat/anime.png';
-import apps from '../assets/cat/apps.png';
-import bluray from '../assets/cat/bluray.png';
-import cartoons from '../assets/cat/cartoons.png';
-import console from '../assets/cat/console.png';
-import docs from '../assets/cat/docs.png';
-import dvdro from '../assets/cat/dvd-ro.png';
-import dvd from '../assets/cat/dvd.png';
-import flac from '../assets/cat/flac.png';
-import games from '../assets/cat/games.png';
-import hdro from '../assets/cat/hd-ro.png';
-import hd from '../assets/cat/hd.png';
-import hdtv from '../assets/cat/hdtv.png';
-import linux from '../assets/cat/linux.png';
-import misc from '../assets/cat/misc.png';
-import mobile from '../assets/cat/mobile.png';
-import music from '../assets/cat/music.png';
-import sd from '../assets/cat/sd.png';
-import sdtv from '../assets/cat/sdtv.png';
-import sport from '../assets/cat/sport.png';
-import vids from '../assets/cat/vids.png';
-import xxx from '../assets/cat/xxx.png';
-import {catValues} from '../assets/catData';
+import { catValues } from '../assets/catData';
+import { RO, EN } from '../assets/lang';
 // Variables
 import {
   width,
@@ -88,10 +63,11 @@ import {
   statusHeight,
   sortArrayHistory,
   PressableOpacity,
+  getColor,
+  getCategoryIcon,
 } from '../assets/variables';
-import {RO, EN} from '../assets/lang';
 
-export default function Search({navigation}) {
+export default function Search({ navigation }) {
   // Redux
   const dispatch = useDispatch();
   const {
@@ -104,6 +80,7 @@ export default function Search({navigation}) {
     searchError,
     enLang,
     hasNotch,
+    variables,
   } = useSelector((state) => state.appConfig);
   // State
   const [catIndex, setCatIndex] = useState('');
@@ -299,11 +276,11 @@ export default function Search({navigation}) {
       [
         {
           text: 'OK',
-          onPress: () => {},
+          onPress: () => { },
           style: 'cancel',
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
 
   const setAPIDown = () =>
@@ -313,11 +290,11 @@ export default function Search({navigation}) {
       [
         {
           text: 'OK',
-          onPress: () => {},
+          onPress: () => { },
           style: 'cancel',
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
 
   const sizeInfo = () =>
@@ -327,10 +304,10 @@ export default function Search({navigation}) {
       [
         {
           text: 'OK',
-          onPress: () => {},
+          onPress: () => { },
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
 
   const seedersInfo = () =>
@@ -340,10 +317,10 @@ export default function Search({navigation}) {
       [
         {
           text: 'OK',
-          onPress: () => {},
+          onPress: () => { },
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
 
   const downloadInfo = () =>
@@ -353,10 +330,10 @@ export default function Search({navigation}) {
       [
         {
           text: 'OK',
-          onPress: () => {},
+          onPress: () => { },
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
 
   const filesInfo = () =>
@@ -368,7 +345,7 @@ export default function Search({navigation}) {
           text: 'OK',
         },
       ],
-      {onDismiss: () => {}, cancelable: true},
+      { onDismiss: () => { }, cancelable: true },
     );
 
   const leechersInfo = () =>
@@ -378,10 +355,10 @@ export default function Search({navigation}) {
       [
         {
           text: 'OK',
-          onPress: () => {},
+          onPress: () => { },
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
 
   const showKeywordSearchInfo = () =>
@@ -391,10 +368,10 @@ export default function Search({navigation}) {
       [
         {
           text: 'OK',
-          onPress: () => {},
+          onPress: () => { },
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
 
   const showIMDbSearchInfo = () =>
@@ -404,10 +381,10 @@ export default function Search({navigation}) {
       [
         {
           text: 'OK',
-          onPress: () => {},
+          onPress: () => { },
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
 
   const onRefChange = useCallback((node) => {
@@ -505,10 +482,10 @@ export default function Search({navigation}) {
         [
           {
             text: 'OK',
-            onPress: () => {},
+            onPress: () => { },
           },
         ],
-        {cancelable: true},
+        { cancelable: true },
       );
     }
   };
@@ -529,11 +506,11 @@ export default function Search({navigation}) {
           [
             {
               text: 'OK',
-              onPress: () => {},
+              onPress: () => { },
               style: 'cancel',
             },
           ],
-          {cancelable: true},
+          { cancelable: true },
         );
         // if search textbox || filters not empty
       } else {
@@ -562,7 +539,7 @@ export default function Search({navigation}) {
   };
 
   const downloadTorrent = (name, link) => async () => {
-    const {android, ios, config, fs} = RNFetchBlob;
+    const { android, ios, config, fs } = RNFetchBlob;
     const downloadDir = Platform.select({
       ios: fs.dirs.DocumentDir,
       android: fs.dirs.DownloadDir,
@@ -877,7 +854,7 @@ export default function Search({navigation}) {
   };
 
   // Torrent pressable
-  const Item = ({item, onPress, style}) => (
+  const Item = ({ item, onPress, style }) => (
     <PressableOpacity
       activeOpacity={0.5}
       onPress={setCollapsible(item.id)}
@@ -902,62 +879,7 @@ export default function Search({navigation}) {
             <FastImage
               style={SearchPage.itemPresssableFastImage}
               resizeMode={FastImage.resizeMode.contain}
-              source={
-                item.category === 'Audio'
-                  ? music
-                  : item.category === 'Jocuri PC'
-                  ? games
-                  : item.category === 'Filme HD'
-                  ? hd
-                  : item.category === 'Filme HD-RO'
-                  ? hdro
-                  : item.category === 'Filme Blu-Ray'
-                  ? bluray
-                  : item.category === 'Docs'
-                  ? docs
-                  : item.category === 'Anime'
-                  ? anime
-                  : item.category === 'Jocuri Console'
-                  ? console
-                  : item.category === 'XXX'
-                  ? xxx
-                  : item.category === 'Seriale HD'
-                  ? hdtv
-                  : item.category === 'Filme SD'
-                  ? sd
-                  : item.category === 'Filme DVD'
-                  ? dvd
-                  : item.category === 'Filme DVD-RO'
-                  ? dvdro
-                  : item.category === 'FLAC'
-                  ? flac
-                  : item.category === 'Filme 4K'
-                  ? a4k
-                  : item.category === 'Programe'
-                  ? apps
-                  : item.category === 'Videoclip'
-                  ? vids
-                  : item.category === 'Sport'
-                  ? sport
-                  : item.category === 'Desene'
-                  ? cartoons
-                  : item.category === 'Linux'
-                  ? linux
-                  : item.category === 'Diverse'
-                  ? misc
-                  : item.category === 'Mobile'
-                  ? mobile
-                  : item.category === 'Seriale SD'
-                  ? sdtv
-                  : item.category === 'Filme 3D'
-                  ? a3d
-                  : item.category === 'Filme 4K Blu-Ray'
-                  ? a4kbd
-                  : item.category === 'Seriale 4K'
-                  ? a4ktv
-                  : null
-              }
-            />
+              source={{ uri: getCategoryIcon(item?.category, variables) }} />
           </View>
           <View style={SearchPage.itemPressableNameContainer}>
             <Text
@@ -965,7 +887,7 @@ export default function Search({navigation}) {
                 SearchPage.itemPressableNameText,
                 {
                   fontSize: Adjust(fontSizes !== null ? fontSizes[1] : 8),
-                  color: lightTheme ? 'black' : 'white',
+                  color: getColor(lightTheme),
                 },
               ]}>
               {item.name}
@@ -1002,7 +924,7 @@ export default function Search({navigation}) {
     </PressableOpacity>
   );
 
-  const renderItem = ({item}) => {
+  const renderItem = ({ item }) => {
     return (
       <>
         <Item
@@ -1037,7 +959,7 @@ export default function Search({navigation}) {
                 style={[
                   {
                     fontSize: Adjust(fontSizes !== null ? fontSizes[1] : 9),
-                    color: lightTheme ? 'black' : 'white',
+                    color: getColor(lightTheme),
                   },
                 ]}>
                 {item.small_description}
@@ -1055,8 +977,8 @@ export default function Search({navigation}) {
                         fontWeight: 'bold',
                         marginRight:
                           item.freeleech === 1 &&
-                          item.internal === 0 &&
-                          item.doubleup === 0
+                            item.internal === 0 &&
+                            item.doubleup === 0
                             ? 0
                             : 4,
                       },
@@ -1073,8 +995,8 @@ export default function Search({navigation}) {
                         fontWeight: 'bold',
                         marginRight:
                           item.freeleech === 1 &&
-                          item.internal === 1 &&
-                          item.doubleup === 0
+                            item.internal === 1 &&
+                            item.doubleup === 0
                             ? 0
                             : 4,
                       },
@@ -1091,8 +1013,8 @@ export default function Search({navigation}) {
                         fontWeight: 'bold',
                         marginRight:
                           item.freeleech === 1 &&
-                          item.internal === 1 &&
-                          item.doubleup === 1
+                            item.internal === 1 &&
+                            item.doubleup === 1
                             ? 0
                             : 4,
                       },
@@ -1445,8 +1367,8 @@ export default function Search({navigation}) {
                     Platform.OS === 'ios' && !hasNotch
                       ? statusHeight * 2.4
                       : Platform.OS === 'ios' && hasNotch
-                      ? statusHeight * 2.2
-                      : statusHeight * 1.6,
+                        ? statusHeight * 2.2
+                        : statusHeight * 1.6,
                   left:
                     Platform.OS === 'ios' && !hasNotch
                       ? statusHeight
@@ -1485,8 +1407,8 @@ export default function Search({navigation}) {
                     Platform.OS === 'ios' && !hasNotch
                       ? statusHeight * 2.4
                       : Platform.OS === 'ios' && hasNotch
-                      ? statusHeight * 2.2
-                      : statusHeight * 1.6,
+                        ? statusHeight * 2.2
+                        : statusHeight * 1.6,
                   right:
                     Platform.OS === 'ios' && !hasNotch
                       ? statusHeight
@@ -1511,7 +1433,7 @@ export default function Search({navigation}) {
               bounces={false}
               style={[
                 SearchPage.catCheckScrollView,
-                {backgroundColor: lightTheme ? MAIN_LIGHT : 'black'},
+                { backgroundColor: lightTheme ? MAIN_LIGHT : 'black' },
               ]}>
               <View
                 style={{
@@ -1523,7 +1445,7 @@ export default function Search({navigation}) {
                 }}>
                 <Text
                   style={{
-                    color: lightTheme ? 'black' : 'white',
+                    color: getColor(lightTheme),
                     fontWeight: 'bold',
                     paddingLeft: 5,
                   }}>
@@ -1538,8 +1460,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : keySearch
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1553,7 +1475,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     keySearch ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1581,8 +1503,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : imdbSearch
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1596,7 +1518,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     imdbSearch ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1628,7 +1550,7 @@ export default function Search({navigation}) {
                 }}>
                 <Text
                   style={{
-                    color: lightTheme ? 'black' : 'white',
+                    color: getColor(lightTheme),
                     fontWeight: 'bold',
                     paddingLeft: 5,
                   }}>
@@ -1643,8 +1565,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : animes
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1654,7 +1576,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     animes ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1681,8 +1603,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : audio
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1692,7 +1614,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     audio ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1719,8 +1641,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : desene
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1730,7 +1652,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     desene ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1757,8 +1679,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : diverse
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1768,7 +1690,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     diverse ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1795,8 +1717,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : doc
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1806,7 +1728,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     doc ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1833,8 +1755,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : flacs
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1844,7 +1766,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     flacs ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1871,8 +1793,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : jocConsole
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1886,7 +1808,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     jocConsole ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1913,8 +1835,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : jocPc
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1924,7 +1846,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     jocPc ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1951,8 +1873,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : lin
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -1962,7 +1884,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     lin ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -1989,8 +1911,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : mob
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2000,7 +1922,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     mob ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2027,8 +1949,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : software
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2042,7 +1964,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     software ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2069,8 +1991,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : sports
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2080,7 +2002,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     sports ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2107,8 +2029,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : videos
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2118,7 +2040,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     videos ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2145,8 +2067,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : porn
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2156,7 +2078,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     porn ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2186,7 +2108,7 @@ export default function Search({navigation}) {
                   }}>
                   <Text
                     style={{
-                      color: lightTheme ? 'black' : 'white',
+                      color: getColor(lightTheme),
                       paddingLeft: 5,
                     }}>
                     {enLang ? EN.movTV : RO.movTV}
@@ -2199,8 +2121,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : filme3d
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2210,7 +2132,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     filme3d ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2237,8 +2159,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : filme4k
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2248,7 +2170,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     filme4k ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2275,8 +2197,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : filme4kbd
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2290,7 +2212,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     filme4kbd ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2317,8 +2239,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : filmeBD
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2328,7 +2250,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     filmeBD ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2355,8 +2277,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : filmeDvd
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2370,7 +2292,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     filmeDvd ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2397,8 +2319,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : filmeDvdRo
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2412,7 +2334,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     filmeDvdRo ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2439,8 +2361,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : filmeHd
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2450,7 +2372,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     filmeHd ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2477,8 +2399,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : filmeHdRo
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2492,7 +2414,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     filmeHdRo ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2519,8 +2441,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : filmeSd
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2530,7 +2452,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     filmeSd ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2557,8 +2479,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : seriale4k
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2572,7 +2494,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     seriale4k ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2599,8 +2521,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : serialeHd
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2614,7 +2536,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     serialeHd ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2641,8 +2563,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : serialeSd
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2656,7 +2578,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     serialeSd ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2687,7 +2609,7 @@ export default function Search({navigation}) {
                 }}>
                 <Text
                   style={{
-                    color: lightTheme ? 'black' : 'white',
+                    color: getColor(lightTheme),
                     fontWeight: 'bold',
                     paddingLeft: 5,
                   }}>
@@ -2709,8 +2631,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : freeleech
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2724,7 +2646,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     freeleech ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2751,8 +2673,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : internal
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2766,7 +2688,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     internal ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2793,8 +2715,8 @@ export default function Search({navigation}) {
                         ? '#155778'
                         : '#d4d2d2'
                       : doubleUp
-                      ? '#155778'
-                      : '#202020',
+                        ? '#155778'
+                        : '#202020',
                     marginRight: 5,
                     marginBottom: 5,
                   }}
@@ -2808,7 +2730,7 @@ export default function Search({navigation}) {
                   icon={() =>
                     doubleUp ? (
                       <FontAwesomeIcon
-                        style={{color: ACCENT_COLOR}}
+                        style={{ color: ACCENT_COLOR }}
                         size={14}
                         icon={faCheckSquare}
                       />
@@ -2845,7 +2767,7 @@ export default function Search({navigation}) {
         ]}>
         <Formik
           innerRef={onRefChange}
-          initialValues={{search: ''}}
+          initialValues={{ search: '' }}
           onSubmit={(values) => {
             searchLoading ? null : handleSearch(values.search);
           }}
@@ -2888,8 +2810,8 @@ export default function Search({navigation}) {
                       ? EN.placeholderK
                       : RO.placeholderK
                     : enLang
-                    ? EN.placeholderI
-                    : RO.placeholderI
+                      ? EN.placeholderI
+                      : RO.placeholderI
                 }
                 placeholderTextColor={'rgba(255,255,255,0.8)'}
                 value={values.search}
@@ -2918,7 +2840,7 @@ export default function Search({navigation}) {
                     activeOpacity={0.5}
                     style={[
                       SearchPage.mainHeaderCogPressable,
-                      {paddingTop: Platform.OS === 'ios' && hasNotch ? 6 : 0},
+                      { paddingTop: Platform.OS === 'ios' && hasNotch ? 6 : 0 },
                     ]}
                     android_ripple={{
                       color: 'white',
@@ -2954,8 +2876,8 @@ export default function Search({navigation}) {
                         Platform.OS === 'ios' && !hasNotch
                           ? Adjust(28)
                           : Platform.OS === 'ios' && hasNotch
-                          ? Adjust(30)
-                          : Adjust(fontSizes !== null ? fontSizes[8] : 22)
+                            ? Adjust(30)
+                            : Adjust(fontSizes !== null ? fontSizes[8] : 22)
                       }
                       color={'white'}
                       icon={faTimes}
@@ -2996,14 +2918,14 @@ export default function Search({navigation}) {
                       Platform.OS === 'ios' && !hasNotch
                         ? Adjust(22)
                         : Adjust(
-                            fontSizes !== null
-                              ? fontSizes[
-                                  Platform.OS === 'ios' && hasNotch ? 8 : 7
-                                ]
-                              : Platform.OS === 'ios'
+                          fontSizes !== null
+                            ? fontSizes[
+                            Platform.OS === 'ios' && hasNotch ? 8 : 7
+                            ]
+                            : Platform.OS === 'ios'
                               ? 22
                               : 20,
-                          )
+                        )
                     }
                     color={'white'}
                     icon={faFilter}
@@ -3073,7 +2995,7 @@ export default function Search({navigation}) {
               </TouchableOpacity>
             </View>
           )}
-          renderItem={({item}) => (
+          renderItem={({ item }) => (
             <PressableOpacity
               activeOpacity={0.5}
               style={{
@@ -3086,8 +3008,8 @@ export default function Search({navigation}) {
                   Platform.OS === 'ios' && !hasNotch
                     ? statusHeight * 2.2
                     : Platform.OS === 'ios' && hasNotch
-                    ? statusHeight
-                    : statusHeight * 1.6,
+                      ? statusHeight
+                      : statusHeight * 1.6,
                 paddingLeft: statusHeight / 2,
               }}
               android_ripple={{
@@ -3104,18 +3026,18 @@ export default function Search({navigation}) {
                 }}>
                 <FontAwesomeIcon
                   size={Adjust(18)}
-                  color={lightTheme ? 'black' : 'white'}
+                  color={getColor(lightTheme)}
                   icon={faSync}
                   style={{
                     marginRight: statusHeight,
-                    transform: [{rotateY: '180deg'}],
+                    transform: [{ rotateY: '180deg' }],
                   }}
                 />
                 <Text
                   style={{
                     fontSize: Adjust(fontSizes !== null ? fontSizes[4] : 12),
                     fontWeight: 'bold',
-                    color: lightTheme ? 'black' : 'white',
+                    color: getColor(lightTheme),
                   }}>
                   {item.query}
                 </Text>
@@ -3129,9 +3051,9 @@ export default function Search({navigation}) {
                 }}
                 onPress={setSearchValue(item.query)}>
                 <FontAwesomeIcon
-                  style={{transform: [{rotate: '-45deg'}], marginLeft: 15}}
+                  style={{ transform: [{ rotate: '-45deg' }], marginLeft: 15 }}
                   size={Adjust(18)}
-                  color={lightTheme ? 'black' : 'white'}
+                  color={getColor(lightTheme)}
                   icon={faArrowUp}
                 />
               </TouchableOpacity>
@@ -3145,25 +3067,25 @@ export default function Search({navigation}) {
           data={
             searchLoading
               ? [
-                  {id: '1'},
-                  {id: '2'},
-                  {id: '3'},
-                  {id: '4'},
-                  {id: '5'},
-                  {id: '6'},
-                  {id: '7'},
-                  {id: '8'},
-                  {id: '9'},
-                  {id: '10'},
-                  {id: '11'},
-                  {id: '12'},
-                  {id: '13'},
-                  {id: '14'},
-                  {id: '15'},
-                ]
+                { id: '1' },
+                { id: '2' },
+                { id: '3' },
+                { id: '4' },
+                { id: '5' },
+                { id: '6' },
+                { id: '7' },
+                { id: '8' },
+                { id: '9' },
+                { id: '10' },
+                { id: '11' },
+                { id: '12' },
+                { id: '13' },
+                { id: '14' },
+                { id: '15' },
+              ]
               : listSearch !== null
-              ? listSearch.slice(0, 30)
-              : listSearch
+                ? listSearch.slice(0, 30)
+                : listSearch
           }
           renderItem={searchLoading ? () => <SkeletonLoading /> : renderItem}
           showsVerticalScrollIndicator={false}
@@ -3180,7 +3102,7 @@ export default function Search({navigation}) {
                 }}>
                 <Text
                   style={{
-                    color: lightTheme ? 'black' : 'white',
+                    color: getColor(lightTheme),
                     textAlign: 'center',
                     fontWeight: 'bold',
                   }}>
@@ -3189,7 +3111,7 @@ export default function Search({navigation}) {
                 </Text>
                 <Text
                   style={{
-                    color: lightTheme ? 'black' : 'white',
+                    color: getColor(lightTheme),
                     textAlign: 'center',
                     fontWeight: 'bold',
                   }}>
@@ -3197,7 +3119,7 @@ export default function Search({navigation}) {
                 </Text>
                 <Text
                   style={{
-                    color: lightTheme ? 'black' : 'white',
+                    color: getColor(lightTheme),
                     textAlign: 'center',
                   }}>
                   {enLang ? EN.resTry : RO.resTry}
@@ -3211,7 +3133,7 @@ export default function Search({navigation}) {
                 }}>
                 <Text
                   style={{
-                    color: lightTheme ? 'black' : 'white',
+                    color: getColor(lightTheme),
                     textAlign: 'center',
                     fontWeight: 'bold',
                   }}>
@@ -3341,7 +3263,7 @@ const SearchPage = EStyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  itemPresssableFastImage: {height: '100%', width: '100%'},
+  itemPresssableFastImage: { height: '100%', width: '100%' },
   itemPressableNameContainer: {
     flexDirection: 'column',
     justifyContent: 'space-between',

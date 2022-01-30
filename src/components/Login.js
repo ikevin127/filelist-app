@@ -33,8 +33,6 @@ import {
   faUserLock,
   faArrowRight,
 } from '@fortawesome/free-solid-svg-icons';
-import ro from '../assets/ro.png';
-import en from '../assets/en.png';
 // Variables
 import {
   width,
@@ -43,6 +41,7 @@ import {
   ACCENT_COLOR,
   statusHeight,
   PressableOpacity,
+  getColor,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
@@ -298,7 +297,8 @@ export default function Login() {
     }, 4000);
   };
 
-  const {CDN_URL, LOGIN_LOGO} = variables || {};
+  const {CDN_URL, LOGIN_LOGO, ICONS} = variables || {};
+  const {roIcon, enIcon} = ICONS || {};
 
   return (
     <>
@@ -410,7 +410,7 @@ export default function Login() {
                         leftIcon={
                           <FontAwesomeIcon
                             size={22}
-                            color={lightTheme ? 'black' : 'white'}
+                            color={getColor(lightTheme)}
                             icon={faUserLock}
                           />
                         }
@@ -450,7 +450,7 @@ export default function Login() {
                         leftIcon={
                           <FontAwesomeIcon
                             size={22}
-                            color={lightTheme ? 'black' : 'white'}
+                            color={getColor(lightTheme)}
                             icon={faKey}
                           />
                         }
@@ -528,14 +528,14 @@ export default function Login() {
             <FastImage
               style={{width: '100%', height: '100%'}}
               resizeMode={FastImage.resizeMode.contain}
-              source={ro}
+              source={{ uri: CDN_URL ? `${ CDN_URL }/${ roIcon }` : 'https://dlc4jqsejiyjs.cloudfront.net/ro_cf908c3a13.png' }}
             />
           </TouchableOpacity>
           <View
             style={{
               height: '15%',
               width: 0.5,
-              backgroundColor: lightTheme ? 'black' : 'white',
+              backgroundColor: getColor(lightTheme),
               marginHorizontal: 20,
             }}
           />
@@ -548,7 +548,7 @@ export default function Login() {
             <FastImage
               style={{width: '100%', height: '100%'}}
               resizeMode={FastImage.resizeMode.contain}
-              source={en}
+              source={{ uri: CDN_URL ? `${ CDN_URL }/${ enIcon }` : 'https://dlc4jqsejiyjs.cloudfront.net/en_eb0fd1fe87.png' }}
             />
           </TouchableOpacity>
         </View>

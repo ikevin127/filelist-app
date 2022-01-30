@@ -46,34 +46,10 @@ import {
   ACCENT_COLOR,
   statusHeight,
   PressableOpacity,
+  getColor,
+  getCategoryIcon,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
-import a3d from '../assets/cat/3d.png';
-import a4k from '../assets/cat/4k.png';
-import a4kbd from '../assets/cat/4kBD.png';
-import a4ktv from '../assets/cat/4ks.png';
-import anime from '../assets/cat/anime.png';
-import apps from '../assets/cat/apps.png';
-import bluray from '../assets/cat/bluray.png';
-import cartoons from '../assets/cat/cartoons.png';
-import console from '../assets/cat/console.png';
-import docs from '../assets/cat/docs.png';
-import dvdro from '../assets/cat/dvd-ro.png';
-import dvd from '../assets/cat/dvd.png';
-import flac from '../assets/cat/flac.png';
-import games from '../assets/cat/games.png';
-import hdro from '../assets/cat/hd-ro.png';
-import hd from '../assets/cat/hd.png';
-import hdtv from '../assets/cat/hdtv.png';
-import linux from '../assets/cat/linux.png';
-import misc from '../assets/cat/misc.png';
-import mobile from '../assets/cat/mobile.png';
-import music from '../assets/cat/music.png';
-import sd from '../assets/cat/sd.png';
-import sdtv from '../assets/cat/sdtv.png';
-import sport from '../assets/cat/sport.png';
-import vids from '../assets/cat/vids.png';
-import xxx from '../assets/cat/xxx.png';
 
 export default function Home({navigation}) {
   // Redux
@@ -87,6 +63,7 @@ export default function Home({navigation}) {
     latestError,
     enLang,
     hasNotch,
+    variables,
   } = useSelector((state) => state.appConfig);
   // State
   const netRef = useRef(false);
@@ -540,62 +517,7 @@ export default function Home({navigation}) {
             <FastImage
               style={HomePage.itemPresssableFastImage}
               resizeMode={FastImage.resizeMode.contain}
-              source={
-                item.category === 'Audio'
-                  ? music
-                  : item.category === 'Jocuri PC'
-                  ? games
-                  : item.category === 'Filme HD'
-                  ? hd
-                  : item.category === 'Filme HD-RO'
-                  ? hdro
-                  : item.category === 'Filme Blu-Ray'
-                  ? bluray
-                  : item.category === 'Docs'
-                  ? docs
-                  : item.category === 'Anime'
-                  ? anime
-                  : item.category === 'Jocuri Console'
-                  ? console
-                  : item.category === 'XXX'
-                  ? xxx
-                  : item.category === 'Seriale HD'
-                  ? hdtv
-                  : item.category === 'Filme SD'
-                  ? sd
-                  : item.category === 'Filme DVD'
-                  ? dvd
-                  : item.category === 'Filme DVD-RO'
-                  ? dvdro
-                  : item.category === 'FLAC'
-                  ? flac
-                  : item.category === 'Filme 4K'
-                  ? a4k
-                  : item.category === 'Programe'
-                  ? apps
-                  : item.category === 'Videoclip'
-                  ? vids
-                  : item.category === 'Sport'
-                  ? sport
-                  : item.category === 'Desene'
-                  ? cartoons
-                  : item.category === 'Linux'
-                  ? linux
-                  : item.category === 'Diverse'
-                  ? misc
-                  : item.category === 'Mobile'
-                  ? mobile
-                  : item.category === 'Seriale SD'
-                  ? sdtv
-                  : item.category === 'Filme 3D'
-                  ? a3d
-                  : item.category === 'Filme 4K Blu-Ray'
-                  ? a4kbd
-                  : item.category === 'Seriale 4K'
-                  ? a4ktv
-                  : null
-              }
-            />
+              source={{ uri: getCategoryIcon(item?.category, variables) }}/>
           </View>
           <View style={HomePage.itemPressableNameContainer}>
             <Text
@@ -603,7 +525,7 @@ export default function Home({navigation}) {
                 HomePage.itemPressableNameText,
                 {
                   fontSize: Adjust(fontSizes !== null ? fontSizes[1] : 8),
-                  color: lightTheme ? 'black' : 'white',
+                  color: getColor(lightTheme),
                 },
               ]}>
               {item.name}
@@ -676,7 +598,7 @@ export default function Home({navigation}) {
                 style={[
                   {
                     fontSize: Adjust(fontSizes !== null ? fontSizes[1] : 9),
-                    color: lightTheme ? 'black' : 'white',
+                    color: getColor(lightTheme),
                   },
                 ]}>
                 {item.small_description}
