@@ -22,6 +22,7 @@ const returnTitleMarginTop = (hasNotch) => {
 }
 
 export default function TrailerViewHeader({ navigation, isPortrait, hasNotch }) {
+    console.log(isPortrait, hasNotch);
     if (isPortrait) return (
         <View
             style={{

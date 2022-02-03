@@ -9,9 +9,8 @@ import { WebView } from 'react-native-webview';
 import { useIsFocused } from '@react-navigation/native';
 import {
   getColor,
-  MAIN_LIGHT,
   statusHeight,
-} from '../assets/variables';
+} from '../assets/variables.js';
 import Orientation from 'react-native-orientation-locker';
 // Redux
 import { useSelector } from 'react-redux';
@@ -25,7 +24,7 @@ import WebViewLoadingScreen from '../templates/WebViewLoadingScreen';
 
 export default function TrailerView({ route, navigation }) {
   const isFocused = useIsFocused();
-  const [orientation, setOrientation] = useState('');
+  const [orientation, setOrientation] = useState('portrait');
   const [webviewLoading, setWebviewLoading] = useState(true);
   const { enLang, lightTheme, hasNotch } = useSelector((state) => state.appConfig);
   // Component mount
@@ -71,7 +70,7 @@ export default function TrailerView({ route, navigation }) {
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
+            backgroundColor: lightTheme ? '#E8E6E6' : 'black',
             paddingBottom: statusHeight * 2,
           }}>
           <FontAwesomeIcon

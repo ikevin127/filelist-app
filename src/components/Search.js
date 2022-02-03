@@ -546,9 +546,12 @@ export default function Search({ navigation }) {
     });
     const configOptions = Platform.select({
       ios: {
+        IOSBackgroundTask: true,
         fileCache: true,
+        indicator: true,
         title: `${name}.torrent`,
         path: `${downloadDir}/${name}.torrent`,
+        appendExt: 'torrent',
       },
       android: {
         fileCache: true,
