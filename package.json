@@ -45,7 +45,7 @@
     "react-native-modern-datepicker": "^1.0.0-beta.91",
     "react-native-orientation-locker": "^1.4.0",
     "react-native-paper": "^4.8.1",
-    "react-native-reanimated": "^2.1.0",
+    "react-native-reanimated": "^2.3.1",
     "react-native-safe-area-context": "^3.2.0",
     "react-native-screens": "^3.1.1",
     "react-native-skeleton-content-nonexpo": "^1.0.11",
