@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Platform, ActivityIndicator } from 'react-native';
-import { height, MAIN_LIGHT, statusHeight } from '../assets/variables';
+import { ACCENT_COLOR, height, MAIN_LIGHT, statusHeight } from '../assets/variables';
 
 const returnViewHeight = (hasNotch) => {
     if (Platform.OS === 'ios' && !hasNotch) return statusHeight * 5
@@ -27,7 +27,7 @@ export default function WebViewLoadingScreen({ isPortrait, lightTheme, hasNotch 
 			}}>
 			<ActivityIndicator
 				size={Platform.OS === 'ios' ? 'small' : 'large'}
-				color={lightTheme ? 'black' : '#deb522'}
+				color={ACCENT_COLOR}
 			/>
 		</View>
 	);

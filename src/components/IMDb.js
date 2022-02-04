@@ -219,7 +219,7 @@ export default function IMDb({ route, navigation }) {
           }}>
           <ActivityIndicator
             size={Platform.OS === 'ios' ? 'small' : 'large'}
-            color={lightTheme ? 'black' : '#deb522'}
+            color={ACCENT_COLOR}
           />
         </View>
       ) : IMDbData ? (

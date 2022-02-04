@@ -20,6 +20,7 @@ import {
   createStackNavigator,
   CardStyleInterpolators,
 } from '@react-navigation/stack';
+import { View } from 'react-native';
 
 const Stack = createStackNavigator();
 
@@ -81,29 +82,30 @@ function Auth() {
   };
 
   return (
-    <Stack.Navigator
-      screenOptions={{
-        cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-        cardStyle: { backgroundColor: 'black' },
-        presentation: 'modal'
-      }}
-      headerMode="none">
-      {listLatest !== null ? (
-        <>
-          <Stack.Screen name="Home" component={Home} />
-          <Stack.Screen name="Search" component={Search} />
-          <Stack.Screen name="Menu" component={Menu} />
-          <Stack.Screen name="HowTo" component={HowTo} />
-          <Stack.Screen name="IMDb" component={IMDb} />
-          <Stack.Screen name="Trailer" component={TrailerView} />
-          <Stack.Screen name="Filelist" component={FilelistView} />
-        </>
-      ) : loading ? (
-        <Stack.Screen name="Loading" component={Loading} />
-      ) : (
-        <Stack.Screen name="Login" component={Login} />
-      )}
-    </Stack.Navigator>
+    <View style={{ flex: 1, backgroundColor: 'black' }}>
+      <Stack.Navigator
+        screenOptions={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          presentation: 'modal',
+        }}
+        headerMode="none">
+        {listLatest !== null ? (
+          <>
+            <Stack.Screen name="Home" component={Home} />
+            <Stack.Screen name="Search" component={Search} />
+            <Stack.Screen name="Menu" component={Menu} />
+            <Stack.Screen name="HowTo" component={HowTo} />
+            <Stack.Screen name="IMDb" component={IMDb} />
+            <Stack.Screen name="Trailer" component={TrailerView} />
+            <Stack.Screen name="Filelist" component={FilelistView} />
+          </>
+        ) : loading ? (
+          <Stack.Screen name="Loading" component={Loading} />
+        ) : (
+          <Stack.Screen name="Login" component={Login} />
+        )}
+      </Stack.Navigator>
+    </View>
   );
 }
 

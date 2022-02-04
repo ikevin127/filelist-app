@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Text, View, Keyboard, Platform} from 'react-native';
 import {WebView} from 'react-native-webview';
 import {
@@ -13,9 +13,11 @@ import Adjust from './AdjustText';
 import {faArrowLeft} from '@fortawesome/free-solid-svg-icons';
 // Redux
 import {useSelector} from 'react-redux';
+import WebViewLoadingScreen from '../templates/WebViewLoadingScreen';
 
 export default function FilelistView({navigation}) {
-  const {hasNotch} = useSelector((state) => state.appConfig);
+  const {lightTheme, hasNotch, variables} = useSelector((state) => state.appConfig);
+  const [webviewLoading, setWebviewLoading] = useState(true);
   // Component mount
   useEffect(() => {
     // Screen focus listener
@@ -31,10 +33,14 @@ export default function FilelistView({navigation}) {
   }, [navigation]);
 
   // Functions
+  const onWebviewLoad = () => setWebviewLoading(false);
+
   const handleBack = () => {
     Orientation.lockToPortrait();
     navigation.goBack();
   };
+
+  const { FILELIST_WEBVIEW } = variables || {};
 
   return (
     <>
@@ -89,12 +95,15 @@ export default function FilelistView({navigation}) {
           Filelist Web
         </Text>
       </View>
+      { webviewLoading && <WebViewLoadingScreen isPortrait lightTheme={ lightTheme } hasNotch={ hasNotch } /> }
       <WebView
-        source={{
-          uri: 'https://filelist.io/forums.php',
-        }}
+        useWebKit
         allowsInlineMediaPlayback
-        mediaPlaybackRequiresUserAction={true}
+        mediaPlaybackRequiresUserAction
+        onLoad={ onWebviewLoad }
+        source={{
+          uri: FILELIST_WEBVIEW || 'https://filelist.io/forums.php',
+        }}
       />
     </>
   );

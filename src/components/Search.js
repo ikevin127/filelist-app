@@ -1431,9 +1431,12 @@ export default function Search({ navigation }) {
               </PressableOpacity>
             </View>
             <ScrollView
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator
               overScrollMode={'never'}
               bounces={false}
+              contentContainerStyle={{
+                paddingBottom: Platform.OS === 'ios' && hasNotch ? statusHeight : 0,
+              }}
               style={[
                 SearchPage.catCheckScrollView,
                 { backgroundColor: lightTheme ? MAIN_LIGHT : 'black' },
