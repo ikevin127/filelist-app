@@ -9,6 +9,7 @@ import { WebView } from 'react-native-webview';
 import { useIsFocused } from '@react-navigation/native';
 import {
   getColor,
+  MAIN_LIGHT,
   statusHeight,
 } from '../assets/variables.js';
 import Orientation from 'react-native-orientation-locker';
@@ -70,7 +71,7 @@ export default function TrailerView({ route, navigation }) {
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: lightTheme ? '#E8E6E6' : 'black',
+            backgroundColor: lightTheme ? MAIN_LIGHT : 'black',
             paddingBottom: statusHeight * 2,
           }}>
           <FontAwesomeIcon

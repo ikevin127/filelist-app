@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Platform, ActivityIndicator } from 'react-native';
-import { height, statusHeight } from '../assets/variables';
+import { height, MAIN_LIGHT, statusHeight } from '../assets/variables';
 
 const returnViewHeight = (hasNotch) => {
     if (Platform.OS === 'ios' && !hasNotch) return statusHeight * 5
