@@ -56,7 +56,7 @@ export default function TrailerView({ route, navigation }) {
   const onOrientationChange = (result) => setOrientation(result?.toLowerCase());
   const onWebviewLoad = () => setWebviewLoading(false);
 
-  const isPortrait = orientation.includes('portrait');
+  const isPortrait = orientation === 'portrait';
   const focusedLandscape = isFocused && !isPortrait;
   const netErrorText = enLang ? EN.imdbNetErrH : RO.imdbNetErrH;
 

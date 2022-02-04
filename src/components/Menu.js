@@ -801,7 +801,7 @@ export default function LeftDrawer({navigation}) {
             color: 'grey',
             textAlign: 'center',
           }}>
-          Filelist App v2022.0.2
+          Filelist App v2022.0.3
         </Text>
       </View>
       {Platform.OS === 'ios' && (
