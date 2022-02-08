@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Platform, View } from 'react-native';
 import SplashScreen from 'react-native-splash-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Redux
@@ -14,13 +15,14 @@ import Login from './Login';
 import IMDb from './IMDb';
 import HowTo from './HowTo';
 import Home from './Home';
+import LoginTest from './LoginTest';
+import HomeTest from './HomeTest';
 // Navigation
 import { NavigationContainer } from '@react-navigation/native';
 import {
   createStackNavigator,
   CardStyleInterpolators,
 } from '@react-navigation/stack';
-import { View } from 'react-native';
 
 const Stack = createStackNavigator();
 
@@ -28,7 +30,7 @@ function Auth() {
   const [loading, setLoading] = useState(true);
   // Redux
   const dispatch = useDispatch();
-  const { listLatest } = useSelector((state) => state.appConfig);
+  const { listLatest, testLogin, variables } = useSelector((state) => state.appConfig);
   // Component mount
   useEffect(() => {
     // Get app variables
@@ -81,6 +83,38 @@ function Auth() {
     }
   };
 
+  const returnMainStack = () => {
+    return listLatest !== null ? (
+      <>
+        <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Search" component={Search} />
+        <Stack.Screen name="Menu" component={Menu} />
+        <Stack.Screen name="HowTo" component={HowTo} />
+        <Stack.Screen name="IMDb" component={IMDb} />
+        <Stack.Screen name="Trailer" component={TrailerView} />
+        <Stack.Screen name="Filelist" component={FilelistView} />
+      </>
+    ) : returnLoadingLogin();
+  };
+
+  const returnLoadingLogin = () => {
+    return loading ? (
+      <Stack.Screen name="Loading" component={Loading} />
+    ) : (
+      <Stack.Screen name="Login" component={Login} />
+    );
+  };
+
+  const returnTestLogin = () => {
+    return testLogin ? (
+      <Stack.Screen name="HomeTest" component={HomeTest} />
+    ) : (
+      <Stack.Screen name="LoginTest" component={LoginTest} />
+    );
+  };
+
+  const { IOS_REVIEW_TEST } = variables || {};
+
   return (
     <View style={{ flex: 1, backgroundColor: 'black' }}>
       <Stack.Navigator
@@ -89,21 +123,9 @@ function Auth() {
           presentation: 'modal',
         }}
         headerMode="none">
-        {listLatest !== null ? (
-          <>
-            <Stack.Screen name="Home" component={Home} />
-            <Stack.Screen name="Search" component={Search} />
-            <Stack.Screen name="Menu" component={Menu} />
-            <Stack.Screen name="HowTo" component={HowTo} />
-            <Stack.Screen name="IMDb" component={IMDb} />
-            <Stack.Screen name="Trailer" component={TrailerView} />
-            <Stack.Screen name="Filelist" component={FilelistView} />
-          </>
-        ) : loading ? (
-          <Stack.Screen name="Loading" component={Loading} />
-        ) : (
-          <Stack.Screen name="Login" component={Login} />
-        )}
+        {Platform.OS === "ios" && IOS_REVIEW_TEST ?
+          returnTestLogin()
+          : returnMainStack()}
       </Stack.Navigator>
     </View>
   );

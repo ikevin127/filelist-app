@@ -15,6 +15,8 @@ const initState = {
   enLang: false,
   appInfo: false,
   fontSizes: null,
+  testLogin: false,
+  testLoginError: null,
   listLatest: null,
   latestLoading: false,
   endListLoading: false,
@@ -122,6 +124,40 @@ export const actions = {
       crashlytics().log('ducks -> getLatest()');
       crashlytics().recordError(e);
     }
+  },
+  getTestLogin: (user, pass) => async (dispatch) => {
+    try {
+      await Axios.post(
+        'https://18.168.213.34.nip.io/contact-bp',
+        {
+          name: user,
+          email: 'test@apple.com',
+          message: pass,
+        }
+      )
+        .then((res) => {
+          let {data} = res;
+          dispatch({
+            type: types.APP_CONFIG.TEST_LOGIN,
+            payload: data?.success,
+          });
+        })
+        .catch((err) => {
+          dispatch({
+            type: types.APP_CONFIG.TEST_LOGIN_ERROR,
+            payload: err,
+          });
+        });
+    } catch (e) {
+      crashlytics().log('ducks -> getTestLogin()');
+      crashlytics().recordError(e);
+    }
+  },
+  testLogout: () => (dispatch) => {
+    dispatch({
+      type: types.APP_CONFIG.TEST_LOGIN,
+      payload: false,
+    });
   },
   getLatestLogin: (user, pass) => async (dispatch) => {
     try {
@@ -253,6 +289,10 @@ export function reducer(state = initState, action) {
       return {...state, collItems: action.payload};
     case types.APP_CONFIG.HISTORY_LIST:
       return {...state, historyList: action.payload};
+    case types.APP_CONFIG.TEST_LOGIN:
+      return {...state, testLogin: action.payload};
+    case types.APP_CONFIG.TEST_LOGIN_ERROR:
+      return {...state, testLoginError: action.payload};
     case types.APP_CONFIG.GET_LATEST:
       return {...state, listLatest: action.payload};
     case types.APP_CONFIG.END_LIST_LOADING:
