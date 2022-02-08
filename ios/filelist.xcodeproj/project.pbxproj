@@ -763,7 +763,7 @@
 				CODE_SIGN_ENTITLEMENTS = filelist/filelist.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 3T77R3XUVN;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = filelist/Info.plist;
@@ -792,7 +792,7 @@
 				CODE_SIGN_ENTITLEMENTS = filelist/filelist.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 3T77R3XUVN;
 				INFOPLIST_FILE = filelist/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
