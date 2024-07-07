@@ -42,6 +42,7 @@ import {
     statusHeight,
     PressableOpacity,
     getColor,
+    addMediaPrefix,
 } from '../assets/variables';
 import { RO, EN } from '../assets/lang';
 
@@ -348,7 +349,7 @@ export default function LoginTest() {
                                     source={{
                                         uri: CDN_URL
                                             ? `${CDN_URL}/${LOGIN_LOGO}`
-                                            : 'https://dlc4jqsejiyjs.cloudfront.net/filelist.png',
+                                            : addMediaPrefix('filelist.png'),
                                     }}
                                 />
                             </View>
@@ -527,7 +528,7 @@ export default function LoginTest() {
                         <FastImage
                             style={{ width: '100%', height: '100%' }}
                             resizeMode={FastImage.resizeMode.contain}
-                            source={{ uri: CDN_URL ? `${CDN_URL}/${roIcon}` : 'https://dlc4jqsejiyjs.cloudfront.net/ro_cf908c3a13.png' }}
+                            source={{ uri: CDN_URL ? `${CDN_URL}/${roIcon}` : addMediaPrefix('ro_cf908c3a13.png') }}
                         />
                     </TouchableOpacity>
                     <View
@@ -547,7 +548,7 @@ export default function LoginTest() {
                         <FastImage
                             style={{ width: '100%', height: '100%' }}
                             resizeMode={FastImage.resizeMode.contain}
-                            source={{ uri: CDN_URL ? `${CDN_URL}/${enIcon}` : 'https://dlc4jqsejiyjs.cloudfront.net/en_eb0fd1fe87.png' }}
+                            source={{ uri: CDN_URL ? `${CDN_URL}/${enIcon}` : addMediaPrefix('en_eb0fd1fe87.png') }}
                         />
                     </TouchableOpacity>
                 </View>

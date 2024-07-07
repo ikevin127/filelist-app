@@ -39,6 +39,7 @@ import {
   ACCENT_COLOR,
   PressableOpacity,
   getColor,
+  addMediaPrefix,
 } from '../assets/variables';
 import {RO, EN} from '../assets/lang';
 
@@ -441,7 +442,7 @@ export default function LeftDrawer({navigation}) {
           <FastImage
             style={{width: 25, height: 25}}
             resizeMode={FastImage.resizeMode.contain}
-            source={{ uri: CDN_URL ? `${ CDN_URL }/${ roIcon }` : 'https://dlc4jqsejiyjs.cloudfront.net/ro_cf908c3a13.png' }}
+            source={{ uri: CDN_URL ? `${ CDN_URL }/${ roIcon }` : addMediaPrefix('ro_cf908c3a13.png') }}
           />
           <PressableOpacity
             activeOpacity={0.5}
@@ -472,7 +473,7 @@ export default function LeftDrawer({navigation}) {
           <FastImage
             style={{width: 25, height: 25}}
             resizeMode={FastImage.resizeMode.contain}
-            source={{ uri: CDN_URL ? `${ CDN_URL }/${ enIcon }` : 'https://dlc4jqsejiyjs.cloudfront.net/en_eb0fd1fe87.png' }}
+            source={{ uri: CDN_URL ? `${ CDN_URL }/${ enIcon }` : addMediaPrefix('en_eb0fd1fe87.png') }}
           />
         </View>
         <Divider
@@ -671,7 +672,7 @@ export default function LeftDrawer({navigation}) {
                   <FastImage
                     style={{height: '100%', width: '100%'}}
                     resizeMode={FastImage.resizeMode.contain}
-                    source={{ uri: CDN_URL ? `${ CDN_URL }/${ torrentDownloader }` : 'https://dlc4jqsejiyjs.cloudfront.net/td_dde6adaa23.png' }}
+                    source={{ uri: CDN_URL ? `${ CDN_URL }/${ torrentDownloader }` : addMediaPrefix('td_dde6adaa23.png') }}
                   />
                 </View>
                 <Text
